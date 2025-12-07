@@ -1,0 +1,45 @@
+{
+  "query": "CRISPR",
+  "timestamp": 1765097294.3611004,
+  "total": 2,
+  "results": [
+    {
+      "title": "The Emergence of a CRISPR-Cas Revolution in Ecology: Applications, Challenges, and an Ecologist's Overview of the Toolbox.",
+      "authors": [
+        "Plewnia A",
+        "Hoenig BD",
+        "Lötters S",
+        "Heine C",
+        "Erens J",
+        "Böning P",
+        "Bending GD",
+        "Krehenwinkel H",
+        "Williams MA."
+      ],
+      "journal": "Molecular ecology resources",
+      "year": "2026",
+      "doi": "10.1111/1755-0998.70086",
+      "pmcid": "PMC12670989",
+      "pmid": "41328758",
+      "abstract": "CRISPR-Cas (Clustered Regularly Interspaced Short Palindromic Repeats-CRISPR-associated nucleases) systems allow researchers to detect, capture, and even alter parts of an organism's genome. However, while the use of CRISPR-Cas has revolutionised many fields in the life sciences, its full potential remains underutilised in ecology and biodiversity research. Here we outline the emerging applications of CRISPR-Cas in ecological contexts, focusing on three main areas: nucleic acid detection, CRISPR-enhanced sequencing, and genome editing. CRISPR-based nucleic acid detection of environmental DNA samples is already reshaping species monitoring, providing highly sensitive and non-invasive tools for both scientists and the public alike, with reduced costs and minimal experience required. Further, CRISPR-enhanced sequencing, including Cas-mediated target enrichment, enables efficient recovery of ecologically relevant loci and supports diverse applications such as amplification-free metagenomics. Finally, while genome editing on wild species remains largely theoretical in ecology, these tools are already being used in controlled settings to study adaptation and resilience in the face of ongoing global stressors. Together, the applications of CRISPR-Cas are paving the way for more affordable, accessible, and impactful applications for species conservation, and promise to improve our ability to tackle the ongoing global biodiversity crisis.",
+      "isOpenAccess": true,
+      "source": "Europe PMC"
+    },
+    {
+      "title": "Engineering Pichia pastoris Strains Using CRISPR/Cas9 Technologies: The Basic Protocol.",
+      "authors": [
+        "Raschmanová H",
+        "Weninger A",
+        "Kovar K."
+      ],
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2026",
+      "doi": "10.1007/978-1-0716-4779-0_25",
+      "pmcid": "",
+      "pmid": "41028476",
+      "abstract": "The CRISPR/Cas9 (clustered regularly interspaced short palindromic repeats, CRISPR-associated protein 9) system has become a commonly used tool for genome editing and metabolic engineering. For Komagataella phaffii, commercialized as Pichia pastoris, the CRISPR/Cas9 protocol for genome editing was established in 2016 and since then has been employed to facilitate genetic modifications such as markerless gene disruptions and deletions as well as to enhance the efficiency of homologous recombination.In this chapter, we describe a robust basic protocol for CRISPR-based genome editing, demonstrating near 100% targeting efficiency for gene inactivation via a frameshift mutation. As described in other chapters of this volume, CRISPR/Cas9 technologies for use in P. pastoris have been further optimized for various specific purposes.",
+      "isOpenAccess": false,
+      "source": "Europe PMC"
+    }
+  ]
+}

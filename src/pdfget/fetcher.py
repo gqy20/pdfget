@@ -122,17 +122,33 @@ class PaperFetcher:
             results = data.get("resultList", {}).get("result", [])
 
             for i, record in enumerate(results[:limit]):
+                # 获取期刊信息
+                journal_info = record.get("journalInfo", {})
+
                 paper = {
                     "title": record.get("title", ""),
                     "authors": [a.strip() for a in record.get("authorString", "").split(",")] if record.get("authorString") else [],
-                    "journal": record.get("journalInfo", {}).get("journal", {}).get("title", ""),
+                    "journal": journal_info.get("journal", {}).get("title", ""),
                     "year": record.get("pubYear", ""),
                     "doi": record.get("doi", ""),
                     "pmcid": record.get("pmcid", ""),
                     "pmid": record.get("pmid", ""),
                     "abstract": record.get("abstractText", ""),
                     "isOpenAccess": bool(record.get("pmcid")),  # 有PMCID通常表示开放获取
-                    "source": "Europe PMC"
+                    "source": "Europe PMC",
+
+                    # 新增的10个字段
+                    "affiliation": record.get("affiliation", ""),
+                    "volume": journal_info.get("volume", ""),
+                    "issue": journal_info.get("issue", ""),
+                    "pages": record.get("pageInfo", ""),
+                    "license": record.get("license", ""),
+                    "citedBy": record.get("citedByCount", 0),
+                    "keywords": record.get("keywordList", []),
+                    "meshTerms": record.get("meshHeadingList", []),
+                    "grants": record.get("grantsList", []),
+                    "hasData": record.get("hasData") == "Y",
+                    "hasSuppl": record.get("hasSuppl") == "Y"
                 }
                 papers.append(paper)
 

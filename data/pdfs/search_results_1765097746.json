@@ -1,0 +1,95 @@
+{
+  "query": "CRISPR gene editing",
+  "timestamp": 1765097746.5634365,
+  "total": 2,
+  "results": [
+    {
+      "title": "LeDNA: a cut-and-build toolkit to democratize CRISPR gene editing technology education.",
+      "authors": [
+        "Kundlatsch GE",
+        "Rodrigues ASL",
+        "Zocca VFB",
+        "Amorim LAS",
+        "de Paiva GB",
+        "Neto APS",
+        "Campos JADB",
+        "Pedrolli DB."
+      ],
+      "journal": "Nature biotechnology",
+      "year": "2025",
+      "doi": "10.1038/s41587-025-02849-9",
+      "pmcid": "",
+      "pmid": "41087699",
+      "abstract": "",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Bioprocess Engineering and Biotechnology, School of Pharmaceutical Sciences, São Paulo State University (Unesp), Araraquara, Brazil.",
+      "volume": "43",
+      "issue": "10",
+      "pages": "1730-1735",
+      "license": "",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Lipid Nanoparticles for Delivery of CRISPR Gene Editing Components.",
+      "authors": [
+        "Wu F",
+        "Li N",
+        "Xiao Y",
+        "Palanki R",
+        "Yamagata H",
+        "Mitchell MJ",
+        "Han X."
+      ],
+      "journal": "Small methods",
+      "year": "2025",
+      "doi": "10.1002/smtd.202401632",
+      "pmcid": "",
+      "pmid": "40434188",
+      "abstract": "Gene editing has emerged as a promising therapeutic option for treating genetic diseases. However, a central challenge in the field is the safe and efficient delivery of these large editing tools, especially in vivo. Lipid nanoparticles (LNPs) are attractive nonviral vectors due to their low immunogenicity and high delivery efficiency. To maximize editing efficiency, LNPs should efficiently protect gene editing components against multiple biological barriers and release them into the cytoplasm of target cells. In this review, the widely used CRISPR gene editing systems are first overviewed. Then, each component of LNPs, as well as their effects on delivery, are systematically discussed. Following this, the current LNP engineering strategies to achieve non-liver targeting are summarized. Finally, preclinical and clinical applications of LNPs for in vivo genome editing are highlighted, and perspectives for the future development of LNPs are provided.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Key Laboratory of RNA Innovation, Science and Engineering, Center for Excellence in Molecular Cell Science, Shanghai Institute of Biochemistry and Cell Biology, Chinese Academy of Sciences, University of Chinese Academy of Sciences, Shanghai, 200031, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "e2401632",
+      "license": "cc by-nc-nd",
+      "citedBy": 3,
+      "keywords": {
+        "keyword": [
+          "Gene therapy",
+          "Delivery",
+          "Lipid Nanoparticles",
+          "Gene Editing"
+        ]
+      },
+      "meshTerms": [],
+      "grants": {
+        "grant": [
+          {
+            "grantId": "XDB0570000",
+            "agency": "Strategic Priority Research Program of the Chinese Academy of Science",
+            "orderIn": 0
+          },
+          {
+            "grantId": "32471401",
+            "agency": "National Natural Science Foundation of China",
+            "orderIn": 0
+          },
+          {
+            "grantId": "ssIII-2024B01",
+            "agency": "Shanghai Sci-Tech Inno Center for Infection & Immunity",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    }
+  ]
+}
