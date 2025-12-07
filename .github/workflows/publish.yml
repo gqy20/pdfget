@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # 触发条件：推送以 v 开头的标签
 
+permissions:
+  contents: write  # 允许创建release
+
 jobs:
   release-and-publish:
     runs-on: ubuntu-latest
