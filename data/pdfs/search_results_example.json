@@ -1,0 +1,393 @@
+{
+  "query": "machine learning",
+  "timestamp": 1765119385.9311996,
+  "total": 5,
+  "results": [
+    {
+      "title": "Integrating Machine Learning Standards in Disseminating Machine Learning Research",
+      "authors": [
+        "Edmunds SC",
+        "Nogoy N",
+        "Lan Q",
+        "Zhang H",
+        "Fan Y",
+        "Zhou H",
+        "Armit CJ."
+      ],
+      "journal": "",
+      "year": "2025",
+      "doi": "10.31222/osf.io/y6jh2_v2",
+      "pmcid": "",
+      "pmid": "",
+      "abstract": "<p>The increasing use of AI-based approaches such as machine learning (ML) across diverse scientific fields presents challenges for reproducibly disseminating and assessing research. As ML becomes integral to a growing range of computationally intensive applications (e.g. clinical research), there is a critical need for transparent reporting methods to ensure both comprehensibility and the reproducibility of the supporting studies. There are a growing number of standards, checklists and guidelines enabling more standardized reporting of ML research, but the proliferation and complexity of these make them challenging to use. Particularly in assessment and peer review, which has to date, been an ad hoc process that has struggled to throw light on increasingly complicated computational supporting methods that are otherwise unintelligible to other researchers. Taking the publication process beyond these black boxes, GigaScience Press has experimented with integrating many of these ML-standards into the publication process. Having a broad-scope that necessitated looking at more generalist and automated approaches. Here, we map the current landscape of artificial intelligence (AI) standards, and outline our adoption of the DOME recommendations for Machine Learning in biology. We developed a publishing workflow that integrates the DOME Data Stewardship Wizard and DOME Registry tools into the peer-review and publication process. From this case study we provide journal authors, reviewers and Editors examples of approaches, workflows and strategies to more logically disseminate and review ML research. Demonstrating the need for continued dialogue and collaboration among various ML communities to create unified, comprehensive standards, to enhance the credibility, sustainability and impact of ML-based scientific research.</p>",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Machine Learning Applications and Sarcopenia.",
+      "authors": [
+        "Michalopoulos N",
+        "Billis E",
+        "Dermatas E",
+        "Tsepis E",
+        "Tsekoura M."
+      ],
+      "journal": "Advances in experimental medicine and biology",
+      "year": "2026",
+      "doi": "10.1007/978-3-032-03398-7_5",
+      "pmcid": "",
+      "pmid": "41273547",
+      "abstract": "The objective of this review was to investigate the variety of machine learning (ML) methods and their ability to detect individuals at risk of or suffering from sarcopenia. Sarcopenia is a progressive disease characterized by a significant decline in muscle mass, muscle strength, and physical performance, primarily affecting older adults. PubMed databases were searched from July to August 2024 for trials related to the sarcopenia prognosis and artificial intelligence. The keywords used were \"sarcopenia,\" \"artificial intelligence,\" \"machine learning,\" and \"risk factors.\" Eleven studies were included involving 15,799 participants. All studies were able to identify sarcopenia with moderate to high accuracy values and with different ML methods. The machine learning methods that standout were deep neural networks, LightGBM, Decision Tree, CatBoost (CAT), and k-nearest neighbors. As for the risk factors, it is found that the most important were age, body mass index, waist circumference, chronic diseases, and some socioeconomic features. In conclusion, machine learning methods have the ability to extract valuable insights from data enabling accurate predictions for the early detection of sarcopenia. These results indicate that ML methods can be used by health professionals for faster and time-saving methods to identify sarcopenia.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Physiotherapy, School of Health Rehabilitation Science, University of Patras, Rio, Greece.",
+      "volume": "1487",
+      "issue": "",
+      "pages": "45-52",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Artificial intelligence",
+          "risk factors",
+          "Machine Learning",
+          "Sarcopenia"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Risk Factors"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Aged"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Muscle Strength"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Sarcopenia",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DI",
+                  "qualifierName": "diagnosis",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PP",
+                  "qualifierName": "physiopathology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Machine Learning"
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Machine Learning to Predict CDK4 Inhibition.",
+      "authors": [
+        "de Azevedo WF."
+      ],
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2026",
+      "doi": "10.1007/978-1-0716-4949-7_15",
+      "pmcid": "",
+      "pmid": "41075095",
+      "abstract": "Cyclin-dependent kinase 4 (CDK4) is a target for anticancer drugs, and available crystallographic structures made it possible to carry out docking simulations focused on this target. Also, the binding affinity data for CDK4 paved the way to build machine learning models to predict its inhibition. This chapter describes an integrated workflow to construct a neural network model to calculate the inhibition of CDK4 based on the atomic coordinates. This workflow utilizes the Molegro Data Modeller to build a regression model based on docking results of inhibitors for which binding affinity data is available (inhibition constant). The machine learning model relies on protein-pose structures determined using Molegro Virtual Docker (MVD). Ligands with experimental binding data are available from the BindingDB. Besides the pair of programs (MVD-MDM), this workflow discusses Jupyter Notebooks developed to integrate all steps necessary to build regression models to calculate binding affinity. All CDK4 datasets and Jupyter Notebooks discussed in this work are available at GitHub: https://github.com/azevedolab/docking#readme .",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Physics, Institute of Exact Sciences, Federal University of Alfenas, Alfenas, MG, Brazil.",
+      "volume": "2984",
+      "issue": "",
+      "pages": "211-225",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Artificial intelligence",
+          "Neural network",
+          "Machine Learning",
+          "Cyclin-dependent Kinase 4",
+          "Deep Learning",
+          "Scoring Function Space",
+          "Molegro Data Modeller"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Protein Kinase Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "PD",
+                  "qualifierName": "pharmacology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Ligands"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Binding Sites"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Protein Binding"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Software"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Cyclin-Dependent Kinase 4",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "AI",
+                  "qualifierName": "antagonists & inhibitors",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Molecular Docking Simulation",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Machine Learning"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Neural Networks, Computer"
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Molegro Data Modeller for Machine Learning.",
+      "authors": [
+        "da Silva AD",
+        "da Silveira NJF",
+        "Oliveira PR",
+        "de Azevedo WF."
+      ],
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2026",
+      "doi": "10.1007/978-1-0716-4949-7_11",
+      "pmcid": "",
+      "pmid": "41075091",
+      "abstract": "Machine learning methods have great potential to build models to address protein-ligand interactions obtained through docking simulations. Molegro Data Modeller (MDM) has an intuitive interface with Molegro Virtual Docker (MVD), which allows us to integrate docking results and machine learning. Here, we present a tutorial on how to build a regression model using a support vector machine to predict the inhibition of cyclin-dependent kinase 2 with MDM. Our model relies on docked poses of CDK2 inhibitors obtained with MVD and employs the support vector machine implemented in the MDM program. We focus on ligands for which binding affinity data is available at the BindingDB and the structure of a CDK2-Cyclin complex determined using crystallography. Our approach explores the concept of scoring function space to build targeted models. We take descriptors, energy terms, and scoring functions determined with MVD to build our machine learning model. All CDK2 datasets and Jupyter Notebooks discussed in this work are available at GitHub: https://github.com/azevedolab/docking#readme .",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Graduate Program in Information Technologies and Health Management, Federal University of Health Sciences of Porto Alegre, Porto Alegre, RS, Brazil.",
+      "volume": "2984",
+      "issue": "",
+      "pages": "153-166",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Support vector machine",
+          "Cyclin-dependent kinase 2",
+          "drug discovery",
+          "Scoring Function Space",
+          "Docking Screen",
+          "Molegro Data Modeller"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Protein Kinase Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "PD",
+                  "qualifierName": "pharmacology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Ligands"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Computational Biology",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Protein Binding"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Software"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Cyclin-Dependent Kinase 2",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "AI",
+                  "qualifierName": "antagonists & inhibitors",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Molecular Docking Simulation",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Machine Learning"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Support Vector Machine"
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Machine learning in chemistry.",
+      "authors": [
+        "Debenedetti PG",
+        "de Pablo JJ",
+        "Schatz GC."
+      ],
+      "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+      "year": "2025",
+      "doi": "10.1073/pnas.2517062122",
+      "pmcid": "PMC12541435",
+      "pmid": "41052331",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Department of Chemical and Biological Engineering, Princeton University, Princeton, NJ 08544.",
+      "volume": "122",
+      "issue": "41",
+      "pages": "e2517062122",
+      "license": "cc by-nc-nd",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    }
+  ]
+}

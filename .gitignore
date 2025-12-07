@@ -137,10 +137,16 @@ dmypy.json
 *.swp
 *.swo
 
-# Data files
-data/pdfs/*.pdf
-data/cache/*.json
-data/logs/*.log
+# Data files - 排除缓存和临时文件，保留测试数据
+data/cache/
+data/pdfs/search_results_*.json
+data/pdfs/*.tmp
+data/logs/
+
+# 保留有价值的测试结果文件
+!data/pdfs/download_results.json
+!data/pdfs/search_results_example.json
+!data/pdfs/*.pdf
 
 # OS
 .DS_Store
