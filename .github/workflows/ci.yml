@@ -56,4 +56,4 @@ jobs:
 
     - name: Check package
       run: |
-        twine check dist/*
+        uv run twine check dist/*
