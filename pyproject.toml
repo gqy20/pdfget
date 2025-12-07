@@ -5,9 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "pdfget"
 version = "0.1.0"
-description = "PDF文献下载工具"
+description = "智能文献搜索与批量下载工具，支持高级检索和并发下载"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "gqy", email = "qingyu_ge@foxmail.com"},
 ]
 dependencies = [
     "requests>=2.25.0",
