@@ -40,16 +40,50 @@ uv run pdfget -i dois.csv -d -t 3
 
 ## 🎯 高级检索语法
 
+### 布尔运算符
 ```bash
-# 布尔运算符
+# AND: 同时包含多个关键词
+uv run pdfget -s "cancer AND immunotherapy" -l 30
+
+# OR: 包含任意关键词
+uv run pdfget -s "machine OR deep learning" -l 20
+
+# NOT: 排除特定词汇
 uv run pdfget -s "cancer AND immunotherapy NOT review" -l 30
 
-# 字段检索
-uv run pdfget -s 'title:"deep learning" AND author:hinton'
-
-# 短语检索
-uv run pdfget -s '"quantum computing"' -l 10
+# 复杂组合
+uv run pdfget -s "(cancer OR tumor) AND immunotherapy NOT mice" -l 25
 ```
+
+### 字段检索
+```bash
+# 标题检索
+uv run pdfget -s 'title:"deep learning"' -l 15
+
+# 作者检索
+uv run pdfget -s 'author:hinton AND title:"neural networks"' -l 10
+
+# 期刊检索
+uv run pdfget -s 'journal:nature AND cancer' -l 20
+
+# 年份检索
+uv run pdfget -s 'cancer AND year:2023' -l 15
+```
+
+### 短语和精确匹配
+```bash
+# 短语检索（用双引号）
+uv run pdfget -s '"quantum computing"' -l 10
+
+# 混合使用
+uv run pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
+```
+
+### 实用检索技巧
+- 使用括号分组复杂的布尔逻辑
+- 短语用双引号确保精确匹配
+- 可以组合多个字段进行精确检索
+- 使用 NOT 过滤掉不相关的结果（如综述、评论等）
 
 ## 📊 性能优势
 
