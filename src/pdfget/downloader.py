@@ -59,7 +59,10 @@ class ConcurrentDownloader:
     def _create_thread_fetcher(self) -> PaperFetcher:
         """为线程创建独立的fetcher实例"""
         # 复制基础配置，但创建新的session
-        fetcher = PaperFetcher(cache_dir=str(self.base_fetcher.cache_dir))
+        fetcher = PaperFetcher(
+            cache_dir=str(self.base_fetcher.cache_dir),
+            output_dir=str(self.base_fetcher.output_dir),
+        )
         return fetcher
 
     def _update_progress(

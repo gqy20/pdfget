@@ -58,7 +58,7 @@ def main() -> None:
     logger = logging.getLogger("PDFDownloader")
 
     # 初始化下载器
-    fetcher = PaperFetcher(cache_dir="data/cache")
+    fetcher = PaperFetcher(cache_dir="data/cache", output_dir="data/pdfs")
 
     logger.info("🚀 PDF下载器启动")
     logger.info(f"   输出目录: {args.o}")

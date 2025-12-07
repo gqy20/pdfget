@@ -20,16 +20,19 @@ import logging
 class PaperFetcher:
     """简单文献获取器"""
 
-    def __init__(self, cache_dir: str = "data/cache"):
+    def __init__(self, cache_dir: str = "data/cache", output_dir: str = "data/pdfs"):
         """
         初始化获取器
 
         Args:
             cache_dir: 缓存目录
+            output_dir: PDF输出目录
         """
         self.logger = logging.getLogger("PaperFetcher")
         self.cache_dir = Path(cache_dir)
+        self.output_dir = Path(output_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # 简单的HTTP会话
         self.session = requests.Session()
@@ -316,7 +319,7 @@ class PaperFetcher:
                 # 保存文件
                 safe_doi = "".join(c for c in doi if c.isalnum() or c in "-._")
                 filename = f"{pmcid}_{safe_doi}.pdf"
-                file_path = self.cache_dir / filename
+                file_path = self.output_dir / filename
 
                 with open(file_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):

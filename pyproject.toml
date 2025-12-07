@@ -86,4 +86,5 @@ dev = [
     "twine>=5.0.0",
     "types-requests>=2.32.4.20250913",
     "pandas-stubs>=2.3.3.251201",
+    "pre-commit>=3.8.0",
 ]
