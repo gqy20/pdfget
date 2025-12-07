@@ -14,7 +14,7 @@ import logging
 
 from .fetcher import PaperFetcher
 from .concurrent_downloader import ConcurrentDownloader
-from .config import TIMEOUT, MAX_RETRIES, DELAY, OUTPUT_DIR, LOG_LEVEL, LOG_FORMAT
+from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
 
 
 def main():
@@ -117,7 +117,7 @@ def main():
 
             # 如果需要下载PDF
             if args.d:
-                logger.info(f"\n📥 开始下载PDF...")
+                logger.info("\n📥 开始下载PDF...")
 
                 # 只下载有PMCID的开放获取文献
                 oa_papers = [p for p in papers if p['pmcid']]

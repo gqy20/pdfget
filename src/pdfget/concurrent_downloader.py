@@ -10,7 +10,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Any, Callable
-from requests import Session
 
 from .fetcher import PaperFetcher
 
@@ -158,7 +157,7 @@ class ConcurrentDownloader:
         ordered_results = [doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"}) for doi in dois]
 
         # 最终统计
-        self.logger.info(f"\n📊 并发下载完成:")
+        self.logger.info("\n📊 并发下载完成:")
         self.logger.info(f"   总计: {len(ordered_results)}")
         self.logger.info(f"   成功: {self._successful}")
         self.logger.info(f"   PDF: {self._pdf_count}")
@@ -234,7 +233,7 @@ class ConcurrentDownloader:
             ordered_results = [doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"}) for doi in dois]
 
             # 最终统计和最后一次回调
-            self.logger.info(f"\n📊 并发下载完成:")
+            self.logger.info("\n📊 并发下载完成:")
             self.logger.info(f"   总计: {len(ordered_results)}")
             self.logger.info(f"   成功: {self._successful}")
             self.logger.info(f"   PDF: {self._pdf_count}")
