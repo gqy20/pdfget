@@ -12,7 +12,7 @@ from pathlib import Path
 import logging
 
 from .fetcher import PaperFetcher
-from .concurrent_downloader import ConcurrentDownloader
+from .downloader import ConcurrentDownloader
 from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
 
 
