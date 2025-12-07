@@ -162,65 +162,12 @@ data/
 └── download_results.json  # 下载结果记录
 ```
 
-## 7. 技术实现架构
+## 7. 许可证
 
-### 7.1 核心技术栈
-- **Python 3.12+**：现代Python特性和类型注解
-- **ThreadPoolExecutor**：高效的线程池管理
-- **Europe PMC API**：权威学术数据源
-- **智能缓存**：24小时自动过期机制
-- **线程安全**：并发环境下的数据一致性保证
-
-## 8. 开发与贡献
-
-### 8.1 开发环境设置
-```bash
-# 克隆仓库
-git clone https://github.com/gqy20/pdfget.git
-cd pdfget
-
-# 安装开发依赖
-uv sync --dev
-
-# 运行测试
-uv run pytest tests/ -v
-
-# 代码质量检查
-uv run ruff check .
-uv run mypy src/
-```
-
-### 8.2 项目结构
-```
-pdfget/
-├── src/pdfget/
-│   ├── __init__.py          # 包初始化
-│   ├── __main__.py          # 命令行入口
-│   ├── main.py              # 主程序逻辑
-│   ├── fetcher.py           # 核心文献获取器
-│   ├── downloader.py        # 并发下载器
-│   └── config.py            # 配置文件
-├── tests/                   # 测试文件
-├── data/                    # 数据目录
-├── .github/workflows/       # CI/CD配置
-├── README.md               # 项目文档
-├── CHANGELOG.md            # 更新日志
-└── pyproject.toml          # 项目配置
-```
-
-## 9. 许可证与更新日志
-
-### 9.1 许可证
 本项目采用 MIT License，允许自由使用和修改。
 
-### 9.2 更新日志
+## 📚 更多信息
 
-#### v0.1.0 (2025-12-07)
-- ✨ 基础DOI下载功能
-- ✨ 高级文献搜索（支持布尔运算、字段检索、短语检索）
-- ✅ 多线程并发下载（3-5倍性能提升）
-- ✅ 完整文献元数据（10+个字段信息）
-- ✅ 智能缓存系统（24小时自动过期）
-- ✅ 简洁命令行界面（单字母参数）
-- ✅ 完整的CI/CD流程
-- ✅ 28个单元测试，60%+代码覆盖率
+- **完整更新日志**: 查看 [CHANGELOG.md](CHANGELOG.md) 了解详细的版本历史
+- **项目源码**: [GitHub Repository](https://github.com/gqy20/pdfget)
+- **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
