@@ -1,12 +1,12 @@
-name: Publish Python Package
+name: Release & Publish
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # 触发条件：推送以 v 开头的标签
 
 jobs:
-  test-and-publish:
+  release-and-publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,49 +27,83 @@ jobs:
 
     - name: Run tests
       run: |
-        uv run pytest tests/ -v
+        uv run pytest tests/ -v --cov=src --cov-report=xml
 
     - name: Run code quality checks
       run: |
         uv run ruff check .
         uv run ruff format --check .
+        uv run mypy src/
 
     - name: Build package
       run: |
         uv build
 
-    - name: Show package info
+    - name: Check package
       run: |
-        find dist/ -name "*.whl" -exec python -m pip show {} \; || true
-        find dist/ -name "*.tar.gz" -exec python -m pip show {} \; || true
-        ls -la dist/
+        uv run twine check dist/*
 
-    - name: Publish to PyPI
-      env:
-        PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Generate release notes
+      id: release_notes
       run: |
-        uv publish --token $PYPI_API_TOKEN
+        # 从CHANGELOG.md提取最新版本信息
+        python << 'EOF'
+        import re
+
+        with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # 查找最新的版本信息
+        version_match = re.search(r'^## \[([0-9.]+)\] - ([0-9-]+)', content, re.MULTILINE)
+        if version_match:
+            version = version_match.group(1)
+            date = version_match.group(2)
+
+            # 提取该版本的主要内容
+            version_start = version_match.start()
+            next_version_match = re.search(r'\n## \[', content[version_start + 1:])
+            if next_version_match:
+                version_content = content[version_start:version_start + next_version_match.start()]
+            else:
+                version_content = content[version_start:]
+
+            # 提取主要功能点
+            features = []
+            lines = version_content.split('\n')
+            for line in lines:
+                if '新增功能' in line:
+                    continue
+                if line.startswith('- **') and ('：' in line or ':' in line):
+                    features.append(line.strip())
+
+            # 设置输出
+            print(f"::set-output name=version::{version}")
+            print(f"::set-output name=date::{date}")
+            print(f"::set-output name=features::{'\\n'.join(features[:8])}")  # 限制显示数量
+        else:
+            print("::set-output name=version::unknown")
+            print("::set-output name=features::No release notes found")
+        EOF
 
     - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ steps.release_notes.outputs.version }}
         body: |
-          🎉 PDFGet ${{ github.ref }} 已发布！
+          🎉 PDFGet ${{ steps.release_notes.outputs.version }} 发布！
 
           ## 📦 安装方法
           ```bash
-          pip install pdfget
+          pip install pdfget==${{ steps.release_notes.outputs.version }}
           # 或使用uv
-          uv add pdfget
+          uv add pdfget==${{ steps.release_notes.outputs.version }}
           ```
 
-          ## 🚀 使用示例
+          ## 🚀 主要特性
+          ${{ steps.release_notes.outputs.features }}
+
+          ## 📖 使用示例
           ```bash
           # 搜索并下载文献
           pdfget -s "machine learning" -l 20 -d -t 5
@@ -82,4 +116,23 @@ jobs:
           ```
 
           ## 📋 完整更新日志
-          请查看 [CHANGELOG.md](https://github.com/gqy20/pdfget/blob/main/CHANGELOG.md)
+          请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
+          ---
+
+          🤖 自动发布于 ${{ steps.release_notes.outputs.date }}
+        draft: false
+        prerelease: false
+
+    - name: Publish to PyPI
+      env:
+        PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        uv publish --token $PYPI_API_TOKEN
+
+    - name: Release Confirmation
+      if: success()
+      run: |
+        echo "✅ Release ${{ steps.release_notes.outputs.version }} published successfully!"
+        echo "📦 PyPI: https://pypi.org/project/pdfget/${{ steps.release_notes.outputs.version }}/"
+        echo "🔗 GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
