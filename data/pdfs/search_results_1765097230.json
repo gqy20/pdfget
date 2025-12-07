@@ -1,0 +1,48 @@
+{
+  "query": "CRISPR gene editing",
+  "timestamp": 1765097230.6638904,
+  "total": 2,
+  "results": [
+    {
+      "title": "LeDNA: a cut-and-build toolkit to democratize CRISPR gene editing technology education.",
+      "authors": [
+        "Kundlatsch GE",
+        "Rodrigues ASL",
+        "Zocca VFB",
+        "Amorim LAS",
+        "de Paiva GB",
+        "Neto APS",
+        "Campos JADB",
+        "Pedrolli DB."
+      ],
+      "journal": "Nature biotechnology",
+      "year": "2025",
+      "doi": "10.1038/s41587-025-02849-9",
+      "pmcid": "",
+      "pmid": "41087699",
+      "abstract": "",
+      "isOpenAccess": false,
+      "source": "Europe PMC"
+    },
+    {
+      "title": "Lipid Nanoparticles for Delivery of CRISPR Gene Editing Components.",
+      "authors": [
+        "Wu F",
+        "Li N",
+        "Xiao Y",
+        "Palanki R",
+        "Yamagata H",
+        "Mitchell MJ",
+        "Han X."
+      ],
+      "journal": "Small methods",
+      "year": "2025",
+      "doi": "10.1002/smtd.202401632",
+      "pmcid": "",
+      "pmid": "40434188",
+      "abstract": "Gene editing has emerged as a promising therapeutic option for treating genetic diseases. However, a central challenge in the field is the safe and efficient delivery of these large editing tools, especially in vivo. Lipid nanoparticles (LNPs) are attractive nonviral vectors due to their low immunogenicity and high delivery efficiency. To maximize editing efficiency, LNPs should efficiently protect gene editing components against multiple biological barriers and release them into the cytoplasm of target cells. In this review, the widely used CRISPR gene editing systems are first overviewed. Then, each component of LNPs, as well as their effects on delivery, are systematically discussed. Following this, the current LNP engineering strategies to achieve non-liver targeting are summarized. Finally, preclinical and clinical applications of LNPs for in vivo genome editing are highlighted, and perspectives for the future development of LNPs are provided.",
+      "isOpenAccess": false,
+      "source": "Europe PMC"
+    }
+  ]
+}

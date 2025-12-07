@@ -1,22 +1,21 @@
 {
-  "timestamp": 1765097236.171151,
+  "query": "cancer immunotherapy",
+  "timestamp": 1765097236.1693225,
   "total": 1,
-  "success": 1,
   "results": [
     {
-      "success": true,
-      "doi": "10.3390/ijms262210839",
-      "pmcid": "PMC12652641",
-      "pdf_path": "data/cache/PMC12652641_10.3390ijms262210839.pdf",
-      "content_type": "pdf",
       "title": "Special Issue \"Molecular Advances in Cancer Immunotherapy\".",
-      "journal": "International journal of molecular sciences",
       "authors": [
         "Schaft N."
       ],
+      "journal": "International journal of molecular sciences",
       "year": "2025",
+      "doi": "10.3390/ijms262210839",
+      "pmcid": "PMC12652641",
+      "pmid": "41303327",
       "abstract": "Cancer immunotherapy is defined as a type of cancer treatment that helps the immune system recognize and attack cancer cells more effectively [...].",
-      "timestamp": 1765097109.392194
+      "isOpenAccess": true,
+      "source": "Europe PMC"
     }
   ]
 }
