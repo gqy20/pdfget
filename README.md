@@ -166,8 +166,17 @@ data/
 
 本项目采用 MIT License，允许自由使用和修改。
 
-## 📚 更多信息
+## 📚 更新日志
 
-- **完整更新日志**: 查看 [CHANGELOG.md](CHANGELOG.md) 了解详细的版本历史
+<details>
+<summary><strong>📋 查看版本更新历史</strong></summary>
+
+- 🔗 **完整更新日志**: [CHANGELOG.md](CHANGELOG.md)
+- ✨ **最新版本 (v0.1.0)**: 高级文献搜索 + 并发下载 + 智能缓存
+
+</details>
+
+## 🔗 相关链接
+
 - **项目源码**: [GitHub Repository](https://github.com/gqy20/pdfget)
 - **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
