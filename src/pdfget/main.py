@@ -13,6 +13,7 @@ from pathlib import Path
 import logging
 
 from .fetcher import PaperFetcher
+from .concurrent_downloader import ConcurrentDownloader
 from .config import TIMEOUT, MAX_RETRIES, DELAY, OUTPUT_DIR, LOG_LEVEL, LOG_FORMAT
 
 
@@ -27,11 +28,12 @@ def main():
   python -m pdfget -s "machine learning cancer"
   python -m pdfget -s "deep learning" -l 20 -d
 
+  # 并发下载（多线程）
+  python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
+  python -m pdfget -i dois.csv -t 3
+
   # 下载单个文献
   python -m pdfget --doi 10.1016/j.cell.2020.01.021
-
-  # 批量下载
-  python -m pdfget -i dois.csv
         """
     )
 
@@ -47,6 +49,7 @@ def main():
     parser.add_argument("--delay", type=float, default=DELAY, help="请求延迟秒数")
     parser.add_argument("-l", type=int, default=50, help="搜索结果数量")
     parser.add_argument("-d", action="store_true", help="下载PDF")
+    parser.add_argument("-t", type=int, default=3, help="并发线程数（默认3）")
     parser.add_argument("-v", action="store_true", help="详细输出")
 
     args = parser.parse_args()
@@ -125,8 +128,18 @@ def main():
                     dois = [p['doi'] for p in oa_papers if p['doi']]
 
                     if dois:
-                        # 批量下载
-                        results = fetcher.fetch_batch(dois, delay=args.delay)
+                        # 根据线程数决定是否使用并发下载
+                        if len(dois) > 1 and args.t > 1:
+                            logger.info(f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献")
+                            concurrent_downloader = ConcurrentDownloader(
+                                max_workers=args.t,
+                                base_delay=args.delay,
+                                fetcher=fetcher
+                            )
+                            results = concurrent_downloader.download_batch(dois, timeout=TIMEOUT)
+                        else:
+                            # 单线程下载（保持原有逻辑）
+                            results = fetcher.fetch_batch(dois, delay=args.delay)
 
                         # 统计结果
                         success_count = sum(1 for r in results if r.get("success"))
@@ -190,8 +203,18 @@ def main():
                     logger.error(f"❌ 读取文件失败: {e}")
                     return 1
 
-            # 批量处理
-            results = fetcher.fetch_batch(dois, delay=args.delay)
+            # 根据线程数决定是否使用并发下载
+            if len(dois) > 1 and args.t > 1:
+                logger.info(f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献")
+                concurrent_downloader = ConcurrentDownloader(
+                    max_workers=args.t,
+                    base_delay=args.delay,
+                    fetcher=fetcher
+                )
+                results = concurrent_downloader.download_batch(dois, timeout=TIMEOUT)
+            else:
+                # 单线程下载（保持原有逻辑）
+                results = fetcher.fetch_batch(dois, delay=args.delay)
 
             # 统计结果
             success_count = sum(1 for r in results if r.get("success"))

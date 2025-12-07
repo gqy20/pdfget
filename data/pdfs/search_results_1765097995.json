@@ -1,0 +1,183 @@
+{
+  "query": "plant biology open access",
+  "timestamp": 1765097995.364058,
+  "total": 5,
+  "results": [
+    {
+      "title": "Issue Information",
+      "authors": [],
+      "journal": "Plant direct",
+      "year": "2025",
+      "doi": "",
+      "pmcid": "PMC12661364",
+      "pmid": "",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "9",
+      "issue": "12",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Engineered pattern recognition receptors enhance broad-spectrum plant resistance.",
+      "authors": [
+        "Yang Y",
+        "Steidele CE",
+        "Huang X",
+        "Löffelhardt B",
+        "Huang L",
+        "Jones JDG",
+        "Nürnberger T",
+        "Ding P",
+        "Gust AA."
+      ],
+      "journal": "Nature biotechnology",
+      "year": "2025",
+      "doi": "10.1038/s41587-025-02858-8",
+      "pmcid": "",
+      "pmid": "41083902",
+      "abstract": "Conventional plant resistance breeding has primarily focused on intracellular immune receptors, while cell-surface pattern recognition receptors (PRRs) have been underexplored because of their comparatively modest contributions to resistance. However, PRRs offer untapped potential for crop improvement. Here we demonstrate that the Arabidopsis receptor-like protein RLP23, which recognizes molecular patterns from three distinct microbial kingdoms, confers broad-spectrum resistance when introduced into the Solanaceae crop tomato. We also identify the C-terminal domain of RLPs as crucial for ensuring compatibility and efficacy during heterologous expression. Targeted engineering of the C-terminal domain significantly enhances RLP23 and its use, enabling transfer of robust resistance against bacterial, fungal and oomycete pathogens to tomato plants without compromising yield. We extend this RLP engineering strategy to rice and poplar, highlighting its broad applicability. These findings establish a versatile framework for PRR-based engineering, opening additional avenues for sustainable crop protection.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Plant Biochemistry, Center of Plant Molecular Biology (ZMBP), Eberhard-Karls-University of Tübingen, Tübingen, Germany. y.yang@biology.leidenuniv.nl.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 2,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": {
+        "grant": [
+          {
+            "agency": "University of Tuebingen: Open access publication fund",
+            "orderIn": 0
+          },
+          {
+            "grantId": "Gu 1034/3-1",
+            "agency": "Deutsche Forschungsgemeinschaft (German Research Foundation)",
+            "orderIn": 0
+          },
+          {
+            "grantId": "HORIZON-MSCA-2023-PF-01",
+            "agency": "European Commission (EC)",
+            "orderIn": 0
+          },
+          {
+            "grantId": "HORIZON-MSCA-2023-PF-01",
+            "agency": "European Commission",
+            "orderIn": 0
+          },
+          {
+            "grantId": "SFB 766",
+            "agency": "Deutsche Forschungsgemeinschaft (German Research Foundation)",
+            "orderIn": 0
+          },
+          {
+            "grantId": "SFB 766",
+            "agency": "Deutsche Forschungsgemeinschaft",
+            "orderIn": 0
+          },
+          {
+            "grantId": "Gu 1034/3-1",
+            "agency": "Deutsche Forschungsgemeinschaft",
+            "orderIn": 0
+          },
+          {
+            "agency": "European Research Council (ERC) Starting Grant ‘R-ELEVATION’",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Issue Information",
+      "authors": [],
+      "journal": "Plant direct",
+      "year": "2025",
+      "doi": "",
+      "pmcid": "PMC12620051",
+      "pmid": "",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "9",
+      "issue": "11",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Impact factor: Playing a number on you.",
+      "authors": [
+        "Hamant O."
+      ],
+      "journal": "Quantitative plant biology",
+      "year": "2025",
+      "doi": "10.1017/qpb.2025.10024",
+      "pmcid": "PMC12658294",
+      "pmid": "41321867",
+      "abstract": "The impact factor has become a defining feature of scientific journals. However, such reductionism can be toxic to science. As Cambridge University Press <i>Quantitative Plant Biology</i> celebrates its 5-year anniversary, and its first impact factor, this is an opportunity to set things straight. A call to value what a scientific journal is about: a community of scientists, a guarantee of rigour and quality, an invitation to explore the complexity of our world, a fair and ethical environment and an engaging, diverse and creative arena.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Laboratoire de Reproduction et Développement des Plantes, Université de Lyon, ENS de Lyon, UCBL, INRAE, CNRS, 46 Allée d'Italie, Lyon, Cedex 07, France.",
+      "volume": "6",
+      "issue": "",
+      "pages": "e33",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Impact factor",
+          "Publishing",
+          "Systems Thinking",
+          "Quantitative Plant Biology",
+          "Goodhart Law"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Issue Information",
+      "authors": [],
+      "journal": "Plant direct",
+      "year": "2025",
+      "doi": "",
+      "pmcid": "PMC12490955",
+      "pmid": "",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "9",
+      "issue": "10",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    }
+  ]
+}

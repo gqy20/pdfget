@@ -1,0 +1,357 @@
+{
+  "query": "machine learning cancer",
+  "timestamp": 1765097906.4080892,
+  "total": 5,
+  "results": [
+    {
+      "title": "A Novel Machine Learning Post-processing Filter for Mass Spectrometry-Based Proteogenomics Leveraging Retention Time Deviation and Peptide Physicochemical Properties.",
+      "authors": [
+        "Wei F",
+        "Sasada T."
+      ],
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2026",
+      "doi": "10.1007/978-1-0716-4832-2_11",
+      "pmcid": "",
+      "pmid": "41085625",
+      "abstract": "The advancements in technology and computation are progressively enhancing the sensitivity and accuracy of mass spectrometry-based immunopeptidomics. In our previous study, we developed a machine learning filter by incorporating retention time as well as predicted physicochemical properties of peptides to eliminate false positives in identifications by Mascot-based traditional shotgun proteomic workflow. The present study provides a step-by-step guide on emphasizing how to prepare and organize the data, as well as applying the machine learning model to analyze the users' own experimental data.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Division of Cancer Immunotherapy, Kanagawa Cancer Center Research Institute, Yokohama, Japan.",
+      "volume": "2980",
+      "issue": "",
+      "pages": "251-259",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Mass spectrometry",
+          "Machine Learning",
+          "Physiochemical Properties",
+          "Immunopeptidomics",
+          "Post-processing Filter"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Peptides",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Proteomics",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Software"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Mass Spectrometry",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Workflow"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Machine Learning"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Proteogenomics",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Development and validation of machine learning models for assessing the risk of postoperative venous thromboembolism in cervical cancer patients.",
+      "authors": [
+        "Chen C",
+        "Hu Z",
+        "Xu Q",
+        "Yuan L",
+        "Yuan Y",
+        "Zheng X",
+        "Lei H."
+      ],
+      "journal": "Scientific reports",
+      "year": "2025",
+      "doi": "10.1038/s41598-025-29761-1",
+      "pmcid": "",
+      "pmid": "41309992",
+      "abstract": "This study aimed to develop a machine learning model for accurately predicting postoperative VTE risk in these patients. The data of this study retrospectively collected the inpatients of cervical cancer in the Affiliated Cancer Hospital of Chongqing University from January 2020 to December 2023. We utilized 1,044 observations and six variables to develop seven machine learning (ML) models and selected the best-performing model for assessing postoperative venous thromboembolism (VTE) risk. The models were evaluated using ROC, PR, and DCA curves, and the prediction of the model's process was explained using SHAP values. Among 1,044 postoperative cervical cancer patients, 82 (7.85%) developed VTE. Seven machine learning algorithms were developed and evaluated, with the random forest (RF) model showing the best overall performance (AUC = 0.852, AUPR = 0.332). Compared with other models, including logistic regression (AUC = 0.767) and XGBoost (AUC = 0.836), the RF model demonstrated superior discrimination, calibration, and generalizability. Decision curve analysis confirmed that the RF model yielded the highest net clinical benefit across a wide range of threshold probabilities (5-80%). SHAP analysis revealed that D-dimer, neutrophil-to-lymphocyte ratio (NLR), and age were the most influential variables, indicating their substantial contributions to model prediction. Our study suggests that machine learning algorithms can be practical tools for postoperative VTE risk assessment and can learn from patient characteristics to provide personalized evaluations. The RF model outperformed the other six algorithms evaluated. We developed the final RF model as a user-friendly web tool for healthcare professionals.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Health Information Management, School of Public Health and Management, Chongqing Three Gorges Medical and Pharmaceutical College, Wanzhou, Chongqing, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cervical cancer",
+          "Postoperative",
+          "Venous thrombosis",
+          "risk assessment",
+          "Machine Learning"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Development and validation of a machine learning-based prognostic model for gastric cancer: a multicenter retrospective study.",
+      "authors": [
+        "Guan X",
+        "Liu J",
+        "Xu L",
+        "Wang C."
+      ],
+      "journal": "Langenbeck's archives of surgery",
+      "year": "2025",
+      "doi": "10.1007/s00423-025-03883-6",
+      "pmcid": "PMC12638397",
+      "pmid": "41269322",
+      "abstract": "<h4>Background</h4>Machine learning has emerged as a promising tool for survival prediction in various diseases; however, its application and external validation in real-world gastric cancer populations remain limited.<h4>Methods</h4>Clinical data of patients diagnosed with gastric cancer between 2000 and 2018 were obtained from the SEER database, supplemented with data from two Chinese medical centers (2005-2018). Three feature selection methods and four modeling algorithms-including Cox, RSF, CoxBoost, and Deepsurv_Cox-were employed to construct prediction models for overall survival (OS) and cancer-specific survival (CSS). Model performance was evaluated using the concordance index (C-index), integrated Brier score (IBS), and mean area under the curve (AUC). The two best-performing base models were subsequently integrated into a stacked model and compared against the traditional TNM staging system using decision curve analysis (DCA) and time-dependent ROC curves at 3, 5, and 10 years.<h4>Results</h4>A total of 21,559 patients from the SEER database and 3,805 patients from two Chinese centers were included. In independent testing, the integrated model achieved a C-index/IBS/mean AUC of 0.693/0.158/0.829 for OS and 0.719/0.171/0.819 for CSS. For 3-, 5-, and 10-year survival prediction, the AUCs were 0.705/0.747/0.851 for OS and 0.734/0.779/0.830 for CSS, outperforming the TNM staging system across all metrics. Superior calibration and clinical utility of the integrated model were further confirmed by calibration curves and DCA.<h4>Conclusion</h4>The integrated machine learning model outperformed both traditional TNM staging and deep learning approaches, offering improved predictive accuracy for survival outcomes in patients with gastric cancer.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "State Key Lab of Molecular Oncology and Department of Pancreatic and Gastric Surgery, National Cancer Center/National Clinical Research Center for Cancer/Cancer Hospital, Chinese Academy of Medical Sciences and Peking Union Medical College, Beijing, China.",
+      "volume": "411",
+      "issue": "1",
+      "pages": "15",
+      "license": "cc by-nc-nd",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Gastric cancer",
+          "Survival analysis",
+          "Machine Learning",
+          "Deep Learning"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Stomach Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MO",
+                  "qualifierName": "mortality",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "SU",
+                  "qualifierName": "surgery",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Neoplasm Staging"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Prognosis"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "SEER Program"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Survival Rate"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Retrospective Studies"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Aged"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Middle Aged"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "China"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Female"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Male"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Machine Learning"
+          }
+        ]
+      },
+      "grants": {
+        "grant": [
+          {
+            "grantId": "81972314",
+            "agency": "National Natural Science Foundation of China",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2022-I2M-1-010",
+            "agency": "Chinese Academy of Medical Sciences",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Machine Learning for Classification in Lung Cancer Using Routine Clinical and Laboratory Data.",
+      "authors": [
+        "Liu C",
+        "Liao Y",
+        "Wang D",
+        "Yang J",
+        "Zhao L",
+        "Liu X",
+        "Wang Z",
+        "Wu L."
+      ],
+      "journal": "Annals of surgical oncology",
+      "year": "2025",
+      "doi": "10.1245/s10434-025-18747-y",
+      "pmcid": "",
+      "pmid": "41335175",
+      "abstract": "<h4>Background</h4>Accurate pathological classification of lung cancer is essential for informing treatment strategies. However, invasive biopsy procedures are not feasible for high-risk patients or those with inaccessible lesions. This study aimed to develop a machine learning model utilizing routine clinical and laboratory data for classification of non-invasive lung cancer.<h4>Methods</h4>Data from patients admitted to Sichuan Provincial Cancer Hospital were retrospectively analyzed. Key features were determined using LASSO and Boruta algorithms. Four machine learning models, including logistic regression, extreme gradient boosting (XGBoost), categorical boosting (CatBoost), and random forest (RandomForest), were trained and optimized through five-fold cross-validation. Model performance was assessed using the area under the receiver operating characteristic curve (AUC), accuracy, and F1 score. An online calculator was developed using R Shiny for clinical deployment.<h4>Results</h4>A total of 1122 patients with lung cancer were included and randomly assigned to the training and test sets. In the training set, 16 features were incorporated into the models. The RandomForest model demonstrated superior performance compared with the other models, achieving an AUC of 0.999, an accuracy of 0.984, and an F1 score of 1.000. Notably, sex and tumor markers were identified as significant predictors. In the test set, the RandomForest model attained a micro-averaged AUC of 0.969 and macro-averaged AUC of 0.940. Sensitivity and specificity varied from 0.667 to 0.995 across subtypes. A web-based tool was implemented to facilitate real-time clinical application ( https://nkuwangkai.shinyapps.io/lung-cancer-v1/ ).<h4>Conclusion</h4>This study presented a robust, non-invasive machine learning model for lung cancer subtype classification, addressing critical gaps in clinical practice for biopsy-ineligible patients. A web-based calculator was developed to facilitate clinical application. Nonetheless, future multicenter validation is warranted to expand the generalizability of this model and promote adoption in diverse healthcare settings.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Clinical Laboratory, Sichuan Clinical Research Center for Cancer, Sichuan Cancer Hospital & Institute, Sichuan Cancer Center, University of Electronic Science and Technology of China, Chengdu, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Classification",
+          "Lung cancer",
+          "Diagnosis",
+          "Machine Learning",
+          "Calculator"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Interpretable multiclassification machine learning models in predicting the extent of small cell lung cancer metastasis.",
+      "authors": [
+        "Xu J",
+        "Shen H",
+        "Cao R",
+        "Li J",
+        "Wang Q",
+        "Gao Q",
+        "Liu Y",
+        "Liu G",
+        "Xiao K",
+        "Wu L",
+        "Huang Y."
+      ],
+      "journal": "Scientific reports",
+      "year": "2025",
+      "doi": "10.1038/s41598-025-30314-9",
+      "pmcid": "",
+      "pmid": "41326647",
+      "abstract": "Small cell lung cancer (SCLC) is known for its rapid disease progression and high metastasis, significantly reducing patient survival. The current lack of clinical models that can accurately predict the metastatic stage of SCLC limits the timeliness and effectiveness of treatment strategies. Machine learning techniques offer the possibility to improve the accuracy and operationalisation of predictions by utilising complex algorithmic pattern recognition. This study aimed to develop and interpret a predictive model for SCLC metastatic staging using real-world data. The Surveillance, Epidemiology, and End Results database (SEER, 2004-2017) of the National Cancer Institute was selected as the data source for this study, and multiple machine learning algorithms were used to predict the metastatic stage of SCLC. Lasso regression was used for feature selection and model parameters were optimised by cross-validation. Model performance was assessed by area under the receiver operating characteristic curve (AUC) and other statistical metrics. To enhance the interpretability of the model, SHAP (SHapley Additive exPlanations) was used to analyse the contribution of key predictor variables to model decisions. After comparing different machine learning models, the XGBoost model demonstrated the highest accuracy in predicting SCLC metastatic stages, especially in advanced metastatic stages (M1b and M1c), with significantly better AUC values than the other models. SHAP analyses revealed that age, tumour size, and treatment regimen were the main variables influencing the model predictions. LIME analyses further confirmed these variables' specific influence in the prediction of individual cases. This study successfully applied advanced machine learning methods in the prediction of SCLC metastatic stage, which significantly improved the accuracy of prediction and the interpretability of the model. These findings can help clinicians make more accurate treatment decisions in SCLC management, especially in strategy selection and early intervention.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Thoracic Surgery, Taizhou Hospital of Traditional Chinese Medicine, Jiangsu, China. 7259191@qq.com.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "small cell lung cancer",
+          "Machine Learning",
+          "Seer",
+          "Shap",
+          "Metastasis Stage",
+          "Model Interpretability Tools"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    }
+  ]
+}
