@@ -6,8 +6,13 @@ import os
 from pathlib import Path
 
 from pdfget.config import (
-    TIMEOUT, MAX_RETRIES, DELAY, OUTPUT_DIR,
-    LOG_LEVEL, LOG_FORMAT, HEADERS
+    TIMEOUT,
+    MAX_RETRIES,
+    DELAY,
+    OUTPUT_DIR,
+    LOG_LEVEL,
+    LOG_FORMAT,
+    HEADERS,
 )
 
 
@@ -36,19 +41,19 @@ class TestConfig:
 
     def test_log_level_constant(self):
         """测试日志级别常量"""
-        assert LOG_LEVEL in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        assert LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     def test_log_format_constant(self):
         """测试日志格式常量"""
         assert isinstance(LOG_FORMAT, str)
-        assert '%(asctime)s' in LOG_FORMAT
-        assert '%(levelname)s' in LOG_FORMAT
+        assert "%(asctime)s" in LOG_FORMAT
+        assert "%(levelname)s" in LOG_FORMAT
 
     def test_headers_constant(self):
         """测试请求头常量"""
         assert isinstance(HEADERS, dict)
-        assert 'User-Agent' in HEADERS
-        assert len(HEADERS['User-Agent']) > 0
+        assert "User-Agent" in HEADERS
+        assert len(HEADERS["User-Agent"]) > 0
 
     def test_config_values_are_reasonable(self):
         """测试配置值的合理性"""
@@ -65,15 +70,16 @@ class TestConfig:
         """测试环境变量覆盖"""
         # 设置环境变量
         test_timeout = 60
-        os.environ['PDFGET_TIMEOUT'] = str(test_timeout)
+        os.environ["PDFGET_TIMEOUT"] = str(test_timeout)
 
         # 重新导入模块以测试环境变量覆盖
         import importlib
         import pdfget.config
+
         importlib.reload(pdfget.config)
 
         # 恢复环境
-        del os.environ['PDFGET_TIMEOUT']
+        del os.environ["PDFGET_TIMEOUT"]
 
         # 注意：这个测试取决于实际的配置实现
         # 如果配置不支持环境变量覆盖，可以跳过

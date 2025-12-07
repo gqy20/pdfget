@@ -33,9 +33,9 @@ class PaperFetcher:
 
         # 简单的HTTP会话
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (compatible; PaperFetcher/1.0)"
-        })
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (compatible; PaperFetcher/1.0)"}
+        )
 
     def parse_query(self, query: str) -> str:
         """
@@ -58,14 +58,14 @@ class PaperFetcher:
 
         # 临时替换短语为占位符
         for i, phrase in enumerate(phrases):
-            query = query.replace(f'"{phrase}"', f'__PHRASE_{i}__')
+            query = query.replace(f'"{phrase}"', f"__PHRASE_{i}__")
 
         # 处理字段检索
         field_mappings = {
-            'title:': 'TITLE:',
-            'author:': 'AUTHOR:',
-            'journal:': 'JOURNAL:',
-            'abstract:': 'ABSTRACT:'
+            "title:": "TITLE:",
+            "author:": "AUTHOR:",
+            "journal:": "JOURNAL:",
+            "abstract:": "ABSTRACT:",
         }
 
         for user_field, pmc_field in field_mappings.items():
@@ -73,10 +73,14 @@ class PaperFetcher:
 
         # 恢复短语，并添加必要的引号
         for i, phrase in enumerate(phrases):
-            query = query.replace(f'__PHRASE_{i}__', f'"{phrase}"')
+            query = query.replace(f"__PHRASE_{i}__", f'"{phrase}"')
 
         # 处理布尔运算符（确保大写）
-        query = query.replace(' and ', ' AND ').replace(' or ', ' OR ').replace(' not ', ' NOT ')
+        query = (
+            query.replace(" and ", " AND ")
+            .replace(" or ", " OR ")
+            .replace(" not ", " NOT ")
+        )
 
         return query.strip()
 
@@ -104,7 +108,7 @@ class PaperFetcher:
             "resulttype": "core",
             "format": "json",
             "pageSize": min(limit, 1000),  # Europe PMC限制最多1000条
-            "cursorMark": "*"
+            "cursorMark": "*",
         }
 
         try:
@@ -127,16 +131,21 @@ class PaperFetcher:
 
                 paper = {
                     "title": record.get("title", ""),
-                    "authors": [a.strip() for a in record.get("authorString", "").split(",")] if record.get("authorString") else [],
+                    "authors": [
+                        a.strip() for a in record.get("authorString", "").split(",")
+                    ]
+                    if record.get("authorString")
+                    else [],
                     "journal": journal_info.get("journal", {}).get("title", ""),
                     "year": record.get("pubYear", ""),
                     "doi": record.get("doi", ""),
                     "pmcid": record.get("pmcid", ""),
                     "pmid": record.get("pmid", ""),
                     "abstract": record.get("abstractText", ""),
-                    "isOpenAccess": bool(record.get("pmcid")),  # 有PMCID通常表示开放获取
+                    "isOpenAccess": bool(
+                        record.get("pmcid")
+                    ),  # 有PMCID通常表示开放获取
                     "source": "Europe PMC",
-
                     # 新增的10个字段
                     "affiliation": record.get("affiliation", ""),
                     "volume": journal_info.get("volume", ""),
@@ -148,11 +157,13 @@ class PaperFetcher:
                     "meshTerms": record.get("meshHeadingList", []),
                     "grants": record.get("grantsList", []),
                     "hasData": record.get("hasData") == "Y",
-                    "hasSuppl": record.get("hasSuppl") == "Y"
+                    "hasSuppl": record.get("hasSuppl") == "Y",
                 }
                 papers.append(paper)
 
-                self.logger.info(f"  📄 {i+1}/{min(len(results), limit)}: {paper['title'][:60]}...")
+                self.logger.info(
+                    f"  📄 {i + 1}/{min(len(results), limit)}: {paper['title'][:60]}..."
+                )
 
             self.logger.info(f"  ✅ 找到 {len(papers)} 篇文献")
             return papers
@@ -217,14 +228,22 @@ class PaperFetcher:
 
             data = response.json()
             if data.get("hitCount", 0) == 0:
-                return {"success": False, "error": "Not found in Europe PMC", "doi": doi}
+                return {
+                    "success": False,
+                    "error": "Not found in Europe PMC",
+                    "doi": doi,
+                }
 
             record = data["resultList"]["result"][0]
             pmcid = record.get("pmcid")
 
             if not pmcid:
                 self.logger.info("  ⏭️ 无PMCID，非开放获取文献")
-                return {"success": False, "error": "Not open access (no PMCID)", "doi": doi}
+                return {
+                    "success": False,
+                    "error": "Not open access (no PMCID)",
+                    "doi": doi,
+                }
 
             self.logger.info(f"  📄 找到PMCID: {pmcid}")
 
@@ -239,10 +258,16 @@ class PaperFetcher:
                     "pdf_path": pdf_result["path"],
                     "content_type": "pdf",
                     "title": record.get("title"),
-                    "journal": record.get("journalInfo", {}).get("journal", {}).get("title"),
-                    "authors": [a.strip() for a in record.get("authorString", "").split(",")] if record.get("authorString") else [],
+                    "journal": record.get("journalInfo", {})
+                    .get("journal", {})
+                    .get("title"),
+                    "authors": [
+                        a.strip() for a in record.get("authorString", "").split(",")
+                    ]
+                    if record.get("authorString")
+                    else [],
                     "year": record.get("pubYear"),
-                    "abstract": record.get("abstractText")
+                    "abstract": record.get("abstractText"),
                 }
 
             # PDF下载失败，返回全文HTML链接
@@ -253,9 +278,13 @@ class PaperFetcher:
                 "full_text_url": f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/",
                 "content_type": "html",
                 "title": record.get("title"),
-                "authors": [a.strip() for a in record.get("authorString", "").split(",")] if record.get("authorString") else [],
+                "authors": [
+                    a.strip() for a in record.get("authorString", "").split(",")
+                ]
+                if record.get("authorString")
+                else [],
                 "year": record.get("pubYear"),
-                "abstract": record.get("abstractText")
+                "abstract": record.get("abstractText"),
             }
 
         except requests.exceptions.Timeout:
@@ -271,12 +300,12 @@ class PaperFetcher:
         pdf_urls = [
             f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/",
             f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/{pmcid}.pdf",
-            f"https://europepmc.org/articles/{pmcid}?pdf=render"
+            f"https://europepmc.org/articles/{pmcid}?pdf=render",
         ]
 
         for i, pdf_url in enumerate(pdf_urls):
             try:
-                self.logger.debug(f"  📥 尝试PDF源 {i+1}: {pdf_url}")
+                self.logger.debug(f"  📥 尝试PDF源 {i + 1}: {pdf_url}")
                 response = self.session.get(pdf_url, timeout=30, stream=True)
                 response.raise_for_status()
 
@@ -297,14 +326,16 @@ class PaperFetcher:
                 return {"success": True, "path": str(file_path)}
 
             except Exception as e:
-                self.logger.debug(f"  ⚠️ PDF源 {i+1} 失败: {str(e)}")
+                self.logger.debug(f"  ⚠️ PDF源 {i + 1} 失败: {str(e)}")
                 continue
 
         return {"success": False, "error": "All PDF sources failed"}
 
     def _get_cache(self, doi: str) -> dict | None:
         """简单缓存检查"""
-        cache_file = self.cache_dir / f"cache_{hashlib.md5(doi.encode()).hexdigest()}.json"
+        cache_file = (
+            self.cache_dir / f"cache_{hashlib.md5(doi.encode()).hexdigest()}.json"
+        )
 
         if cache_file.exists():
             try:
@@ -335,7 +366,9 @@ class PaperFetcher:
     def _save_cache(self, doi: str, result: dict) -> None:
         """保存缓存"""
         try:
-            cache_file = self.cache_dir / f"cache_{hashlib.md5(doi.encode()).hexdigest()}.json"
+            cache_file = (
+                self.cache_dir / f"cache_{hashlib.md5(doi.encode()).hexdigest()}.json"
+            )
             result["timestamp"] = time.time()
 
             with open(cache_file, "w") as f:
@@ -366,11 +399,7 @@ class PaperFetcher:
                 results.append(result)
             except Exception as e:
                 self.logger.error(f"获取文献失败 ({doi}): {e}")
-                results.append({
-                    "doi": doi,
-                    "success": False,
-                    "error": str(e)
-                })
+                results.append({"doi": doi, "success": False, "error": str(e)})
 
             # 简单延迟，避免被限制
             if i < len(dois):

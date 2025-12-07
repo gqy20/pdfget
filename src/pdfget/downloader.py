@@ -17,11 +17,13 @@ from .fetcher import PaperFetcher
 class ConcurrentDownloader:
     """并发下载管理器"""
 
-    def __init__(self,
-                 max_workers: int = 3,
-                 base_delay: float = 1.0,
-                 random_delay_range: float = 0.5,
-                 fetcher: Optional[PaperFetcher] = None):
+    def __init__(
+        self,
+        max_workers: int = 3,
+        base_delay: float = 1.0,
+        random_delay_range: float = 0.5,
+        fetcher: Optional[PaperFetcher] = None,
+    ):
         """
         初始化并发下载器
 
@@ -60,7 +62,9 @@ class ConcurrentDownloader:
         fetcher = PaperFetcher(cache_dir=str(self.base_fetcher.cache_dir))
         return fetcher
 
-    def _update_progress(self, success: bool = False, pdf_downloaded: bool = False) -> None:
+    def _update_progress(
+        self, success: bool = False, pdf_downloaded: bool = False
+    ) -> None:
         """线程安全的进度更新"""
         with self._lock:
             self._completed += 1
@@ -78,7 +82,9 @@ class ConcurrentDownloader:
                 f"成功: {self._successful} PDF: {self._pdf_count} 失败: {self._failed}"
             )
 
-    def _download_single(self, doi: str, fetcher: PaperFetcher, timeout: int = 30) -> Dict[str, Any]:
+    def _download_single(
+        self, doi: str, fetcher: PaperFetcher, timeout: int = 30
+    ) -> Dict[str, Any]:
         """单个文献的下载任务"""
         try:
             # 添加随机延迟
@@ -96,13 +102,11 @@ class ConcurrentDownloader:
         except Exception as e:
             self.logger.debug(f"下载失败 ({doi}): {str(e)}")
             self._update_progress(False)
-            return {
-                "doi": doi,
-                "success": False,
-                "error": str(e)
-            }
+            return {"doi": doi, "success": False, "error": str(e)}
 
-    def download_batch(self, dois: List[str], timeout: int = 30) -> List[Dict[str, Any]]:
+    def download_batch(
+        self, dois: List[str], timeout: int = 30
+    ) -> List[Dict[str, Any]]:
         """
         并发批量下载文献
 
@@ -116,7 +120,9 @@ class ConcurrentDownloader:
         if not dois:
             return []
 
-        self.logger.info(f"🚀 启动并发下载：{len(dois)} 篇文献，{self.max_workers} 个并发线程")
+        self.logger.info(
+            f"🚀 启动并发下载：{len(dois)} 篇文献，{self.max_workers} 个并发线程"
+        )
 
         # 初始化进度跟踪
         self._total = len(dois)
@@ -135,7 +141,9 @@ class ConcurrentDownloader:
             for doi in dois:
                 # 为每个线程创建独立的fetcher
                 thread_fetcher = self._create_thread_fetcher()
-                future = executor.submit(self._download_single, doi, thread_fetcher, timeout)
+                future = executor.submit(
+                    self._download_single, doi, thread_fetcher, timeout
+                )
                 future_to_doi[future] = doi
 
             # 收集结果（保持原始顺序）
@@ -146,15 +154,14 @@ class ConcurrentDownloader:
                     results.append(result)
                 except Exception as e:
                     self.logger.error(f"并发下载异常 ({doi}): {str(e)}")
-                    results.append({
-                        "doi": doi,
-                        "success": False,
-                        "error": str(e)
-                    })
+                    results.append({"doi": doi, "success": False, "error": str(e)})
 
         # 按原始DOI顺序重新排列结果
-        doi_to_result = {r['doi']: r for r in results}
-        ordered_results = [doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"}) for doi in dois]
+        doi_to_result = {r["doi"]: r for r in results}
+        ordered_results = [
+            doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"})
+            for doi in dois
+        ]
 
         # 最终统计
         self.logger.info("\n📊 并发下载完成:")
@@ -162,14 +169,18 @@ class ConcurrentDownloader:
         self.logger.info(f"   成功: {self._successful}")
         self.logger.info(f"   PDF: {self._pdf_count}")
         self.logger.info(f"   失败: {self._failed}")
-        self.logger.info(f"   成功率: {(self._successful/len(ordered_results))*100:.1f}%")
+        self.logger.info(
+            f"   成功率: {(self._successful / len(ordered_results)) * 100:.1f}%"
+        )
 
         return ordered_results
 
-    def download_with_progress_callback(self,
-                                        dois: List[str],
-                                        timeout: int = 30,
-                                        progress_callback: Optional[Callable[[int, int, int, int], None]] = None) -> List[Dict[str, Any]]:
+    def download_with_progress_callback(
+        self,
+        dois: List[str],
+        timeout: int = 30,
+        progress_callback: Optional[Callable[[int, int, int, int], None]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         带进度回调的并发下载
 
@@ -184,7 +195,9 @@ class ConcurrentDownloader:
         if not dois:
             return []
 
-        self.logger.info(f"🚀 启动并发下载：{len(dois)} 篇文献，{self.max_workers} 个并发线程")
+        self.logger.info(
+            f"🚀 启动并发下载：{len(dois)} 篇文献，{self.max_workers} 个并发线程"
+        )
 
         # 初始化进度跟踪
         self._total = len(dois)
@@ -195,11 +208,15 @@ class ConcurrentDownloader:
 
         results = []
 
-        def update_progress_with_callback(success: bool = False, pdf_downloaded: bool = False) -> None:
+        def update_progress_with_callback(
+            success: bool = False, pdf_downloaded: bool = False
+        ) -> None:
             """带回调的进度更新"""
             self._update_progress(success, pdf_downloaded)
             if progress_callback:
-                progress_callback(self._completed, self._successful, self._pdf_count, self._total)
+                progress_callback(
+                    self._completed, self._successful, self._pdf_count, self._total
+                )
 
         # 使用线程池执行并发下载，避免方法赋值
         try:
@@ -209,7 +226,13 @@ class ConcurrentDownloader:
                 for doi in dois:
                     thread_fetcher = self._create_thread_fetcher()
                     # 直接使用线程中的update_with_progress方法
-                    future = executor.submit(self._download_single_with_callback, doi, thread_fetcher, timeout, update_progress_with_callback)
+                    future = executor.submit(
+                        self._download_single_with_callback,
+                        doi,
+                        thread_fetcher,
+                        timeout,
+                        update_progress_with_callback,
+                    )
                     future_to_doi[future] = doi
 
                 for future in as_completed(future_to_doi):
@@ -219,15 +242,16 @@ class ConcurrentDownloader:
                         results.append(result)
                     except Exception as e:
                         self.logger.error(f"并发下载异常 ({doi}): {str(e)}")
-                        results.append({
-                            "doi": doi,
-                            "success": False,
-                            "error": str(e)
-                        })
+                        results.append({"doi": doi, "success": False, "error": str(e)})
 
             # 按原始顺序排列结果
-            doi_to_result = {r['doi']: r for r in results}
-            ordered_results = [doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"}) for doi in dois]
+            doi_to_result = {r["doi"]: r for r in results}
+            ordered_results = [
+                doi_to_result.get(
+                    doi, {"doi": doi, "success": False, "error": "Not found"}
+                )
+                for doi in dois
+            ]
 
             # 最终统计和最后一次回调
             self.logger.info("\n📊 并发下载完成:")
@@ -235,21 +259,27 @@ class ConcurrentDownloader:
             self.logger.info(f"   成功: {self._successful}")
             self.logger.info(f"   PDF: {self._pdf_count}")
             self.logger.info(f"   失败: {self._failed}")
-            self.logger.info(f"   成功率: {(self._successful/len(ordered_results))*100:.1f}%")
+            self.logger.info(
+                f"   成功率: {(self._successful / len(ordered_results)) * 100:.1f}%"
+            )
 
             if progress_callback:
-                progress_callback(self._completed, self._successful, self._pdf_count, self._total)
+                progress_callback(
+                    self._completed, self._successful, self._pdf_count, self._total
+                )
 
             return ordered_results
 
         finally:
             pass
 
-    def _download_single_with_callback(self,
-                                       doi: str,
-                                       thread_fetcher: PaperFetcher,
-                                       timeout: int,
-                                       progress_callback: Callable[[], None]) -> Dict[str, Any]:
+    def _download_single_with_callback(
+        self,
+        doi: str,
+        thread_fetcher: PaperFetcher,
+        timeout: int,
+        progress_callback: Callable[[], None],
+    ) -> Dict[str, Any]:
         """带回调的单个文献下载（用于并发下载）"""
         try:
             # 添加随机延迟避免API限制
@@ -260,17 +290,9 @@ class ConcurrentDownloader:
             paper_info = thread_fetcher.fetch_by_doi(doi, timeout)
             if not paper_info:
                 progress_callback()
-                return {
-                    "doi": doi,
-                    "success": False,
-                    "error": "文献信息获取失败"
-                }
+                return {"doi": doi, "success": False, "error": "文献信息获取失败"}
 
-            result = {
-                "doi": doi,
-                "success": True,
-                "paper_info": paper_info
-            }
+            result = {"doi": doi, "success": True, "paper_info": paper_info}
 
             # 更新进度
             progress_callback()
@@ -280,8 +302,4 @@ class ConcurrentDownloader:
         except Exception as e:
             progress_callback()
             self.logger.error(f"下载异常 ({doi}): {str(e)}")
-            return {
-                "doi": doi,
-                "success": False,
-                "error": str(e)
-            }
+            return {"doi": doi, "success": False, "error": str(e)}

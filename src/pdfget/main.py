@@ -33,7 +33,7 @@ def main() -> None:
 
   # 下载单个文献
   python -m pdfget --doi 10.1016/j.cell.2020.01.021
-        """
+        """,
     )
 
     # 输入选项
@@ -54,10 +54,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # 设置日志
-    logging.basicConfig(
-        level=logging.DEBUG if args.v else LOG_LEVEL,
-        format=LOG_FORMAT
-    )
+    logging.basicConfig(level=logging.DEBUG if args.v else LOG_LEVEL, format=LOG_FORMAT)
     logger = logging.getLogger("PDFDownloader")
 
     # 初始化下载器
@@ -94,23 +91,32 @@ def main() -> None:
             logger.info(f"\n📊 搜索结果 ({len(papers)} 篇):")
             for i, paper in enumerate(papers, 1):
                 logger.info(f"\n{i}. {paper['title']}")
-                logger.info(f"   作者: {', '.join(paper['authors'][:3])}{'...' if len(paper['authors']) > 3 else ''}")
+                logger.info(
+                    f"   作者: {', '.join(paper['authors'][:3])}{'...' if len(paper['authors']) > 3 else ''}"
+                )
                 logger.info(f"   期刊: {paper['journal']} ({paper['year']})")
-                if paper['doi']:
+                if paper["doi"]:
                     logger.info(f"   DOI: {paper['doi']}")
                 logger.info(f"   开放获取: {'是' if paper['isOpenAccess'] else '否'}")
 
             # 保存搜索结果
-            search_results_file = Path(args.o) / f"search_results_{int(time.time())}.json"
+            search_results_file = (
+                Path(args.o) / f"search_results_{int(time.time())}.json"
+            )
             search_results_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(search_results_file, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "query": args.s,
-                    "timestamp": time.time(),
-                    "total": len(papers),
-                    "results": papers
-                }, f, indent=2, ensure_ascii=False)
+            with open(search_results_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "query": args.s,
+                        "timestamp": time.time(),
+                        "total": len(papers),
+                        "results": papers,
+                    },
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
 
             logger.info(f"\n💾 搜索结果已保存到: {search_results_file}")
 
@@ -119,23 +125,27 @@ def main() -> None:
                 logger.info("\n📥 开始下载PDF...")
 
                 # 只下载有PMCID的开放获取文献
-                oa_papers = [p for p in papers if p['pmcid']]
+                oa_papers = [p for p in papers if p["pmcid"]]
                 logger.info(f"   找到 {len(oa_papers)} 篇开放获取文献")
 
                 if oa_papers:
                     # 构造DOI列表
-                    dois = [p['doi'] for p in oa_papers if p['doi']]
+                    dois = [p["doi"] for p in oa_papers if p["doi"]]
 
                     if dois:
                         # 根据线程数决定是否使用并发下载
                         if len(dois) > 1 and args.t > 1:
-                            logger.info(f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献")
+                            logger.info(
+                                f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献"
+                            )
                             concurrent_downloader = ConcurrentDownloader(
                                 max_workers=args.t,
                                 base_delay=args.delay,
-                                fetcher=fetcher
+                                fetcher=fetcher,
                             )
-                            results = concurrent_downloader.download_batch(dois, timeout=TIMEOUT)
+                            results = concurrent_downloader.download_batch(
+                                dois, timeout=TIMEOUT
+                            )
                         else:
                             # 单线程下载（保持原有逻辑）
                             results = fetcher.fetch_batch(dois, delay=args.delay)
@@ -154,16 +164,27 @@ def main() -> None:
 
                         # 保存下载结果
                         if success_count > 0:
-                            download_results_file = Path(args.o) / "download_results.json"
-                            with open(download_results_file, 'w', encoding='utf-8') as f:
-                                json.dump({
-                                    "timestamp": time.time(),
-                                    "total": len(results),
-                                    "success": success_count,
-                                    "results": results
-                                }, f, indent=2, ensure_ascii=False)
+                            download_results_file = (
+                                Path(args.o) / "download_results.json"
+                            )
+                            with open(
+                                download_results_file, "w", encoding="utf-8"
+                            ) as f:
+                                json.dump(
+                                    {
+                                        "timestamp": time.time(),
+                                        "total": len(results),
+                                        "success": success_count,
+                                        "results": results,
+                                    },
+                                    f,
+                                    indent=2,
+                                    ensure_ascii=False,
+                                )
 
-                            logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
+                            logger.info(
+                                f"\n💾 下载结果已保存到: {download_results_file}"
+                            )
 
         else:
             # 批量下载
@@ -175,9 +196,10 @@ def main() -> None:
                 logger.error(f"❌ 输入文件不存在: {args.i}")
                 exit(1)
 
-            if input_path.suffix.lower() == '.csv':
+            if input_path.suffix.lower() == ".csv":
                 # 读取CSV文件
                 import pandas as pd
+
                 try:
                     df = pd.read_csv(input_path)
                     if args.c not in df.columns:
@@ -194,7 +216,7 @@ def main() -> None:
             else:
                 # 读取文本文件（每行一个DOI）
                 try:
-                    with open(input_path, 'r') as f:
+                    with open(input_path, "r") as f:
                         dois = [line.strip() for line in f if line.strip()]
                     logger.info(f"   找到 {len(dois)} 个DOI")
 
@@ -206,9 +228,7 @@ def main() -> None:
             if len(dois) > 1 and args.t > 1:
                 logger.info(f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献")
                 concurrent_downloader = ConcurrentDownloader(
-                    max_workers=args.t,
-                    base_delay=args.delay,
-                    fetcher=fetcher
+                    max_workers=args.t, base_delay=args.delay, fetcher=fetcher
                 )
                 results = concurrent_downloader.download_batch(dois, timeout=TIMEOUT)
             else:
@@ -232,13 +252,18 @@ def main() -> None:
                 output_file = Path(args.o) / "download_results.json"
                 output_file.parent.mkdir(parents=True, exist_ok=True)
 
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump({
-                        "timestamp": time.time(),
-                        "total": len(results),
-                        "success": success_count,
-                        "results": results
-                    }, f, indent=2, ensure_ascii=False)
+                with open(output_file, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {
+                            "timestamp": time.time(),
+                            "total": len(results),
+                            "success": success_count,
+                            "results": results,
+                        },
+                        f,
+                        indent=2,
+                        ensure_ascii=False,
+                    )
 
                 logger.info(f"\n💾 结果已保存到: {output_file}")
 
