@@ -150,6 +150,23 @@ data/
 - requests
 - pandas
 
+## 🔄 CI/CD
+
+PDFGet 使用 GitHub Actions 进行持续集成和自动化发布：
+
+### 🧪 持续集成 (CI)
+- **代码质量检查**: ruff 格式化和语法检查
+- **类型检查**: mypy 静态类型分析
+- **单元测试**: pytest 测试套件
+- **覆盖率报告**: pytest-cov 覆盖率统计
+
+### 📦 自动发布
+- **触发条件**: 推送 `v*` 标签时自动发布
+- **测试验证**: 发布前运行完整测试套件
+- **PyPI发布**: 自动构建并发布到 PyPI
+- **GitHub Release**: 自动创建版本发布页面
+
+
 ## 📄 许可证
 
 MIT License
