@@ -1,7 +1,7 @@
 {
-  "timestamp": 1765098023.145089,
-  "total": 5,
-  "success": 5,
+  "timestamp": 1765098191.809867,
+  "total": 3,
+  "success": 3,
   "results": [
     {
       "success": true,
@@ -58,51 +58,6 @@
       "year": "2025",
       "abstract": null,
       "timestamp": 1765098021.0595367
-    },
-    {
-      "success": true,
-      "doi": "10.1186/s12870-025-07717-x",
-      "pmcid": "PMC12613758",
-      "pdf_path": "data/cache/PMC12613758_10.1186s12870-025-07717-x.pdf",
-      "content_type": "pdf",
-      "title": "Correction: Floral anatomy and ultrastructure of Lepanthes calodictyon, L. saltatrix and L. tentaculata (Orchidaceae).",
-      "journal": "BMC plant biology",
-      "authors": [
-        "Rykaczewski M",
-        "Kapusta M",
-        "Narajczyk M",
-        "Łuszczek D",
-        "Brzezicka E",
-        "Szlachetko DL",
-        "Małgorzata K."
-      ],
-      "year": "2025",
-      "abstract": null,
-      "timestamp": 1765098023.14178
-    },
-    {
-      "success": true,
-      "doi": "10.1186/s12870-025-07791-1",
-      "pmcid": "PMC12642243",
-      "pdf_path": "data/cache/PMC12642243_10.1186s12870-025-07791-1.pdf",
-      "content_type": "pdf",
-      "title": "Correction: UAV-based multispectral image analysis revealed stay-green haplotypes in wheat specific for different soil nitrogen levels.",
-      "journal": "BMC plant biology",
-      "authors": [
-        "Behn H",
-        "Ballvora A",
-        "Bendig J",
-        "Yamati FRI",
-        "Koua AP",
-        "Mahlein AK",
-        "Mason AS",
-        "Rascher U",
-        "Sadeqi MB",
-        "Léon J."
-      ],
-      "year": "2025",
-      "abstract": null,
-      "timestamp": 1765098022.9012637
     }
   ]
 }

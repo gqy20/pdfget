@@ -6,7 +6,6 @@ PDF下载器主程序
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 
@@ -17,7 +16,7 @@ from .concurrent_downloader import ConcurrentDownloader
 from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
 
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(
         description="PDF文献下载器",
@@ -89,7 +88,7 @@ def main():
 
             if not papers:
                 logger.error("❌ 未找到匹配的文献")
-                return 1
+                exit(1)
 
             # 显示搜索结果
             logger.info(f"\n📊 搜索结果 ({len(papers)} 篇):")
@@ -174,7 +173,7 @@ def main():
             input_path = Path(args.i)
             if not input_path.exists():
                 logger.error(f"❌ 输入文件不存在: {args.i}")
-                return 1
+                exit(1)
 
             if input_path.suffix.lower() == '.csv':
                 # 读取CSV文件
@@ -183,14 +182,14 @@ def main():
                     df = pd.read_csv(input_path)
                     if args.c not in df.columns:
                         logger.error(f"❌ CSV文件中找不到列: {args.c}")
-                        return 1
+                        exit(1)
 
                     dois = df[args.c].dropna().unique().tolist()
                     logger.info(f"   找到 {len(dois)} 个唯一DOI")
 
                 except Exception as e:
                     logger.error(f"❌ 读取CSV文件失败: {e}")
-                    return 1
+                    exit(1)
 
             else:
                 # 读取文本文件（每行一个DOI）
@@ -201,7 +200,7 @@ def main():
 
                 except Exception as e:
                     logger.error(f"❌ 读取文件失败: {e}")
-                    return 1
+                    exit(1)
 
             # 根据线程数决定是否使用并发下载
             if len(dois) > 1 and args.t > 1:
@@ -245,14 +244,14 @@ def main():
 
     except KeyboardInterrupt:
         logger.info("\n⏹️ 用户中断下载")
-        return 130
+        exit(1)
     except Exception as e:
         logger.error(f"\n💥 发生错误: {e}", exc_info=True)
-        return 1
+        exit(1)
 
     logger.info("\n✨ 下载完成")
-    return 0
+    exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -84,4 +84,6 @@ dev = [
     "ruff>=0.5.0",
     "mypy>=1.9.0",
     "twine>=5.0.0",
+    "types-requests>=2.32.4.20250913",
+    "pandas-stubs>=2.3.3.251201",
 ]

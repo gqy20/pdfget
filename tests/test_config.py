@@ -2,8 +2,6 @@
 配置文件测试
 """
 
-import pytest
-import tempfile
 import os
 from pathlib import Path
 
@@ -33,7 +31,6 @@ class TestConfig:
 
     def test_output_dir_constant(self):
         """测试输出目录常量"""
-        from pathlib import Path
         assert isinstance(OUTPUT_DIR, (str, Path))
         assert len(str(OUTPUT_DIR)) > 0
 

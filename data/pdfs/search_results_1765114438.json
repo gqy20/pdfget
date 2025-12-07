@@ -1,0 +1,17 @@
+{
+  "query": "machine learning",
+  "timestamp": 1765114438.1445477,
+  "total": 1,
+  "results": [
+    {
+      "title": "Test Paper",
+      "authors": [
+        "John Doe"
+      ],
+      "journal": "Nature",
+      "year": "2023",
+      "doi": "10.1234/test.doi",
+      "isOpenAccess": true
+    }
+  ]
+}

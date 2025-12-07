@@ -1,0 +1,2090 @@
+{
+  "query": "(cancer OR tumor) AND immunotherapy NOT mice",
+  "timestamp": 1765112541.940873,
+  "total": 25,
+  "results": [
+    {
+      "title": "Eliminating intratumoral bacteria with cGAS-STING-activating nanodrug-bacteria biohybrids potentiates cancer immunotherapy",
+      "authors": [
+        "Zhou X",
+        "Pan X",
+        "Shen Z",
+        "Kang R",
+        "Pang Y",
+        "Luo L",
+        "Liu F",
+        "Yu S",
+        "Zhang J",
+        "Shen Q."
+      ],
+      "journal": "Biomaterials.",
+      "year": "2026",
+      "doi": "",
+      "pmcid": "",
+      "pmid": "",
+      "abstract": "Breast cancer remains a leading cause of cancer-related mortality in women, with intratumoral bacteria playing a significant role in immunosuppression. However, targeted therapeutic strategies to address this microbial influence remain underexplored. In this study, we developed a novel nanodrug bacteria biohybrid system, LGG-PDA@Cu-CPT, which integrated Lactobacillus rhamnosus GG (LGG) probiotics, polydopamine (PDA), and copper-irinotecan (Cu-CPT) composites to potentiate cancer immunotherapy by simultaneously eliminating immunosuppressive intratumoral bacteria and activating the cGAS–STING pathway, thereby suppressing tumor progression. Photothermal therapy (PTT) mediated by PDA enhanced intratumoral bacterial eradication by disrupting bacterial membranes and promoting intracellular Cu²⁺ uptake. Cu²⁺ ions further induced reactive oxygen species (ROS) generation through Fenton-like reactions, effectively killing intratumoral Fusobacterium nucleatum (Fn) bacteria and thereby relieving the bacterium-induced immunosuppressive tumor microenvironment. Concurrently, the acidic tumor microenvironment and PTT-induced heating facilitated the release of CPT, which, together with LGG, activated the cGAS-STING pathway. This activation triggered robust type I interferon production, dendritic cell (DC) maturation, and cytotoxic T lymphocyte (CTL) infiltration, leading to effective immune-mediated tumor cell clearance. Additionally, Fn bacterial remnants acted as immunostimulatory agents, further amplifying immune responses. This synergistic strategy of bacterial elimination and cGAS-STING activation significantly enhanced antitumor immune responses and inhibited tumor progression, providing a promising therapeutic approach for breast cancer treatment.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "325",
+      "issue": "",
+      "pages": "Not Available",
+      "license": "",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Characterizing the Head and Neck Cancer Microenvironment: Implications for Immunotherapy and Prognosis.",
+      "authors": [
+        "Varmazyari S",
+        "Borhani H",
+        "Moradipour Z",
+        "Ziaei H",
+        "Rezaei N."
+      ],
+      "journal": "Advances in experimental medicine and biology",
+      "year": "2026",
+      "doi": "10.1007/978-3-032-03176-1_18",
+      "pmcid": "",
+      "pmid": "41225107",
+      "abstract": "Head and neck cancers (HNCs), predominantly squamous cell carcinomas, exhibit high relapse and poor survival rates despite multimodal treatment approaches. One of the main challenges in HNC is the tumor microenvironment (TME), which is composed of both immune and non-immune cells, as well as non-cellular components such as the extracellular matrix, which collectively foster an immunosuppressive environment that enables tumor growth, invasion, and therapeutic resistance. This chapter explores the intricate nature of the TME in HNC and its pivotal role in influencing treatment outcomes, particularly with immunotherapy. It delves into the characteristics and functions of key cellular components of the TME, including cancer-associated fibroblasts, dendritic cells, T cells, B cells, tumor-associated macrophages, and neutrophils, each presenting both challenges and therapeutic opportunities. Furthermore, it explores novel therapeutic strategies that target the TME, such as immune checkpoint inhibitors, adoptive cell transfer, and cancer vaccines. Additionally, it discusses predictive and prognostic factors related to immune, genetic, and microbial signatures in HNC, offering insights into their potential role in improving treatment outcomes. By exploring both current and emerging therapies, the present chapter underscores the significance of modulating the TME to enhance the efficacy of cancer treatments.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Laser Research Center of Dentistry, Dentistry Research Institute, Tehran University of Medical Sciences, Tehran, Iran.",
+      "volume": "1492",
+      "issue": "",
+      "pages": "363-397",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Oral Cancer",
+          "Oral Squamous Cell Carcinoma",
+          "Head And Neck Cancer",
+          "Cancer Immunotherapy"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Animals"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Head and Neck Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "GE",
+                  "qualifierName": "genetics",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Cancer Vaccines",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Prognosis"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Tumor Microenvironment",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Squamous Cell Carcinoma of Head and Neck",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Immune Checkpoint Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Successful sequential chemo-immunotherapy and reduced-volume brachytherapy for bulky residual cervical tumor after external beam radiotherapy: two case reports",
+      "authors": [
+        "Zhang L",
+        "Ai C",
+        "Yu S",
+        "Li K",
+        "Jiang M",
+        "Zhao C",
+        "Li Z",
+        "Wu X."
+      ],
+      "journal": "Frontiers in immunology",
+      "year": "",
+      "doi": "",
+      "pmcid": "PMC12672426",
+      "pmid": "",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "16",
+      "issue": "",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Case Report",
+          "Locally Advanced Cervical Cancer",
+          "Chemo-immunotherapy",
+          "Bulky Residual Tumor",
+          "Reduced-volume Brachytherapy"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": true,
+      "hasSuppl": true
+    },
+    {
+      "title": "Cancer Patient-Derived Scaffolds as In Vitro Preclinical Models for Immunotherapy Screening.",
+      "authors": [
+        "Estêvão D",
+        "Oliveira MJ",
+        "Cruz TB."
+      ],
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2026",
+      "doi": "10.1007/978-1-0716-4734-9_13",
+      "pmcid": "",
+      "pmid": "41028267",
+      "abstract": "The extracellular matrix (ECM) is a complex network of macromolecules that provides physical structure support for tissues and acts as a reservoir for multiple growth factors and signaling mediators modulating the behavior of both cancer and stromal cells within the tumor microenvironment (TME). This key element of the tumor milieu significantly influences various cancer features such as cell differentiation, proliferation, angiogenesis, immune escape, invasion, and metastasis. Therefore, to accurately mimic tumors, it is essential that in vitro models include ECM components. Therefore, to develop 3D biomimetic models for studying cancer, researchers have explored various approaches, including scaffolds made from natural or synthetic polymers and ceramics. However, decellularized ECM derived from patient tumors presents a distinctive model since it preserves the native ECM architecture, biomechanical properties, and molecular composition. Here, we spotlight innovative and advanced protocols to obtain 3D models based on patient-derived decellularized ECM as high-throughput strategies for cancer research, particularly to immunotherapy screening.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "i3S-Institute for Research and Innovation in Health, University of Porto, Porto, Portugal.",
+      "volume": "2959",
+      "issue": "",
+      "pages": "179-188",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Extracellular matrix",
+          "Decellularization",
+          "Biomimetic Models",
+          "Patient-derived Scaffolds",
+          "Therapy Screenings"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Cell Line, Tumor"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Extracellular Matrix",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Tissue Engineering",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Tissue Scaffolds",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Tumor Microenvironment"
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Multi-omics analysis unveils tumor heterogeneity and immunotherapy predictive model in breast cancer for precision medicine and early detection.",
+      "authors": [
+        "Zhao Z",
+        "Zheng Z",
+        "Jiang S",
+        "Zhang L",
+        "Tang X."
+      ],
+      "journal": "Neoplasia (New York, N.Y.)",
+      "year": "2025",
+      "doi": "10.1016/j.neo.2025.101260",
+      "pmcid": "",
+      "pmid": "41344266",
+      "abstract": "<h4>Background</h4>Intratumoral heterogeneity contributes to therapy resistance and immune evasion in breast cancer, making treatment strategies more complex. This study integrates single-cell RNA sequencing (scRNA-seq), spatial transcriptomics, and bulk RNA-seq deconvolution to characterize tumor subpopulations and develop a robust prognostic model.<h4>Methods</h4>We employed a multi-omics approach combining scRNA-seq, spatial transcriptomics, and bulk RNA-seq data deconvolution to explore the molecular diversity within breast cancer tumors. Tumor subtypes were identified based on distinct gene expression profiles, and functional pathway analysis was conducted to evaluate associations with clinical outcomes, including therapy resistance and immune evasion. Data from TCGA and GEO cohorts were integrated to validate the prognostic and immune-related findings. A CoxBoost+GBM algorithm was used to develop a robust prognostic model for patient survival and immunotherapy response prediction.<h4>Results</h4>Five distinct tumor subtypes were identified, each with unique functional profiles, underscoring the complexity of breast cancer heterogeneity. Basal-like breast cancer (BLBC) cells were found to play a central role in immune evasion and poor immunotherapy response, with high basal-like cell infiltration correlating with worse survival outcomes. Spatial transcriptomics revealed the widespread presence of BLBC cells across clinical subtypes, including ER+ tumors, suggesting their involvement in therapy resistance. A prognostic model based on CoxBoost+GBM demonstrated strong predictive power for patient survival and immunotherapy efficacy.<h4>Conclusions</h4>This study provides a comprehensive view of the genetic and immune determinants of breast cancer heterogeneity, with a focus on BLBC's role in immune escape and treatment resistance. These insights enhance the potential of multi-omics approaches in precision prevention, early detection, and personalized immunotherapy strategies.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Taizhou Central Hospital (Taizhou University Hospital), Taizhou, Zhejiang 317000, China.",
+      "volume": "71",
+      "issue": "",
+      "pages": "101260",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Breast cancer",
+          "Basal-like Breast Cancer",
+          "Prognostic Model",
+          "Tumor Heterogeneity",
+          "Single-cell Rna Sequencing"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Management of Locoregional Melanoma.",
+      "authors": [
+        "Swisher SK",
+        "Delman KA."
+      ],
+      "journal": "Hematology/oncology clinics of North America",
+      "year": "2026",
+      "doi": "10.1016/j.hoc.2025.07.005",
+      "pmcid": "",
+      "pmid": "41224442",
+      "abstract": "Standard use of adjuvant immunotherapy has significantly improved clinical outcomes in melanoma. Neoadjuvant immunotherapy has further enhanced these benefits in the setting of advanced disease. Lack of a reliable biomarker to monitor treatment response or disease progression has severely limited prognostication accuracy and the individualization of treatment regimens. A reliable biomarker that indicates treatment response or disease progression could guide clinical decision making to benefit patients with high-risk features or significant disease burden by enhanced activation of the innate antitumor immune response or altered gene expression are areas of active investigation to further improve clinical management of melanoma.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Division of Surgical Oncology, Department of Surgery, Winship Cancer Institute, Emory University School of Medicine, 1365 Clifton Road Northeast, Building C, Suite C5068, Bays 1-5, Atlanta, GA 30322, USA. Electronic address: Shannon.Kimberly.Swisher@emory.edu.",
+      "volume": "40",
+      "issue": "1",
+      "pages": "51-64",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Melanoma",
+          "Immunotherapy",
+          "Targeted Therapy",
+          "Neoadjuvant Therapy",
+          "Checkpoint Inhibitors",
+          "Locoregional Melanoma",
+          "Surgically Resectable Melanoma",
+          "Targeted Nodal Resection"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Melanoma",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DI",
+                  "qualifierName": "diagnosis",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Skin Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DI",
+                  "qualifierName": "diagnosis",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Prognosis"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Neoadjuvant Therapy"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Disease Management"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Biomarkers, Tumor"
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "A comprehensive pan-cancer analysis of the prognostic role and immunotherapy efficacy evaluation of Glyoxalase 1.",
+      "authors": [
+        "Zhao YQ",
+        "Zhao J",
+        "Zheng YM",
+        "Wang QQ."
+      ],
+      "journal": "Discover oncology",
+      "year": "2025",
+      "doi": "10.1007/s12672-025-04109-3",
+      "pmcid": "",
+      "pmid": "41307806",
+      "abstract": "<h4>Background</h4>Glyoxalase 1 (GLO1), an enzyme responsible for breaking down methylglyoxal (MG), is increasingly recognized as a tumor-promoting factor due to its role in removing cytotoxic MG. This study aims to analyze the expression status and prognostic significance of GLO1 across various cancers and explore its potential role in cancer immunotherapy.<h4>Methods</h4>We obtained GLO1 mRNA expression profiles from The Cancer Genome Atlas (TCGA) database. Kaplan-Meier analysis was used to evaluate the prognostic value of GLO1 in multiple cancers. We validated GLO1 protein expression in clinical endometrial cancer samples using immunohistochemical staining. Additionally, we analyzed GLO1's correlation with drug sensitivity from the Genomics of Drug Sensitivity in Cancer (GDSC) database and its relationship with the tumor microenvironment and immunotherapy response.<h4>Results</h4>GLO1 was widely expressed in human tumor tissues with significant differences compared to adjacent normal tissues. High GLO1 expression was associated with poor prognosis in 14 cancers, including adrenocortical carcinoma, cholangiocarcinoma, and lymphoid neoplasm diffuse large B-cell lymphoma. GLO1 expression was negatively related to immune cell infiltration in breast invasive carcinoma. In melanoma and kidney renal clear cell carcinoma, high GLO1 expression was linked to poor immunotherapy outcomes.<h4>Conclusions</h4>This comprehensive pan-cancer study reveals the prognostic value and potential predictive role of GLO1 in immunotherapy across multiple tumor types. This study primarily utilized bioinformatic datasets; experimental validation was performed for endometrial cancer but warrants expansion to other cancer types in future work.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Center for Reproductive Medicine, Department of Obstetrics, Zhejiang Provincial People's Hospital, Affiliated People's Hospital, Hangzhou Medical College, No.158, Shangtang Road, Hangzhou, 310000, Zhejiang, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Prognostic Biomarker",
+          "Glyoxalase 1",
+          "Tumor Immune Microenvironment",
+          "Pan-cancer"
+        ]
+      },
+      "meshTerms": [],
+      "grants": {
+        "grant": [
+          {
+            "grantId": "2024ZL251",
+            "agency": "Zhejiang Provincial Program of Chinese Medical and Health Science Funding",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Precision Delivery of Active Compounds from Edible and Medicinal Plants via Gut Microbiota Targeting: A New Paradigm for Cancer Immunotherapy.",
+      "authors": [
+        "Peng L",
+        "Wang L",
+        "Zhao Y",
+        "Yu P",
+        "Yang H."
+      ],
+      "journal": "Nutrients",
+      "year": "2025",
+      "doi": "10.3390/nu17223591",
+      "pmcid": "PMC12655488",
+      "pmid": "41305642",
+      "abstract": "The immune system plays a pivotal role in the progression of tumors. Recent advancements in immunotherapies, notably CAR-T cell therapy and checkpoint inhibitors, have markedly improved clinical outcomes. However, a significant proportion of patients continue to experience treatment resistance, posing a persistent and formidable challenge. The gut microbiota has been established as a critical determinant of responses to immunotherapy. Enriched with bioactive components such as polysaccharides, (poly)phenols, and flavonoids, edible and medicinal plants (EMPs) exhibit significant potential to enhance host immunity by reshaping the gut microbiota, increasing the production of microbiota-derived metabolites (e.g., short-chain fatty acids), strengthening the intestinal barrier, and reducing intestinal inflammation. The bioactive components derived from EMPs not only demonstrate substantial pharmacological activities but also serve dual roles: functioning either as inherent drug carriers or as effective modifiers for existing carrier systems, which facilitates targeted drug delivery to specific sites such as the liver and intestinal, enhancing therapeutic efficacy. In summary, this review highlights that bioactive components from EMPs hold significant promise for enhancing cancer immunotherapy by modulating complex interactions with the gut microbiota.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Public Experimental Center, Changchun University of Chinese Medicine, Changchun 130117, China.",
+      "volume": "17",
+      "issue": "22",
+      "pages": "3591",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Drug carriers",
+          "Cancer Immunotherapy",
+          "Gut Microbiota",
+          "bioactive components",
+          "Edible And Medicinal Plants"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Animals"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Plants, Edible",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Plants, Medicinal",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "CH",
+                  "qualifierName": "chemistry",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Drug Delivery Systems",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Phytochemicals",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "AD",
+                  "qualifierName": "administration & dosage",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PD",
+                  "qualifierName": "pharmacology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Gastrointestinal Microbiome",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": {
+        "grant": [
+          {
+            "grantId": "20240305022YY",
+            "agency": "The Science and Technology Development Planning Project of Jilin Province",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Research progress and frontier trends in liver cancer immunotherapy in the post-COVID-19 era (2020-2024): a visualization analysis based on bibliometric methods.",
+      "authors": [
+        "Liang S",
+        "Zhang X",
+        "Wang X",
+        "Xie Y",
+        "Wang J",
+        "Wang J",
+        "Chen B."
+      ],
+      "journal": "Discover oncology",
+      "year": "2025",
+      "doi": "10.1007/s12672-025-04144-0",
+      "pmcid": "",
+      "pmid": "41315158",
+      "abstract": "<h4>Background</h4>The COVID-19 pandemic has transformed liver cancer research, making immunotherapy a key breakthrough for advanced cases. This study uses bibliometrics to reveal research hotspots and paradigm shifts of this field from 2020 to 2024.<h4>Methods</h4>The data were retrieved from the Web of Science Core Collection (2020 to 2024). Data quality was ensured through two rounds of independent data cleaning, achieving a Kappa coefficient of 0.89. A comprehensive bibliometric analysis was conducted on the literature related to liver cancer immunotherapy, utilizing tools such as Biblioshiny, VOSviewer, Scimago Graphica, CiteSpace, and Microsoft Office Excel (2022 version).<h4>Results</h4>From 2020 to 2024, China and the US led global liver cancer immunotherapy research, forming a collaboration network with Canada. Sun Yat-sen University is a key hub with over 600 publications and an annual growth rate of 18.5%, closely collaborating with Huazhong University of Science and Technology and Zhejiang University (correlation index 0.92). The journal impact is dominated by Frontiers in Immunology and Frontiers in Oncology, which form a dual-core citation network, with the top 1% journals contributing 35.7% of publications. Frontiers in Immunology has the highest h-index (35) and fastest growth rate. The co-citation network includes three major clusters: immune mechanisms (led by Nature), clinical trials (Clinical Cancer Research), and liver cancer pathology (Hepatology). Research themes evolve in four directions: prognostic models, tumor microenvironment, hepatocellular carcinoma mechanisms, and cancer immunotherapy. Hotspots include \"cancer\", \"immunotherapy\", and \"hepatocellular carcinoma\", with rising trends in \"tumor microenvironment\" and \"combination therapy\" after 2021.<h4>Conclusion</h4>The COVID-19 pandemic has spurred multidisciplinary integration and the use of real-world evidence in research. Emerging themes like Sino-American collaboration, knowledge diffusion in core journals, and tumor microenvironment are shaping liver cancer immunotherapy research in the post-pandemic era. This study offers strategic insights for optimizing resources and advancing clinical-basic translational research.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Ningxia Medical University, Yinchuan, 750004, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Liver cancer",
+          "Immunotherapy",
+          "bibliometrics",
+          "Covid-19"
+        ]
+      },
+      "meshTerms": [],
+      "grants": {
+        "grant": [
+          {
+            "grantId": "2023AAC02073",
+            "agency": "Natural Science Foundation of Ningxia Province",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Editorial: Current trends and future prospects in the use of immunotherapy in ovarian cancer.",
+      "authors": [
+        "Gavalas NG."
+      ],
+      "journal": "Frontiers in oncology",
+      "year": "2025",
+      "doi": "10.3389/fonc.2025.1737055",
+      "pmcid": "PMC12668960",
+      "pmid": "41341399",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "2nd Propaedeutic Department of Medicine, Medical School, National and Kapodistrian University of Athens- ATTIKON University Hospital, Athens, Greece.",
+      "volume": "15",
+      "issue": "",
+      "pages": "1737055",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer",
+          "Single cell",
+          "Ovarian",
+          "Immunotherapy",
+          "Biomarkers"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Immune Modulation in Cancer: The Role of Tumor-Treating Fields (TTFields).",
+      "authors": [
+        "Liu M",
+        "Hage ME",
+        "Zhao J",
+        "Linnebacher M."
+      ],
+      "journal": "Current protocols",
+      "year": "2025",
+      "doi": "10.1002/cpz1.70270",
+      "pmcid": "",
+      "pmid": "41347753",
+      "abstract": "Tumor-treating fields (TTFields) represent an innovative approach to cancer treatment that leverages low-intensity (1-3 V/cm) alternating electric fields operating at intermediate frequencies (100-300 kHz). These electric fields are specifically designed to disrupt the mitotic process, thereby inhibiting the proliferation of malignant cells. Recent research has shown that TTFields not only induce direct cytotoxic effects but also modulate the immune system by triggering immunogenic cancer cell death, thereby enhancing immune cell infiltration into tumor sites. This dual mechanism opens up new possibilities for synergistic integration with immunotherapy, which has already revolutionized oncology through the advent of immune-checkpoint inhibitors, adoptive cell therapies, and cancer vaccines. Given the immune-modulatory properties of TTFields, there is growing interest in exploring their potential synergistic effect to enhance immunotherapeutic efficacy. Recognizing the complementary role of TTFields in cancer treatment paves the way for innovative combinatorial strategies that may further improve patient outcomes by enhancing the effectiveness of both TTFields and immunotherapy. © 2025 The Author(s). Current Protocols published by Wiley Periodicals LLC.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Molecular Oncology and Immunotherapy, Clinic of General Surgery, University Medical Center Rostock, Rostock, Germany.",
+      "volume": "5",
+      "issue": "12",
+      "pages": "e70270",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer",
+          "Immunotherapy",
+          "Immunogenic Cell Death",
+          "Ttfields"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Animals"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Electric Stimulation Therapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Targeting DNA damage response to enhance cancer immunotherapy efficacy: molecular mechanisms and clinical advances.",
+      "authors": [
+        "Tang Z",
+        "Chen P",
+        "Xiang B",
+        "Xiong W",
+        "Wu P",
+        "Zeng Z."
+      ],
+      "journal": "Medical oncology (Northwood, London, England)",
+      "year": "2025",
+      "doi": "10.1007/s12032-025-03153-x",
+      "pmcid": "",
+      "pmid": "41331183",
+      "abstract": "The DNA damage response (DDR) is a critical cellular mechanism for maintaining genomic stability and integrity. Over the past decade, targeting DDR pathways in tumors has led to significant therapeutic advances but faces limitations such as drug resistance and combinatorial toxicity. Meanwhile, cancer immunotherapy has shown remarkable efficacy in some solid tumors, yet response rates to single-agent therapies remain modest and are often hindered by immunosuppression in the tumor microenvironment (TME). DDR inhibitors (DDRi) can potentiate antitumor immunity via mechanisms such as increased neoantigen release and activation of the cGAS-STING pathway, providing a rationale for combining DDRi with immunotherapy. Indeed, the combination of DDRi with immune checkpoint inhibitors (ICIs) has shown synergistic promise in clinical studies, while combinations of DDRi with novel immunotherapeutic approaches are now in early development. Here, we systematically review DDR-targeted cancer therapies and their molecular mechanisms for enhancing tumor immunogenicity, along with recent clinical advances in combining DDRi with immunotherapy. Our goal is to provide a theoretical foundation and translational insight for optimizing these combination strategies.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "NHC Key Laboratory of Carcinogenesis and Hunan Key Laboratory of Cancer Metabolism, Hunan Cancer Hospital and the Affiliated Cancer Hospital of Xiangya School of Medicine, Central South University, Changsha, 410078, China.",
+      "volume": "43",
+      "issue": "1",
+      "pages": "33",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer Immunotherapy",
+          "Dna Damage Response",
+          "Dna Damage Response Inhibitors"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Animals"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "GE",
+                  "qualifierName": "genetics",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "DNA Damage",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "DNA Repair",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Molecular Targeted Therapy"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Tumor Microenvironment",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Immune Checkpoint Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "PD",
+                  "qualifierName": "pharmacology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": {
+        "grant": [
+          {
+            "grantId": "82403859",
+            "agency": "National Natural Science Foundation of China",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2024JJ6544",
+            "agency": "Natural Science Foundation of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "kq2402235",
+            "agency": "Natural Science Foundation of Changsha",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "A bibliometric visualization of resistance to lung cancer immunotherapy: a decade of research progress (2014-2024).",
+      "authors": [
+        "Yang Z",
+        "Yang L",
+        "Wang Y",
+        "Ren X",
+        "Cui Y",
+        "Li Y",
+        "Wu J."
+      ],
+      "journal": "Frontiers in oncology",
+      "year": "2025",
+      "doi": "10.3389/fonc.2025.1656967",
+      "pmcid": "PMC12641397",
+      "pmid": "41293265",
+      "abstract": "<h4>Background</h4>Lung cancer remains the leading cause of cancer-related deaths globally and represents the most common malignant tumor. While immunotherapy has significantly improved patient survival in recent years, the development of resistance limits its clinical efficacy. Currently, a systematic and comprehensive bibliometric analysis of drug resistance in immunotherapy for lung cancer is lacking. This study aims to address this gap by employing bibliometric methods to illuminate the knowledge structure and to identify key research hotspots in this critical area.<h4>Methods</h4>We retrieved publications concerning lung cancer immunotherapy drug resistance from the Web of Science Core Collection and PubMed databases, covering January 1, 2014, to December 31, 2024. NoteExpress was used for data integration, duplicate detection, and screening. Subsequently, we quantitatively and visually analyzed the characteristics of the selected literature, with an emphasis on country, institution, and keywords. This analysis was performed utilizing VOSviewer, CiteSpace, and the \"bibliometrix\" package in R.<h4>Result</h4>The annual publication output showed a marked upward trend, peaking in 2024. China produced the most publications, while the USA demonstrated higher citation impact. Analysis of keywords revealed a clear thematic evolution: from initial focus on clinical trials (e.g. Open-label) and specific drugs (e.g. Nivolumab), to immune checkpoints (e.g.PD-1/PD-L1), and more recently to underlying molecular mechanisms like the tumor microenvironment, autophagy, and ferroptosis.<h4>Conclusions</h4>This study offers a thorough overview of the most important research topics and emerging trends related to drug resistance and lung cancer immunotherapy. By integrating current knowledge, it enables researchers to swiftly identify pivotal research directions, thereby promoting in-depth development and innovation within the field and supporting the progression of clinical practice. For clinicians, this bibliometric insight provides a more scientific and precise basis for formulating treatment strategies, ultimately assisting lung cancer patients in deriving benefits from immunotherapy.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Clinical Medical Center of Oncology, Shanghai Municipal Hospital of Traditional Chinese Medicine, Shanghai University of Traditional Chinese Medicine, Shanghai, China.",
+      "volume": "15",
+      "issue": "",
+      "pages": "1656967",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Lung cancer",
+          "Mechanisms",
+          "Tumor Microenvironment",
+          "Bibliometric",
+          "Immunotherapy Resistance"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "The “double-edged sword” effect of cytokines in cancer: coexisting opportunities and challenges",
+      "authors": [
+        "Yin X",
+        "Zhang W",
+        "Wang G",
+        "Liu Y",
+        "Dai B",
+        "Yue L."
+      ],
+      "journal": "Frontiers in immunology",
+      "year": "",
+      "doi": "",
+      "pmcid": "PMC12672462",
+      "pmid": "",
+      "abstract": "",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "16",
+      "issue": "",
+      "pages": "",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer",
+          "Cytokines",
+          "Cancer therapy",
+          "Immune Checkpoint Blockade",
+          "Tumor Immune Microenvironment"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": true,
+      "hasSuppl": true
+    },
+    {
+      "title": "Elevated tumor-associated androgen receptor activity correlates with poor immune infiltration and immunotherapy response across cancer types.",
+      "authors": [
+        "Hu YM",
+        "Zhao F",
+        "Graff JN",
+        "Chen C",
+        "Zhang Y",
+        "Stommel JM",
+        "Lee J",
+        "Zangirolani GM",
+        "Rose J",
+        "Thomas GV",
+        "Wu H",
+        "Kardosh A",
+        "Mills GB",
+        "Alumkal JJ",
+        "Moran AE",
+        "Xia Z."
+      ],
+      "journal": "Cancer research communications",
+      "year": "2025",
+      "doi": "10.1158/2767-9764.crc-25-0409",
+      "pmcid": "",
+      "pmid": "41295980",
+      "abstract": "The role of androgen receptor (AR) signaling in modulating antitumor immune responses has received increasing attention in recent years; however, its broader impact across diverse cancer types and between sexes remains largely unexplored. Here, we investigated how AR activity correlates with tumor-infiltrating leukocytes, patient prognosis, and immunotherapy response across cancers and sexes. We inferred AR activity using a network-based approach across bulk RNA-seq (TCGA), single-cell RNA-seq (prostate cancer meta-atlas), and immunotherapy cohorts. Pathway analysis and Cox regression assessed mechanisms and survival. Immune infiltration and signatures were evaluated via TIMER and ssGSEA. Key findings were validated using Digital Spatial Profiling and immunohistochemistry. Our pan-cancer analysis of 33 TCGA cancer types revealed broad variability in AR activity, highest in prostate adenocarcinoma. Genes significantly correlated with AR activity show negative associations and are enriched in immune activation pathways. Notably, AR activity inversely correlated with leukocyte abundance and IFN-γ pathway activity across tumors and sexes-unlike estrogen or progesterone receptors. Longitudinal biopsy analysis in metastatic prostate cancer showed AR inhibition enhanced immune cell and IFN-γ signatures. Single-cell analysis confirmed that tumor-intrinsic AR activity inversely correlates with immune infiltration in prostate cancer. Furthermore, low AR activity is significantly associated with favorable immunotherapy responses in hormone-independent cohorts. Spatial proteomics showed a negative correlation between AR and CD45 protein in sarcoma and ovarian cancers. These findings suggest AR activity as a pan-cancer predictive biomarker of immunotherapy response and support that AR blockade in immunotherapy-refractory tumors represents a promising treatment strategy, regardless of tumor type or patient sex.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Oregon Health & Science University, Portland, OR, United States.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Expression of carcinoma ecotypes in the tumor microenvironment predicts response to neoadjuvant therapy in early-stage breast cancer.",
+      "authors": [
+        "Asleh K",
+        "Bethune G",
+        "Marcato P."
+      ],
+      "journal": "Scientific reports",
+      "year": "2025",
+      "doi": "10.1038/s41598-025-28810-z",
+      "pmcid": "",
+      "pmid": "41286068",
+      "abstract": "Immunotherapy is associated with modest pathologic complete response (pCR) rates in early-stage breast cancer, and a subset of patients still achieves a pCR after neoadjuvant chemotherapy (NAC) only. Identifying biomarkers in the complex tumor ecosystem which define the subsets of patients who achieve pCR benefit on immunotherapy versus not is of a critical need. Transcriptomic data for patients enrolled in the two neoadjuvant immunotherapy arms of 'pembrolizumab' (n = 69) and 'durvalumab' (n = 71), and the chemotherapy arm 'control' (n = 210) of the I-SPY2 breast cancer clinical trial were included. Using a machine learning algorithm for tumor ecosystem-based classification, we deconvoluted transcriptomic data into the established 10 multicellular organization systems known as 'Ecotypes'. We found that the most pro-inflammatory carcinoma ecotype (CE)9 predicts pCR in the 'pembrolizumab' arm (OR = 2.07; 95% CI 1.35-3.8; adjusted P value = 0.01), in the 'control' arm (OR = 1.89; 95% CI 1.36-2.63; adjusted P value = 0.002), and in the 'durvalumab' arm (OR = 1.66; 95%CI 1.18-2.34; adjusted P value = 0.03). In contrast, the basal-enriched ecotype CE2 was the most significant predictor of pCR in the 'durvalumab' arm, which included the addition of olaparib (OR = 3.22; 95%CI 2.25-4.60; adjusted P value < 0.0001), but not in NAC (OR = 1.18; 95%CI 0.81-1.72; adjusted P value = 0.94). Our findings suggest that CE9 could identify early-stage breast cancer patients who achieve a pCR after neoadjuvant therapy and may have a good prognosis. Whether CE9 patients could still be considered for immunotherapy or be candidates for de-escalation strategies in the neoadjuvant setting requires further investigation in future studies with link to survival outcomes. In contrast, CE2 tumors would benefit from the combination of immunotherapy with olaparib. Integrating tumor ecosystem-based patient classification could guide effective clinical management in early-stage breast cancer.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Pathology and Laboratory Medicine, Dalhousie University, Halifax, NS, Canada. karama.asleh@dal.ca.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Neoadjuvant Therapy",
+          "Tumor Microenvironment",
+          "Machine Learning",
+          "Transcriptomics",
+          "Predictive Biomarkers",
+          "Pathologic Complete Response",
+          "Early-stage Breast Cancer",
+          "Cell State",
+          "Carcinoma Ecotype"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Facilitating Personalized Immunotherapy with Interventional Radiology and Tumor Organoids.",
+      "authors": [
+        "Tian W",
+        "McKenney AS",
+        "Zhan C."
+      ],
+      "journal": "Journal of vascular and interventional radiology : JVIR",
+      "year": "2025",
+      "doi": "10.1016/j.jvir.2025.08.038",
+      "pmcid": "",
+      "pmid": "41276362",
+      "abstract": "Personalized immunotherapy is a novel treatment approach aiming to increase precision and reduce toxicity compared with traditional immune checkpoint inhibitors. Tumor organoids derived from interventional radiology (IR) biopsy specimens can provide a powerful platform, positioning IR centrally in developing and delivering these therapies. Patient-derived tumor organoid (PDO) cultures amplify tumor biomass, enabling identification of tumor-specific neoantigens. Co-culture of PDOs with autologous immune cells allows activation and expansion of tumor-reactive T cells from the same patient, which can serve as biomarkers and therapeutic targets for investigating tumor-specific immune responses following locoregional therapies. IR can play a critical role in PDO-based personalized immunotherapy by providing tumor sampling for organoid culture and delivering locoregional therapies that not only control tumor progression but also prime systemic immune responses during therapy preparation. Although promising, organoid-based personalized immunotherapy remains mostly in preclinical stages. Integrating IR interventions with PDO platform could accelerate the clinical translation of personalized immunotherapy.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Interventional Radiology Service, Department of Radiology, Memorial Sloan Kettering Cancer Center, New York, New York; Department of Interventional Radiology, The First Affiliated Hospital with Nanjing Medical University, Nanjing, China.",
+      "volume": "36",
+      "issue": "12",
+      "pages": "1851-1855",
+      "license": "",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Organoids",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DG",
+                  "qualifierName": "diagnostic imaging",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Radiography, Interventional"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "AE",
+                  "qualifierName": "adverse effects",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Coculture Techniques"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Radiology, Interventional"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Precision Medicine",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Immunotherapeutics in metastatic cancer management.",
+      "authors": [
+        "Shukla M",
+        "Shri P",
+        "Mahobiya SK",
+        "Vishwakarma RK."
+      ],
+      "journal": "Discover oncology",
+      "year": "2025",
+      "doi": "10.1007/s12672-025-03561-5",
+      "pmcid": "PMC12618787",
+      "pmid": "41239147",
+      "abstract": "Metastatic cancer remains the leading cause of cancer-related mortality, largely owing to the limitations of conventional treatments such as chemotherapy, radiotherapy, and targeted agents that are challenged by tumor heterogeneity, acquired resistance, and systemic toxicity. In contrast, immunotherapy has emerged as a transformative modality, harnessing the power of the immune system to selectively target and eradicate tumor cells. This review systematically examines key immunotherapeutic strategies ranging from immune checkpoint inhibitors (ICIs) and monoclonal antibodies to cancer vaccines, oncolytic viruses, and adoptive cell therapies (such as CAR-T and TCR-engineered T cells). Of particular interest are personalized approaches, including neoantigen-based vaccines and tumor-infiltrating lymphocyte (TIL) therapies, which hold promise for tailored treatment but also present significant logistical and translational challenges. Central to therapeutic outcomes are factors like immune resistance, the suppressive tumor microenvironment, and the identification of predictive biomarkers including PD-L1 expression and tumor mutational burden (TMB) that can guide patient selection and efficacy. As the field progresses, future breakthroughs will hinge on deepening our understanding of metastasis immunobiology, refining biomarker-driven precision approaches, and developing novel immunological targets and delivery platforms to improve outcomes and accessibility.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Department of Biotechnology, Pandit Shambhunath Shukla University, Shahdol, Madhya Pradesh, India. shuklamumaneesha@gmail.com.",
+      "volume": "16",
+      "issue": "1",
+      "pages": "2106",
+      "license": "cc by-nc-nd",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Cancer vaccines",
+          "Tumor Microenvironment",
+          "Metastatic Cancer",
+          "Immune Checkpoint Inhibitors",
+          "Car-t Cells"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": true,
+      "hasSuppl": false
+    },
+    {
+      "title": "Role of the neurotransmitter-receptor pathway in T-cell tumor immunology and cancer immunotherapy.",
+      "authors": [
+        "Fan M",
+        "Zhao X."
+      ],
+      "journal": "Acta biochimica et biophysica Sinica",
+      "year": "2025",
+      "doi": "10.3724/abbs.2025216",
+      "pmcid": "",
+      "pmid": "41306018",
+      "abstract": "This review synthesizes how neurotransmitters-including glutamate, acetylcholine (ACh), γ-aminobutyric acid (GABA), serotonin (5-HT), and catecholamines-modulate T-cell immunity in the tumor microenvironment through activation, differentiation, trafficking, and checkpoint dependence. Glutamate amplifies T-cell receptor signaling but is counterbalanced by tumor-derived glutamate export. Cholinergic pathways exert dual effects through nicotinic and muscarinic receptors, whereas GABA generally imposes metabolic and signaling brakes that favor regulatory programs. Serotonin shows spatial divergence-suppressing peripheral responses but enhancing intratumoral cytotoxicity-and chronic β-adrenergic stress dampens effector function and limits immunotherapy efficacy. Advances in spatial multi-omics, single-cell profiling, and neuromodulation will help discover new targets across these axes. This review provides mechanistic insights and translational implications, highlighting emerging strategies such as glutamate receptor, metabotropic glutamate receptor 4 (mGluR4) or xCT (SLC7A11) inhibition, receptor subtype modulation, and β-blockade. Integrating neurotransmitter-receptor targeting with checkpoint inhibitors or cell therapies may improve the depth and durability of cancer immunotherapy.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Neurotransmitter",
+          "T cell",
+          "Cancer Immunotherapy",
+          "Tumor Microenvironment",
+          "Receptor Signaling",
+          "Immune Checkpoint Blockade",
+          "Immunometabolism",
+          "Neuroimmune Crosstalk"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Inducing ferroptosis to improve cancer therapy: a promising tool for enhancing immunotherapy.",
+      "authors": [
+        "Caforio M",
+        "Iacovelli S",
+        "Locatelli F",
+        "Folgiero V."
+      ],
+      "journal": "Journal of experimental & clinical cancer research : CR",
+      "year": "2025",
+      "doi": "10.1186/s13046-025-03593-3",
+      "pmcid": "",
+      "pmid": "41339932",
+      "abstract": "<h4>Background</h4>The discovery of ferroptosis as a novel mechanism of cell death has opened the door to a new scenario in which it could be used to support current cancer therapy, particularly in cases of relapse. Several compounds have been developed aimed to inhibit or induce ferroptosis in cancer cells by acting on different signaling pathways caable of activating or repressing, respectively, this cell death mechanism.<h4>Main body</h4>This review shows how treatmenting cancer cells with ferroptosis inducers results in improved efficacy of immunotherapy. Indeed, the advantage of affecting ferroptosis lies in the capacity of compounds to improve immune system compartments. The involvement of ferroptosis in cancer treatment is now emerging, demonstrating the high translational potential of this approach capable of carrying out an immune response against tumors, dendritic cells (DC), regulatory T cells (Treg), Natural Killer cells (NK) and tumor-associated macrophages (TAM) exert an interesting role. Some immune check-point inhibitors (ICIs) have been approved as cancer immunotherapy, because they target cytotoxic T lymphocyte-associated antigen 4 (CTLA4), programmed cell death protein 1 (PD-1) and its ligand PD-L1. For this reason, promising results have been achieved by combining ferroptosis inducers with ICIs. At the same time, combining Chimeric Antigen Receptor (CAR) T-cell therapy with ferroptosis inducers shows promising anti-tumor activity, particularly in solid tumors. This approach demonstrates how the modulation of ferroptosis may improve the efficacy of CAR T-cells treatment by promoting tumor cell death and enhancing immunogenicity.<h4>Conclusion</h4>In conclusion the development of clinical trials aimed at testing the efficacy of ferroptosis induction in combination with current cancer therapy will be the definitive proof of the valid opportunity provided by this therapeutic approach.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Onco-Hematology and Cell and Gene Therapy, Bambino Gesù Children's Hospital, IRCCS, Rome, Italy. matteo.caforio@opbg.net.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer",
+          "Immunotherapy",
+          "Ferroptosis"
+        ]
+      },
+      "meshTerms": [],
+      "grants": {
+        "grant": [
+          {
+            "grantId": "2025",
+            "agency": "Fondazione Umberto Veronesi",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Recent advances in targeting protein degradation for tumor immunotherapy.",
+      "authors": [
+        "Li S",
+        "Jin Y",
+        "Wu H",
+        "Yuan H",
+        "Zhao J."
+      ],
+      "journal": "Journal of hematology & oncology",
+      "year": "2025",
+      "doi": "10.1186/s13045-025-01765-4",
+      "pmcid": "",
+      "pmid": "41345706",
+      "abstract": "Immunotherapy has revolutionized the landscape of cancer treatment, yet its efficacy is often limited by drug resistance, the immunosuppressive tumor microenvironment (TME), and the \"undruggable\" nature of key immunoregulatory proteins. Targeted protein degradation (TPD) technology, which harnesses cellular degradation machinery to eliminate disease-associated proteins, is emerging as a transformative strategy in the field of tumor immunotherapy. This review systematically summarizes recent advances in various TPD strategies-based on both the ubiquitin-proteasome system (UPS) and the lysosomal pathway, such as proteolysis-targeting chimera (PROTAC), molecular glues, lysosome-targeting chimera (LYTAC), and antibody-based PROTAC (AbTAC)-within the context of cancer immunotherapy. We emphasize how TPD molecules can directly degrade key target proteins, including immune checkpoints, to alleviate immunosuppression, as well as clear critical immunomodulatory factors within the TME, thereby synergistically reversing immunosuppression and enhancing antitumor immunity. Furthermore, this article discusses the rational design, preclinical validation, and clinical translation trends of TPD-based immunotherapeutic agents. Despite encouraging progress, challenges such as tissue selectivity, off-target effects, and delivery efficiency remain to be addressed. Finally, we envision future directions for advancing the application of TPD technology in cancer immunotherapy.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Clinical Laboratory Center, Central Hospital of Dalian University of Technology, Dalian, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": [],
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Medicinal Chemistry Strategies for the Development of CD73 Inhibitors in Cancer Immunotherapy.",
+      "authors": [
+        "Cui M",
+        "Ma S",
+        "Huang Z",
+        "Zhang D",
+        "Sun X",
+        "You Y."
+      ],
+      "journal": "Medicinal research reviews",
+      "year": "2025",
+      "doi": "10.1002/med.70029",
+      "pmcid": "",
+      "pmid": "41345702",
+      "abstract": "CD73, a membrane-bound ecto-5'-nucleotidase, catalyzes the extracellular conversion of adenosine monophosphate into immunosuppressive adenosine. Functioning as an emerging immune checkpoint, CD73 is frequently upregulated across numerous tumor types, contributing to the accumulation of adenosine within the tumor microenvironment and promoting immune evasion. Intensive efforts have led to the discovery of diverse CD73 inhibitors, which show strong potential in cancer immunotherapy. To date, around eighteen candidates targeting CD73 have entered clinical evaluation, many exhibiting encouraging efficacy in combination regimens for solid tumors. This review provides an overview of the biological functions of CD73 in tumor-induced immunosuppression and highlights the medicinal chemistry strategies employed in the development of small-molecule CD73 inhibitors since 2018. Additionally, the challenges in drug design and future directions are also discussed to enhance the clinical applicability of CD73-targeted therapies in cancer treatment. We believe that this review will offer valuable insights to guide the rational design of next-generation CD73 inhibitors for cancer immunotherapy.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Department of Clinical Trial Ward, Clinical Trial and Conversion Center, Shengjing Hospital of China Medical University, Shenyang, China.",
+      "volume": "",
+      "issue": "",
+      "pages": "",
+      "license": "",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Cancer Immunotherapy",
+          "Cd73",
+          "Adenosine Signaling",
+          "Immune Checkpoint",
+          "Small‐molecule Inhibitors"
+        ]
+      },
+      "meshTerms": [],
+      "grants": [],
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Advancing immunotherapy for esophageal cancer: decoding the roles of PD-L1, TME, and tumor-intrinsic biomarkers.",
+      "authors": [
+        "Ma J",
+        "Wu D",
+        "Liu Y",
+        "Zhang G."
+      ],
+      "journal": "Frontiers in immunology",
+      "year": "2025",
+      "doi": "10.3389/fimmu.2025.1679365",
+      "pmcid": "PMC12669114",
+      "pmid": "41341591",
+      "abstract": "Esophageal squamous cell carcinoma (ESCC) remains a global health challenge, with immune checkpoint inhibitors (ICIs) reshaping therapeutic strategies. However, heterogeneous responses underscore the urgent need for robust predictive biomarkers. While PD-L1 expression remains the most widely used marker, its limitations, including spatial heterogeneity and inducible expression, have prompted exploration of alternative and composite indicators. Recent advances highlight the predictive potential of tumor immune microenvironment (TME) features such as tumor-infiltrating lymphocytes (TILs), tertiary lymphoid structures (TLSs), stromal maturity, and T cell-inflamed gene expression profiles. Concurrently, tumor-intrinsic biomarkers, including microsatellite instability, tumor mutational burden, neoantigen load, and chromosomal alterations-have shown promise in stratifying immunotherapy responders. Multi-omics approaches, liquid biopsies, and integration of host factors such as gut microbiota are emerging to refine patient selection. This review comprehensively examines evolving biomarkers and therapeutic trials, emphasizing the need for integrative precision strategies to optimize immunotherapy efficacy in ESCC.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Henan Key Laboratory of Cancer Epigenetics, Cancer Hospital, The First Affiliated Hospital, and College of Clinical Medicine of Henan University of Science and Technology, Luoyang, China.",
+      "volume": "16",
+      "issue": "",
+      "pages": "1679365",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Esophageal cancer",
+          "Chemoimmunotherapy",
+          "Predictive Biomarkers",
+          "Tumor Immune Microenvironment",
+          "Programmed Death-ligand 1"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Lymphocytes, Tumor-Infiltrating",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Animals"
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Esophageal Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Tumor Microenvironment",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Biomarkers, Tumor",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "B7-H1 Antigen",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "AI",
+                  "qualifierName": "antagonists & inhibitors",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "ME",
+                  "qualifierName": "metabolism",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Esophageal Squamous Cell Carcinoma",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Immune Checkpoint Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": [],
+      "hasData": true,
+      "hasSuppl": false
+    },
+    {
+      "title": "Cellular characteristics of the immune microenvironment of colorectal cancer and progress in immunotherapy research.",
+      "authors": [
+        "Yang C",
+        "Fan J",
+        "Zhang Y",
+        "Zhang Y",
+        "Xia L",
+        "Cao X",
+        "Wu X."
+      ],
+      "journal": "Annals of medicine",
+      "year": "2025",
+      "doi": "10.1080/07853890.2025.2591308",
+      "pmcid": "",
+      "pmid": "41320679",
+      "abstract": "<h4>Background</h4>Colorectal cancer (CRC) continues to represent a major cause of cancer-related mortality worldwide, with its progression and therapeutic outcomes strongly shaped by the complexity and heterogeneity of the tumor immune microenvironment (TME). This review critically examines the cellular and molecular mechanisms driving immune evasion in CRC, emphasizing the dual roles of immune cell populations-including tumor-associated macrophages, neutrophils, dendritic cells, T cells, B cells, and natural killer cells-as well as non-cellular elements such as the extracellular matrix and extracellular vesicles.<h4>Objective</h4>A key objective is to evaluate recent developments in immunotherapeutic approaches, including immune checkpoint inhibitors, tumor vaccines, adoptive cell transfer, and novel combinatorial regimens, while addressing their therapeutic promise and inherent limitations, especially in microsatellite-stable (MSS) tumors that exhibit primary resistance to standard immunotherapies. Further analysis integrates perspectives on metabolic reprogramming within the TME, epigenetic alterations, and advances in engineered cellular therapies, thereby providing a comprehensive framework for overcoming immunosuppressive mechanisms.<h4>Discussion and conclusion</h4>Special consideration is directed toward the translational value of targeting immune-metabolic interactions and spatial dynamics within the TME. Ultimately, this work synthesizes current knowledge and outlines forward-looking strategies to advance personalized, multi-target immunotherapy, with the potential to reshape clinical paradigms in CRC management.",
+      "isOpenAccess": false,
+      "source": "Europe PMC",
+      "affiliation": "Graduate School, Hebei North University, Zhangjiakou, China.",
+      "volume": "57",
+      "issue": "1",
+      "pages": "2591308",
+      "license": "cc by",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Immunotherapy",
+          "Research progress",
+          "Colorectal Cancer",
+          "Tumor Microenvironment"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Colorectal Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Cancer Vaccines",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TD",
+                  "qualifierName": "trends",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Tumor Escape",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Tumor Microenvironment",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Immune Checkpoint Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": {
+        "grant": [
+          {
+            "grantId": "CXZZSS2025118",
+            "agency": "Graduate Innovation Funding Project in Hebei Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "H2022405033",
+            "agency": "Hebei Provincial Natural Science Precision Medicine Joint Fund Project",
+            "orderIn": 0
+          },
+          {
+            "grantId": "202410092006",
+            "agency": "Hebei Province National College Students Innovation and Entrepreneurship Training Project",
+            "orderIn": 0
+          },
+          {
+            "grantId": "CX202409",
+            "agency": "the Postgraduate Education Project of Hebei North College",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": false,
+      "hasSuppl": false
+    },
+    {
+      "title": "Neoadjuvant immunotherapy in squamous cell carcinoma of the head and neck: current evidence and future perspectives.",
+      "authors": [
+        "Zhang B",
+        "Tan H",
+        "Kuang J",
+        "Zhou B",
+        "Liang S",
+        "Pang X",
+        "Ouyang Y",
+        "Zhang Z",
+        "Long Y",
+        "Zhang H."
+      ],
+      "journal": "Molecular cancer",
+      "year": "2025",
+      "doi": "10.1186/s12943-025-02487-4",
+      "pmcid": "PMC12604315",
+      "pmid": "41214710",
+      "abstract": "Head and Neck Squamous Cell Carcinoma (HNSCC) is a highly aggressive malignant tumor. Traditional therapeutic approaches have limited efficacy in locally advanced HNSCC patients, and neoadjuvant immunotherapy has emerged as a new hope. However, the current outcomes of neoadjuvant immunotherapy for HNSCC are not yet optimal and urgently need improvement. This article comprehensively reviews the clinical research progress of neoadjuvant immunotherapy in the field of HNSCC treatment. By integrating perspectives from the regulatory mechanisms of the immune microenvironment, we propose future research directions for enhancing the efficacy of neoadjuvant immunotherapy for HNSCC patients.",
+      "isOpenAccess": true,
+      "source": "Europe PMC",
+      "affiliation": "Hunan provincial clinical research centre for oncoplastic surgery, The Affiliated Cancer Hospital of Xiangya School of Medicine, Hunan Cancer Hospital, Central South University, Changsha, Hunan, 410013, P. R. China.",
+      "volume": "24",
+      "issue": "1",
+      "pages": "284",
+      "license": "cc by-nc-nd",
+      "citedBy": 0,
+      "keywords": {
+        "keyword": [
+          "Clinical Trials",
+          "Head And Neck Squamous Cell Carcinoma",
+          "Nit",
+          "Neoadjuvant Immunotherapy",
+          "Immunoregulatory Mechanisms"
+        ]
+      },
+      "meshTerms": {
+        "meshHeading": [
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Humans"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Head and Neck Neoplasms",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Treatment Outcome"
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Immunotherapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Neoadjuvant Therapy",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "MT",
+                  "qualifierName": "methods",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Tumor Microenvironment",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "DE",
+                  "qualifierName": "drug effects",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "Y",
+            "descriptorName": "Squamous Cell Carcinoma of Head and Neck",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "ET",
+                  "qualifierName": "etiology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "IM",
+                  "qualifierName": "immunology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "PA",
+                  "qualifierName": "pathology",
+                  "majorTopic_YN": "N"
+                },
+                {
+                  "abbreviation": "TH",
+                  "qualifierName": "therapy",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          },
+          {
+            "majorTopic_YN": "N",
+            "descriptorName": "Immune Checkpoint Inhibitors",
+            "meshQualifierList": {
+              "meshQualifier": [
+                {
+                  "abbreviation": "TU",
+                  "qualifierName": "therapeutic use",
+                  "majorTopic_YN": "N"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "grants": {
+        "grant": [
+          {
+            "grantId": "Grant No. 82273466",
+            "agency": "National Natural Science Foundation of China",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2024JJ8117",
+            "agency": "Natural Science Foundation of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "20250731-1015",
+            "agency": "High-Level Talent Support Program of Hunan Cancer Hospital",
+            "orderIn": 0
+          },
+          {
+            "grantId": "20230355",
+            "agency": "Health Commission of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2023ZJ1120",
+            "agency": "Department of Science and Technology of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2024JJ2039",
+            "agency": "Natural Science Foundation of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "20250730-1011",
+            "agency": "High-Level Talent Support Program of Hunan Cancer Hospital",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2024JJ9264",
+            "agency": "Natural Science Foundation of Hunan Province",
+            "orderIn": 0
+          },
+          {
+            "grantId": "ZX2021002",
+            "agency": "Hunan Cancer Hospital Climb Plan",
+            "orderIn": 0
+          },
+          {
+            "grantId": "2023JJ60468",
+            "agency": "Natural Science Foundation of Hunan Province",
+            "orderIn": 0
+          }
+        ]
+      },
+      "hasData": true,
+      "hasSuppl": true
+    }
+  ]
+}

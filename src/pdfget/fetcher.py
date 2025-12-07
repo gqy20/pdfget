@@ -108,7 +108,7 @@ class PaperFetcher:
         }
 
         try:
-            response = self.session.get(search_url, params=params, timeout=30)
+            response = self.session.get(search_url, params=params, timeout=30)  # type: ignore[arg-type]
             response.raise_for_status()
 
             data = response.json()
@@ -323,7 +323,7 @@ class PaperFetcher:
                     cache_file.unlink()
                     return None
 
-                return data
+                return data  # type: ignore
 
             except Exception as e:
                 self.logger.debug(f"缓存读取失败: {str(e)}")
@@ -332,7 +332,7 @@ class PaperFetcher:
 
         return None
 
-    def _save_cache(self, doi: str, result: dict):
+    def _save_cache(self, doi: str, result: dict) -> None:
         """保存缓存"""
         try:
             cache_file = self.cache_dir / f"cache_{hashlib.md5(doi.encode()).hexdigest()}.json"
