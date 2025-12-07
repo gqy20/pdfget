@@ -147,6 +147,7 @@ data/logs/
 !data/pdfs/download_results.json
 !data/pdfs/search_results_example.json
 !data/pdfs/*.pdf
+!data/cache/cache_example.json
 
 # OS
 .DS_Store
