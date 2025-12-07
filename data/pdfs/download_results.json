@@ -1,53 +1,22 @@
 {
-  "timestamp": "1765096386.6132574",
-  "total": 3,
+  "timestamp": 1765097109.3935137,
+  "total": 1,
   "success": 1,
   "results": [
     {
       "success": true,
-      "doi": "10.1016/j.cell.2020.01.021",
-      "pmcid": "PMC8349178",
-      "pdf_path": "data/cache/PMC8349178_10.1016j.cell.2020.01.021.pdf",
+      "doi": "10.3390/ijms262210839",
+      "pmcid": "PMC12652641",
+      "pdf_path": "data/cache/PMC12652641_10.3390ijms262210839.pdf",
       "content_type": "pdf",
-      "title": "A Deep Learning Approach to Antibiotic Discovery.",
-      "journal": "Cell",
+      "title": "Special Issue \"Molecular Advances in Cancer Immunotherapy\".",
+      "journal": "International journal of molecular sciences",
       "authors": [
-        "Stokes JM",
-        "Yang K",
-        "Swanson K",
-        "Jin W",
-        "Cubillos-Ruiz A",
-        "Donghia NM",
-        "MacNair CR",
-        "French S",
-        "Carfrae LA",
-        "Bloom-Ackermann Z",
-        "Tran VM",
-        "Chiappino-Pepe A",
-        "Badran AH",
-        "Andrews IW",
-        "Chory EJ",
-        "Church GM",
-        "Brown ED",
-        "Jaakkola TS",
-        "Barzilay R",
-        "Collins JJ."
+        "Schaft N."
       ],
-      "year": "2020",
-      "abstract": "Due to the rapid emergence of antibiotic-resistant bacteria, there is a growing need to discover new antibiotics. To address this challenge, we trained a deep neural network capable of predicting molecules with antibacterial activity. We performed predictions on multiple chemical libraries and discovered a molecule from the Drug Repurposing Hub-halicin-that is structurally divergent from conventional antibiotics and displays bactericidal activity against a wide phylogenetic spectrum of pathogens including Mycobacterium tuberculosis and carbapenem-resistant Enterobacteriaceae. Halicin also effectively treated Clostridioides difficile and pan-resistant Acinetobacter baumannii infections in murine models. Additionally, from a discrete set of 23 empirically tested predictions from >107 million molecules curated from the ZINC15 database, our model identified eight antibacterial compounds that are structurally distant from known antibiotics. This work highlights the utility of deep learning approaches to expand our antibiotic arsenal through the discovery of structurally distinct antibacterial molecules.",
-      "timestamp": 1765096546.0905073
-    },
-    {
-      "success": false,
-      "error": "Not found in Europe PMC",
-      "doi": "10.1038/nature.2021.12345",
-      "timestamp": 1765096550.1230547
-    },
-    {
-      "success": false,
-      "error": "Not found in Europe PMC",
-      "doi": "10.1126/science.2022.67890",
-      "timestamp": 1765096551.8916614
+      "year": "2025",
+      "abstract": "Cancer immunotherapy is defined as a type of cancer treatment that helps the immune system recognize and attack cancer cells more effectively [...].",
+      "timestamp": 1765097109.392194
     }
   ]
 }

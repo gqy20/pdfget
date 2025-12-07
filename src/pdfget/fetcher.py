@@ -7,6 +7,7 @@
 
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -35,6 +36,120 @@ class PaperFetcher:
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (compatible; PaperFetcher/1.0)"
         })
+
+    def parse_query(self, query: str) -> str:
+        """
+        解析高级检索词为Europe PMC格式
+
+        支持的语法：
+        - 布尔运算符：AND, OR, NOT
+        - 字段检索：title:, author:, journal:
+        - 短语检索："exact phrase"
+
+        Args:
+            query: 用户输入的检索词
+
+        Returns:
+            Europe PMC格式的检索词
+        """
+        # 处理短语检索（引号包围的内容）
+        phrase_pattern = r'"([^"]+)"'
+        phrases = re.findall(phrase_pattern, query)
+
+        # 临时替换短语为占位符
+        for i, phrase in enumerate(phrases):
+            query = query.replace(f'"{phrase}"', f'__PHRASE_{i}__')
+
+        # 处理字段检索
+        field_mappings = {
+            'title:': 'TITLE:',
+            'author:': 'AUTHOR:',
+            'journal:': 'JOURNAL:',
+            'abstract:': 'ABSTRACT:'
+        }
+
+        for user_field, pmc_field in field_mappings.items():
+            query = query.replace(user_field, pmc_field)
+
+        # 恢复短语，并添加必要的引号
+        for i, phrase in enumerate(phrases):
+            query = query.replace(f'__PHRASE_{i}__', f'"{phrase}"')
+
+        # 处理布尔运算符（确保大写）
+        query = query.replace(' and ', ' AND ').replace(' or ', ' OR ').replace(' not ', ' NOT ')
+
+        return query.strip()
+
+    def search_papers(self, query: str, limit: int = 50) -> list[dict]:
+        """
+        通过Europe PMC搜索文献
+
+        Args:
+            query: 检索词（支持高级语法）
+            limit: 返回结果数量限制
+
+        Returns:
+            文献列表，包含DOI、标题、作者等信息
+        """
+        self.logger.info(f"🔍 搜索文献: {query}")
+
+        # 解析检索词
+        parsed_query = self.parse_query(query)
+        self.logger.debug(f"  解析后: {parsed_query}")
+
+        # 构建搜索URL
+        search_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+        params = {
+            "query": parsed_query,
+            "resulttype": "core",
+            "format": "json",
+            "pageSize": min(limit, 1000),  # Europe PMC限制最多1000条
+            "cursorMark": "*"
+        }
+
+        try:
+            response = self.session.get(search_url, params=params, timeout=30)
+            response.raise_for_status()
+
+            data = response.json()
+
+            if data.get("hitCount", 0) == 0:
+                self.logger.info("  ❌ 未找到匹配的文献")
+                return []
+
+            # 处理结果
+            papers = []
+            results = data.get("resultList", {}).get("result", [])
+
+            for i, record in enumerate(results[:limit]):
+                paper = {
+                    "title": record.get("title", ""),
+                    "authors": [a.strip() for a in record.get("authorString", "").split(",")] if record.get("authorString") else [],
+                    "journal": record.get("journalInfo", {}).get("journal", {}).get("title", ""),
+                    "year": record.get("pubYear", ""),
+                    "doi": record.get("doi", ""),
+                    "pmcid": record.get("pmcid", ""),
+                    "pmid": record.get("pmid", ""),
+                    "abstract": record.get("abstractText", ""),
+                    "isOpenAccess": bool(record.get("pmcid")),  # 有PMCID通常表示开放获取
+                    "source": "Europe PMC"
+                }
+                papers.append(paper)
+
+                self.logger.info(f"  📄 {i+1}/{min(len(results), limit)}: {paper['title'][:60]}...")
+
+            self.logger.info(f"  ✅ 找到 {len(papers)} 篇文献")
+            return papers
+
+        except requests.exceptions.Timeout:
+            self.logger.error("  ❌ 搜索超时")
+            return []
+        except requests.exceptions.ConnectionError:
+            self.logger.error("  ❌ 连接失败")
+            return []
+        except Exception as e:
+            self.logger.error(f"  ❌ 搜索失败: {str(e)}")
+            return []
 
     def fetch_by_doi(self, doi: str, timeout: int = 30) -> dict:
         """

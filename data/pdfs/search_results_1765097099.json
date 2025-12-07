@@ -1,0 +1,39 @@
+{
+  "query": "cancer AND immunotherapy",
+  "timestamp": 1765097099.6871676,
+  "total": 2,
+  "results": [
+    {
+      "title": "Special Issue \"Molecular Advances in Cancer Immunotherapy\".",
+      "authors": [
+        "Schaft N."
+      ],
+      "journal": "International journal of molecular sciences",
+      "year": "2025",
+      "doi": "10.3390/ijms262210839",
+      "pmcid": "PMC12652641",
+      "pmid": "41303327",
+      "abstract": "Cancer immunotherapy is defined as a type of cancer treatment that helps the immune system recognize and attack cancer cells more effectively [...].",
+      "isOpenAccess": true,
+      "source": "Europe PMC"
+    },
+    {
+      "title": "Progress of Exosomes in Cancer Immunotherapy.",
+      "authors": [
+        "Wang Y",
+        "Wang J",
+        "Li H",
+        "Deng S",
+        "Li Y."
+      ],
+      "journal": "Cell biochemistry and function",
+      "year": "2025",
+      "doi": "10.1002/cbf.70140",
+      "pmcid": "",
+      "pmid": "41230743",
+      "abstract": "Cancer immunotherapy, focusing on breaking tumor microenvironment (TME) immunosuppression, is limited by heterogeneity and drug resistance. Exosomes, 30-150 nm extracellular vesicles(EVs) carrying proteins, lipids, and noncoding RNAs, mediate intercellular communication and play dual roles in tumors. This review explores their multifaceted functions in cancer immunotherapy: in TME, tumor-derived exosomes (TDEs) drive immunosuppression, cancer-associated fibroblasts(CAFs) activation, and angiogenesis to promote progression and immune checkpoint inhibitors (ICIs) resistance; diagnostically, exosomal biomolecules (e.g., urinary miR-424/423/660/let-7i, serum LINC01125) serve as sensitive liquid biopsy markers for early detection and monitoring; therapeutically, engineered exosomes (e.g., DC-derived antigen-loaded ones) activate antitumor immunity and reverse ICIs resistance. These findings highlight exosomes' potential as diagnostic and therapeutic tools, laying a foundation for personalized cancer treatment.",
+      "isOpenAccess": false,
+      "source": "Europe PMC"
+    }
+  ]
+}
