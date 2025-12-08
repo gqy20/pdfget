@@ -42,7 +42,7 @@ class StatsFormatter:
         )
         output.append(f"   文件数量: {stats['with_pmcid']:,} 个PDF")
         output.append(
-            f"   估算大小: {stats['estimated_size_mb']:,.0f} MB ({stats['estimated_size_mb']/1024:.1f} GB)"
+            f"   估算大小: {stats['estimated_size_mb']:,.0f} MB ({stats['estimated_size_mb'] / 1024:.1f} GB)"
         )
 
         return "\n".join(output)
@@ -78,13 +78,13 @@ class StatsFormatter:
         output.append("|------|------|--------|")
         output.append(f"| 总文献数 | {stats['total']:,} | 100% |")
         output.append(
-            f"| 检查文献数 | {stats['checked']:,} | {stats['checked']/stats['total']*100:.1f}% |"
+            f"| 检查文献数 | {stats['checked']:,} | {stats['checked'] / stats['total'] * 100:.1f}% |"
         )
         output.append(
             f"| 有PMCID（开放获取） | {stats['with_pmcid']:,} | {stats['rate']:.1f}% |"
         )
         output.append(
-            f"| 无PMCID | {stats['without_pmcid']:,} | {100-stats['rate']:.1f}% |"
+            f"| 无PMCID | {stats['without_pmcid']:,} | {100 - stats['rate']:.1f}% |"
         )
         output.append("")
         output.append("### 处理效率")
@@ -106,7 +106,7 @@ class StatsFormatter:
         output.append("### 下载估算")
         output.append(f"- 文件数量: {stats['with_pmcid']:,} 个PDF")
         output.append(
-            f"- 估算大小: {stats['estimated_size_mb']:,.0f} MB ({stats['estimated_size_mb']/1024:.1f} GB)"
+            f"- 估算大小: {stats['estimated_size_mb']:,.0f} MB ({stats['estimated_size_mb'] / 1024:.1f} GB)"
         )
         output.append("")
         output.append("---")

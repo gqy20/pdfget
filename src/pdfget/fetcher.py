@@ -366,7 +366,7 @@ class PaperFetcher:
                     result_data.update(batch_result)
 
                 except Exception as e:
-                    print(f"获取第 {i//batch_size + 1} 批摘要信息时出错: {e}")
+                    print(f"获取第 {i // batch_size + 1} 批摘要信息时出错: {e}")
                     continue
 
             # 3. 使用 EFetch 获取详细信息（包括 PMCID）
@@ -453,7 +453,7 @@ class PaperFetcher:
                                     pmcid = f"PMC{pmcid}"
                                 pmid_to_pmcid[current_pmid] = pmcid
                     except Exception as e:
-                        print(f"处理第 {i//batch_size + 1} 批时出错: {e}")
+                        print(f"处理第 {i // batch_size + 1} 批时出错: {e}")
                         continue
 
             # 处理结果
