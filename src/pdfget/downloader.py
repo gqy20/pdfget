@@ -107,14 +107,36 @@ class ConcurrentDownloader:
             self._update_progress(False)
             return {"doi": doi, "success": False, "error": str(e)}
 
+    def _download_single_with_pmcid(
+        self, doi: str, pmcid: str | None, fetcher: PaperFetcher, timeout: int = 30
+    ) -> Dict[str, Any]:
+        """单个文献的下载任务（带PMCID）"""
+        try:
+            # 添加随机延迟
+            time.sleep(self._get_delay())
+
+            result = fetcher.fetch_by_doi(doi, pmcid=pmcid, timeout=timeout)
+
+            # 更新进度
+            success = result.get("success", False)
+            pdf_downloaded = bool(result.get("pdf_path"))
+            self._update_progress(success, pdf_downloaded)
+
+            return result
+
+        except Exception as e:
+            self.logger.debug(f"下载失败 ({doi}): {str(e)}")
+            self._update_progress(False)
+            return {"doi": doi, "success": False, "error": str(e)}
+
     def download_batch(
-        self, dois: List[str], timeout: int = 30
+        self, dois: List[str] | List[dict], timeout: int = 30
     ) -> List[Dict[str, Any]]:
         """
         并发批量下载文献
 
         Args:
-            dois: DOI列表
+            dois: DOI列表或论文信息列表
             timeout: 单个请求超时时间
 
         Returns:
@@ -122,6 +144,14 @@ class ConcurrentDownloader:
         """
         if not dois:
             return []
+
+        # 检查输入格式
+        papers: list[dict] = []
+        if dois and isinstance(dois[0], dict):
+            papers = dois  # type: ignore
+            dois = [p["doi"] for p in papers if p.get("doi")]  # type: ignore
+        else:
+            papers = [{"doi": d} for d in dois]
 
         self.logger.info(
             f"🚀 启动并发下载：{len(dois)} 篇文献，{self.max_workers} 个并发线程"
@@ -141,11 +171,17 @@ class ConcurrentDownloader:
             # 提交所有下载任务
             future_to_doi = {}
 
-            for doi in dois:
+            for paper in papers:
                 # 为每个线程创建独立的fetcher
                 thread_fetcher = self._create_thread_fetcher()
+                doi = paper["doi"] if isinstance(paper, dict) else paper
+                pmcid = paper.get("pmcid") if isinstance(paper, dict) else None
                 future = executor.submit(
-                    self._download_single, doi, thread_fetcher, timeout
+                    self._download_single_with_pmcid,
+                    doi,
+                    str(pmcid) if pmcid else None,
+                    thread_fetcher,
+                    timeout,
                 )
                 future_to_doi[future] = doi
 

@@ -50,6 +50,12 @@ def main() -> None:
     parser.add_argument("-d", action="store_true", help="下载PDF")
     parser.add_argument("-t", type=int, default=3, help="并发线程数（默认3）")
     parser.add_argument("-v", action="store_true", help="详细输出")
+    parser.add_argument(
+        "-S",
+        choices=["pubmed", "europe_pmc", "both"],
+        default="pubmed",
+        help="数据源（默认: pubmed）",
+    )
 
     args = parser.parse_args()
 
@@ -58,7 +64,9 @@ def main() -> None:
     logger = logging.getLogger("PDFDownloader")
 
     # 初始化下载器
-    fetcher = PaperFetcher(cache_dir="data/cache", output_dir="data/pdfs")
+    fetcher = PaperFetcher(
+        cache_dir="data/cache", output_dir="data/pdfs", default_source=args.S
+    )
 
     logger.info("🚀 PDF下载器启动")
     logger.info(f"   输出目录: {args.o}")
@@ -80,8 +88,8 @@ def main() -> None:
 
         elif args.s:
             # 搜索文献
-            logger.info(f"\n🔍 搜索文献: {args.s}")
-            papers = fetcher.search_papers(args.s, limit=args.l)
+            logger.info(f"\n🔍 搜索文献: {args.s} (数据源: {args.S})")
+            papers = fetcher.search_papers(args.s, limit=args.l, source=args.S)
 
             if not papers:
                 logger.error("❌ 未找到匹配的文献")
@@ -129,14 +137,14 @@ def main() -> None:
                 logger.info(f"   找到 {len(oa_papers)} 篇开放获取文献")
 
                 if oa_papers:
-                    # 构造DOI列表
-                    dois = [p["doi"] for p in oa_papers if p["doi"]]
+                    # 传递论文信息（包含PMCID）
+                    papers_to_fetch = oa_papers  # 已经是有PMCID的论文列表
 
-                    if dois:
+                    if papers_to_fetch:
                         # 根据线程数决定是否使用并发下载
-                        if len(dois) > 1 and args.t > 1:
+                        if len(papers_to_fetch) > 1 and args.t > 1:
                             logger.info(
-                                f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献"
+                                f"\n🚀 使用 {args.t} 个线程并发下载 {len(papers_to_fetch)} 篇文献"
                             )
                             concurrent_downloader = ConcurrentDownloader(
                                 max_workers=args.t,
@@ -144,11 +152,13 @@ def main() -> None:
                                 fetcher=fetcher,
                             )
                             results = concurrent_downloader.download_batch(
-                                dois, timeout=TIMEOUT
+                                papers_to_fetch, timeout=TIMEOUT
                             )
                         else:
                             # 单线程下载（保持原有逻辑）
-                            results = fetcher.fetch_batch(dois, delay=args.delay)
+                            results = fetcher.fetch_batch(
+                                papers_to_fetch, delay=args.delay
+                            )
 
                         # 统计结果
                         success_count = sum(1 for r in results if r.get("success"))
