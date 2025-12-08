@@ -13,6 +13,8 @@ import logging
 
 from .fetcher import PaperFetcher
 from .downloader import ConcurrentDownloader
+from .counter import PMCIDCounter
+from .formatter import StatsFormatter
 from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
 
 
@@ -42,6 +44,11 @@ def main() -> None:
     group.add_argument("-i", help="输入文件（CSV或TXT）")
     group.add_argument("-s", help="搜索文献")
 
+    # 统计选项
+    parser.add_argument(
+        "--count", action="store_true", help="统计PMCID数量（需要配合-s使用）"
+    )
+
     # 可选参数
     parser.add_argument("-c", default="doi", help="CSV列名（默认: doi）")
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
@@ -55,6 +62,11 @@ def main() -> None:
         choices=["pubmed", "europe_pmc", "both"],
         default="pubmed",
         help="数据源（默认: pubmed）",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["console", "json", "markdown"],
+        help="统计输出格式（仅用于--count）",
     )
 
     args = parser.parse_args()
@@ -72,7 +84,36 @@ def main() -> None:
     logger.info(f"   输出目录: {args.o}")
 
     try:
-        if args.doi:
+        if args.count:
+            # 统计PMCID数量
+            if not args.s:
+                logger.error("❌ --count 需要配合 -s 参数使用")
+                exit(1)
+
+            # 初始化统计器
+            from . import config
+
+            email = getattr(config, "NCBI_EMAIL", None)
+            api_key = getattr(config, "NCBI_API_KEY", None)
+
+            counter = PMCIDCounter(email=email, api_key=api_key)
+
+            # 执行统计
+            stats = counter.count_pmcid(args.s, limit=args.l)
+
+            # 格式化输出
+            formatted_output = StatsFormatter.format(stats, args.format)
+            print(formatted_output)
+
+            # 如果指定了输出格式，保存报告
+            if args.format and args.format != "console":
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                filename = f"pmcid_stats_{timestamp}"
+                StatsFormatter.save_report(stats, filename, args.format)
+
+            return
+
+        elif args.doi:
             # 单个DOI下载
             logger.info(f"\n📄 下载单个文献: {args.doi}")
             result = fetcher.fetch_by_doi(args.doi, timeout=TIMEOUT)

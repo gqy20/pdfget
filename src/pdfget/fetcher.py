@@ -343,11 +343,31 @@ class PaperFetcher:
             if self.api_key:
                 summary_params["api_key"] = self.api_key
 
-            response = self.session.get(summary_url, params=summary_params, timeout=30)
-            response.raise_for_status()
+            # 分批获取summary信息以避免URL过长
+            result_data = {}
+            batch_size = 200  # 每批处理200个PMID
 
-            summary_data = response.json()
-            result_data = summary_data.get("result", {})
+            if len(idlist) > batch_size:
+                print(f"PMID数量过多({len(idlist)})，分批获取摘要信息...")
+
+            for i in range(0, len(idlist), batch_size):
+                batch_ids = idlist[i : i + batch_size]
+                batch_params = summary_params.copy()
+                batch_params["id"] = ",".join(batch_ids)
+
+                try:
+                    response = self.session.get(
+                        summary_url, params=batch_params, timeout=30
+                    )
+                    response.raise_for_status()
+
+                    batch_data = response.json()
+                    batch_result = batch_data.get("result", {})
+                    result_data.update(batch_result)
+
+                except Exception as e:
+                    print(f"获取第 {i//batch_size + 1} 批摘要信息时出错: {e}")
+                    continue
 
             # 3. 使用 EFetch 获取详细信息（包括 PMCID）
             self._rate_limit_pubmed()
@@ -388,7 +408,53 @@ class PaperFetcher:
 
                     pmcid_match = re.search(pmcid_pattern, line)
                     if pmcid_match and current_pmid:
-                        pmid_to_pmcid[current_pmid] = pmcid_match.group(1)
+                        # 标准化PMCID，确保包含PMC前缀
+                        pmcid = pmcid_match.group(1)
+                        if not pmcid.startswith("PMC"):
+                            pmcid = f"PMC{pmcid}"
+                        pmid_to_pmcid[current_pmid] = pmcid
+            else:
+                # 如果因为ID太多导致EFetch失败，尝试分批处理
+                print(f"PMID数量过多({len(idlist)})，分批获取PMCID信息...")
+                batch_size = 100  # 每批处理100个PMID
+                for i in range(0, len(idlist), batch_size):
+                    batch_ids = idlist[i : i + batch_size]
+                    self._rate_limit_pubmed()
+                    batch_params = {
+                        "db": "pubmed",
+                        "id": ",".join(batch_ids),
+                        "retmode": "xml",
+                        "rettype": "full",
+                    }
+
+                    if self.email:
+                        batch_params["email"] = self.email
+                    if self.api_key:
+                        batch_params["api_key"] = self.api_key
+
+                    try:
+                        response = self.session.get(
+                            fetch_url, params=batch_params, timeout=30
+                        )
+                        response.raise_for_status()
+                        batch_xml = response.text
+
+                        # 解析这批的XML
+                        current_pmid = None
+                        for line in batch_xml.split("\n"):
+                            pmid_match = re.search(pmid_pattern, line)
+                            if pmid_match:
+                                current_pmid = pmid_match.group(1)
+
+                            pmcid_match = re.search(pmcid_pattern, line)
+                            if pmcid_match and current_pmid:
+                                pmcid = pmcid_match.group(1)
+                                if not pmcid.startswith("PMC"):
+                                    pmcid = f"PMC{pmcid}"
+                                pmid_to_pmcid[current_pmid] = pmcid
+                    except Exception as e:
+                        print(f"处理第 {i//batch_size + 1} 批时出错: {e}")
+                        continue
 
             # 处理结果
             papers = []
@@ -419,6 +485,9 @@ class PaperFetcher:
 
                 # 判断是否开放获取（如果有 PMC ID）
                 pmcid = pmid_to_pmcid.get(pmid, record.get("pmcid", ""))
+                # 标准化PMCID，确保包含PMC前缀
+                if pmcid and not pmcid.startswith("PMC"):
+                    pmcid = f"PMC{pmcid}"
                 is_open_access = bool(pmcid)
 
                 paper = {
@@ -830,6 +899,9 @@ class PaperFetcher:
                     continue
 
                 # 保存文件
+                # 标准化PMCID格式，确保包含PMC前缀
+                if pmcid and not pmcid.startswith("PMC"):
+                    pmcid = f"PMC{pmcid}"
                 safe_doi = "".join(c for c in doi if c.isalnum() or c in "-._")
                 filename = f"{pmcid}_{safe_doi}.pdf"
                 file_path = self.output_dir / filename

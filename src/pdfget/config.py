@@ -28,3 +28,8 @@ HEADERS = {
 # 日志设置
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+
+# PMCID统计设置
+COUNT_BATCH_SIZE = 80  # 每批处理的PMID数量
+COUNT_MAX_WORKERS = 10  # 并行处理的线程数
+COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
