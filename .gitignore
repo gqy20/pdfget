@@ -137,21 +137,14 @@ dmypy.json
 *.swp
 *.swo
 
-# Data files - 排除缓存和临时文件，保留测试数据
-data/cache/
-data/pdfs/search_results_*.json
-data/pdfs/download_results_*.json
-data/pdfs/*.tmp
-data/logs/
+# Data files - 完全忽略data文件夹
+data/
 
 # 统计报告（临时生成的）
 pmcid_report.md
 pmcid_stats_*.json
 pmcid_stats_*.md
 
-# 保留有价值的测试结果文件
-!data/pdfs/search_results_example.json
-!data/cache/cache_example.json
 
 # OS
 .DS_Store
