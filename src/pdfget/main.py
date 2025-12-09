@@ -10,7 +10,13 @@ import logging
 import time
 from pathlib import Path
 
-from .config import DEFAULT_SEARCH_LIMIT, DEFAULT_SOURCE, TIMEOUT
+from .config import (
+    DEFAULT_SEARCH_LIMIT,
+    DEFAULT_SOURCE,
+    NCBI_API_KEY,
+    NCBI_EMAIL,
+    TIMEOUT,
+)
 from .counter import PMCIDCounter
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
@@ -90,6 +96,8 @@ def main() -> None:
         choices=["console", "json", "markdown"],
         help="统计输出格式",
     )
+    parser.add_argument("-e", help="NCBI API邮箱（提高请求限制）")
+    parser.add_argument("-k", help="NCBI API密钥（可选）")
 
     args = parser.parse_args()
 
@@ -192,15 +200,9 @@ def main() -> None:
 
             else:
                 # 统计模式：获取全部文献的PMCID信息
-                try:
-                    import config
-
-                    email = getattr(config, "NCBI_EMAIL", None)
-                    api_key = getattr(config, "NCBI_API_KEY", None)
-                except ImportError:
-                    # 如果没有外部配置文件，使用默认值
-                    email = None
-                    api_key = None
+                # 使用命令行参数或配置文件中的邮箱/API密钥
+                email = args.e or NCBI_EMAIL
+                api_key = args.k or NCBI_API_KEY
 
                 counter = PMCIDCounter(email=email, api_key=api_key)
 

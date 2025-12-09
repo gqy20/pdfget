@@ -51,6 +51,9 @@ pdfget -s "machine learning" -l 20
 # 下载PDF（添加-d参数）
 pdfget -s "deep learning" -l 50 -d
 
+# 使用自己的邮箱和API密钥（可选，提高搜索请求限制）
+pdfget -s "quantum" -l 30 -e your-email@example.com -k your-api-key
+
 # 指定Europe PMC作为数据源
 pdfget -s "quantum" -S europe_pmc -l 30
 
@@ -71,6 +74,8 @@ uv run pdfget -s "machine learning" -l 20
 - 搜索时默认进入统计模式，显示PMCID统计信息
 - 添加 `-d` 参数进入下载模式，下载开放获取的PDF
 - PubMed 是默认数据源，可指定 `europe_pmc` 或 `both`
+- 邮箱和API密钥是可选的，仅用于提高搜索请求限制（3→10次/秒）
+- 下载功能不需要API密钥，使用公开的开放获取服务
 
 ## 3. 高级检索语法
 
@@ -193,6 +198,42 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 - `-t NUM` : 并发线程数（默认3）
 - `--format FORMAT` : 统计输出格式（console/json/markdown，默认console）
 - `-v` : 详细输出
+
+### 4.3 NCBI API 配置
+- `-e EMAIL` : NCBI API邮箱（提高请求限制，推荐设置）
+- `-k KEY` : NCBI API密钥（推荐，便于监控使用情况）
+
+**配置示例**：
+```bash
+# 使用自己的邮箱（推荐）
+pdfget -s "cancer" -l 100 -e your-email@example.com
+
+# 使用邮箱和API密钥
+pdfget -s "machine learning" -l 500 -e your-email@example.com -k your-api-key
+```
+
+**为什么要配置邮箱？**
+- 邮箱是可选的，但推荐配置以遵守NCBI使用政策
+- 有助于 NCBI 在出现问题时联系您
+
+**获取 NCBI API 密钥**（推荐）：
+1. 访问 [NCBI 账户页面](https://www.ncbi.nlm.nih.gov/account/)
+2. 创建或登录 NCBI 账户（免费）
+3. 登录后访问 [账户设置](https://www.ncbi.nlm.nih.gov/account/settings/)
+4. 查找 "API Key Management" 部分创建 API 密钥
+5. 提供简要的应用描述并接受服务条款
+
+**重要说明**：
+- API 密钥可以将请求限制从 3 次/秒提高到 10 次/秒（仅用于搜索）
+- API 密钥主要用于 NCBI 监控使用情况和问题追踪
+- 虽不是必需，但建议配置以获得更好的搜索性能
+
+**下载功能说明**：
+- PDF 下载不需要 API 密钥（使用公开的 PMC OA Service）
+- 下载通过以下公开服务进行：
+  - PMC Open Access Web Service
+  - Europe PMC 直接下载链接
+- 只有搜索和 PMCID 获取需要使用 NCBI E-utilities API
 
 ## 5. 输出格式与文件结构
 
