@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """PMCID统计器 - 并行统计开放获取文献数量"""
 
+import logging
 import random
 import re
 import time
@@ -9,9 +10,8 @@ from typing import Dict, List, Tuple
 
 import requests
 
-import logging
-
 from . import config
+from .config import AVG_PDF_SIZE_MB, PUBMED_MAX_RESULTS
 
 
 class PMCIDCounter:
@@ -66,7 +66,9 @@ class PMCIDCounter:
         time.sleep(random.uniform(0.05, 0.15))
 
         try:
-            response = self.session.get(fetch_url, params=params, timeout=30)
+            response = self.session.get(
+                fetch_url, params=params, timeout=config.TIMEOUT
+            )
             response.raise_for_status()
             xml = response.text
 
@@ -114,11 +116,11 @@ class PMCIDCounter:
 
         # 1. 获取PMID列表
         search_url = f"{self.ncbi_base_url}esearch.fcgi"
-        search_params = {
+        search_params: dict[str, str | int] = {
             "db": "pubmed",
             "term": query,
             "retmode": "json",
-            "retmax": min(limit, 10000),  # PubMed单次最多返回10000条
+            "retmax": min(limit, PUBMED_MAX_RESULTS),  # PubMed单次最多返回10000条
         }
 
         if self.email:
@@ -126,7 +128,11 @@ class PMCIDCounter:
         if self.api_key:
             search_params["api_key"] = self.api_key
 
-        response = self.session.get(search_url, params=search_params, timeout=30)  # type: ignore[arg-type]
+        response = self.session.get(
+            search_url,
+            params=search_params,
+            timeout=config.TIMEOUT,  # type: ignore[arg-type]
+        )
         response.raise_for_status()
 
         search_data = response.json()
@@ -185,7 +191,7 @@ class PMCIDCounter:
 
         # 3. 计算结果
         rate = (total_with_pmcid / total_checked) * 100 if total_checked > 0 else 0
-        avg_pdf_size = 1.5  # MB
+        avg_pdf_size = AVG_PDF_SIZE_MB  # MB
         estimated_size_mb = total_with_pmcid * avg_pdf_size
 
         # 返回统计信息

@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Any, Optional
 
 from .fetcher import PaperFetcher
+from .config import DOWNLOAD_BASE_DELAY, DOWNLOAD_RANDOM_DELAY
 
 
 class UnifiedDownloadManager:
@@ -21,8 +22,8 @@ class UnifiedDownloadManager:
         self,
         fetcher: PaperFetcher,
         max_workers: int = 1,
-        base_delay: float = 1.0,
-        random_delay_range: float = 0.5,
+        base_delay: float = DOWNLOAD_BASE_DELAY,
+        random_delay_range: float = DOWNLOAD_RANDOM_DELAY,
     ):
         """
         初始化下载管理器

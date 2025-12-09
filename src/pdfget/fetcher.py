@@ -16,6 +16,8 @@ import requests
 
 import logging
 
+from .config import RATE_LIMIT, SUMMARY_BATCH_SIZE, PMCID_BATCH_SIZE
+
 
 class PaperFetcher:
     """简单文献获取器"""
@@ -46,7 +48,7 @@ class PaperFetcher:
         self.ncbi_base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
         self.email = ""  # 可配置邮箱以提高请求限制
         self.api_key = ""  # 可选 API 密钥
-        self.rate_limit = 3  # 每秒最多3次请求
+        self.rate_limit = RATE_LIMIT  # 每秒最多3次请求
         self._last_request_time = 0.0
 
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -345,10 +347,10 @@ class PaperFetcher:
 
             # 分批获取summary信息以避免URL过长
             result_data = {}
-            batch_size = 200  # 每批处理200个PMID
+            batch_size = SUMMARY_BATCH_SIZE  # 每批处理200个PMID
 
             if len(idlist) > batch_size:
-                print(f"PMID数量过多({len(idlist)})，分批获取摘要信息...")
+                self.logger.info(f"PMID数量过多({len(idlist)})，分批获取摘要信息...")
 
             for i in range(0, len(idlist), batch_size):
                 batch_ids = idlist[i : i + batch_size]
@@ -366,7 +368,9 @@ class PaperFetcher:
                     result_data.update(batch_result)
 
                 except Exception as e:
-                    print(f"获取第 {i // batch_size + 1} 批摘要信息时出错: {e}")
+                    self.logger.error(
+                        f"获取第 {i // batch_size + 1} 批摘要信息时出错: {e}"
+                    )
                     continue
 
             # 3. 使用 EFetch 获取详细信息（包括 PMCID）
@@ -415,8 +419,8 @@ class PaperFetcher:
                         pmid_to_pmcid[current_pmid] = pmcid
             else:
                 # 如果因为ID太多导致EFetch失败，尝试分批处理
-                print(f"PMID数量过多({len(idlist)})，分批获取PMCID信息...")
-                batch_size = 100  # 每批处理100个PMID
+                self.logger.info(f"PMID数量过多({len(idlist)})，分批获取PMCID信息...")
+                batch_size = PMCID_BATCH_SIZE  # 每批处理100个PMID
                 for i in range(0, len(idlist), batch_size):
                     batch_ids = idlist[i : i + batch_size]
                     self._rate_limit_pubmed()
@@ -453,7 +457,7 @@ class PaperFetcher:
                                     pmcid = f"PMC{pmcid}"
                                 pmid_to_pmcid[current_pmid] = pmcid
                     except Exception as e:
-                        print(f"处理第 {i // batch_size + 1} 批时出错: {e}")
+                        self.logger.error(f"处理第 {i // batch_size + 1} 批时出错: {e}")
                         continue
 
             # 处理结果
@@ -715,26 +719,6 @@ class PaperFetcher:
             )
 
         return standardized
-
-    def search_papers_with_fallback(
-        self,
-        query: str,
-        primary: str = "pubmed",
-        fallback: str = "europe_pmc",
-        limit: int = 50,
-    ) -> list[dict]:
-        """
-        带降级的搜索，主数据源失败时尝试备用数据源
-        """
-        try:
-            return self.search_papers(query, limit, source=primary)
-        except Exception as e:
-            self.logger.warning(f"{primary} 搜索失败，尝试 {fallback}: {e}")
-            try:
-                return self.search_papers(query, limit, source=fallback)
-            except Exception as e2:
-                self.logger.error(f"两个数据源都失败: {e2}")
-                return []
 
     def fetch_by_doi(
         self, doi: str, timeout: int = 30, pmcid: str | None = None
