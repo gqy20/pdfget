@@ -58,7 +58,7 @@ pdfget -s "quantum" -S europe_pmc -l 30
 pdfget -s "cancer immunotherapy" -S both -l 100
 
 # 从CSV文件读取PMCID列表下载
-pdfget -m pmcids.csv
+pdfget -m examples/pmcids.csv
 ```
 
 如果您使用 uv 作为包管理器，也可以：
@@ -230,16 +230,16 @@ PMC789012,Deep Learning Review,Science
 使用示例：
 ```bash
 # 下载所有PMCID对应的PDF（默认查找PMCID列）
-pdfget -m pmcids.csv
+pdfget -m examples/pmcids.csv
 
 # 指定PMCID列名
-pdfget -m pmcids.csv -p "ID"
+pdfget -m examples/pmcids.csv -p "ID"
 
 # 使用5个并发线程
-pdfget -m pmcids.csv -t 5
+pdfget -m examples/pmcids.csv -t 5
 
 # 限制只下载前10个
-pdfget -m pmcids.csv -l 10
+pdfget -m examples/pmcids.csv -l 10
 ```
 
 ## 6. 许可证
