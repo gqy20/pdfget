@@ -223,7 +223,6 @@ class PaperSearcher:
                                 authors.append(author["name"])
 
                     # 提取期刊信息
-                    journal = ""
                     year = ""
                     if "pubdate" in article_data:
                         pubdate = article_data["pubdate"]
