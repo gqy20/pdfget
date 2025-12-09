@@ -50,6 +50,16 @@ extend-exclude = '''
   | dist
 )/
 '''
+# 强制双引号字符串
+force-exclude = '''
+/(
+  __pycache__
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+)/
+'''
 
 [tool.isort]
 profile = "black"
@@ -61,6 +71,90 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+# 忽略缺少类型导入
+ignore_missing_imports = true
+# 允许部分类型为 Any
+disallow_any_generics = false
+disallow_subclassing_any = false
+# 检查未定义的类型
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_incomplete_defs = true
+# 检查覆盖
+check_untyped_defs = true
+# 报告类型错误
+show_error_codes = true
+show_error_context = true
+# 模块
+[[tool.mypy.overrides]]
+module = [
+    "pandas.*",
+    "requests.*",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+# Python 版本
+target-version = "py312"
+# 行长度
+line-length = 88
+# 包含的文件
+include = ["src/**/*.py", "tests/**/*.py"]
+# 排除的文件
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# 启用的规则
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # flake8-comprehensions
+    "C4",
+    # flake8-unused-arguments
+    "ARG",
+    # flake8-self
+    "SLF",
+    # isort
+    "I",
+]
+# 忽略的规则
+ignore = [
+    # E501: 行太长（由 black 处理）
+    "E501",
+    # B008: 不要在函数参数中执行函数调用
+    "B008",
+    # ARG002: 未使用的方法参数
+    "ARG002",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试文件中的特殊忽略
+"tests/**/*.py" = [
+    "ARG",  # 允许未使用的测试参数
+    "SLF",  # 允许在测试中使用私有成员
+    "S101",  # 允许使用 assert
+]
+
+[tool.ruff.lint.isort]
+# 与 black 兼容
+known-first-party = ["pdfget"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

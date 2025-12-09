@@ -178,11 +178,10 @@ class TestPaperSearcher:
         """
         测试: 搜索两个源
         """
-        with patch.object(
-            searcher, "search_pubmed", return_value=[]
-        ) as mock_pubmed, patch.object(
-            searcher, "search_europepmc", return_value=[]
-        ) as mock_europe:
+        with (
+            patch.object(searcher, "search_pubmed", return_value=[]) as mock_pubmed,
+            patch.object(searcher, "search_europepmc", return_value=[]) as mock_europe,
+        ):
             searcher.search_papers("test query", source="both")
 
             mock_pubmed.assert_called_once_with("test query", 50)
