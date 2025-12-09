@@ -5,6 +5,7 @@
 """
 
 import re
+from typing import Any
 
 import requests
 
@@ -108,8 +109,8 @@ class PaperSearcher:
         return query
 
     def _normalize_paper_data(
-        self, paper: dict[str, any], source: str
-    ) -> dict[str, any]:
+        self, paper: dict[str, Any], source: str
+    ) -> dict[str, Any]:
         """
         标准化论文数据格式
 
@@ -145,7 +146,7 @@ class PaperSearcher:
 
         return normalized
 
-    def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, any]]:
+    def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         执行 PubMed API 搜索
 
@@ -176,7 +177,9 @@ class PaperSearcher:
 
             self.logger.debug(f"PubMed ESearch 查询: {query}")
             search_response = self.session.get(
-                search_url, params=search_params, timeout=30
+                search_url,
+                params=search_params,
+                timeout=30,  # type: ignore[arg-type]
             )
             search_response.raise_for_status()
 
@@ -203,7 +206,9 @@ class PaperSearcher:
                 summary_params["api_key"] = self.api_key
 
             summary_response = self.session.get(
-                summary_url, params=summary_params, timeout=30
+                summary_url,
+                params=summary_params,
+                timeout=30,  # type: ignore[arg-type]
             )
             summary_response.raise_for_status()
 
@@ -231,7 +236,7 @@ class PaperSearcher:
                             year = year_match.group()
 
                     # 构建论文数据
-                    paper = {
+                    paper: dict[str, Any] = {
                         "pmid": pmid,
                         "title": article_data.get("title", ""),
                         "authors": authors,
@@ -257,7 +262,7 @@ class PaperSearcher:
 
     def _search_europepmc_api(
         self, query: str, limit: int = 50
-    ) -> list[dict[str, any]]:
+    ) -> list[dict[str, Any]]:
         """
         执行 Europe PMC API 搜索
 
@@ -279,7 +284,7 @@ class PaperSearcher:
             }
 
             self.logger.debug(f"Europe PMC 查询: {query}")
-            response = self.session.get(search_url, params=params, timeout=30)
+            response = self.session.get(search_url, params=params, timeout=30)  # type: ignore[arg-type]
             response.raise_for_status()
 
             data = response.json()
@@ -303,7 +308,7 @@ class PaperSearcher:
                         year = str(item["pubYear"])
 
                     # 构建论文数据
-                    paper = {
+                    paper: dict[str, Any] = {
                         "pmid": item.get("pmid", ""),
                         "doi": item.get("doi", ""),
                         "title": item.get("title", ""),
@@ -328,7 +333,7 @@ class PaperSearcher:
             self.logger.error(f"Europe PMC 搜索出错: {str(e)}")
             return []
 
-    def search_pubmed(self, query: str, limit: int = 50) -> list[dict[str, any]]:
+    def search_pubmed(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         通过 NCBI PubMed 搜索文献
 
@@ -356,7 +361,7 @@ class PaperSearcher:
 
         return papers
 
-    def search_europepmc(self, query: str, limit: int = 50) -> list[dict[str, any]]:
+    def search_europepmc(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         通过 Europe PMC 搜索文献
 
@@ -384,7 +389,7 @@ class PaperSearcher:
 
         return papers
 
-    def search_all_sources(self, query: str, limit: int = 50) -> list[dict[str, any]]:
+    def search_all_sources(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         从所有可用源搜索文献
 
@@ -406,8 +411,8 @@ class PaperSearcher:
         all_papers.extend(europe_pmc_papers)
 
         # 去重（基于 PMID）
-        seen_pmids = set()
-        unique_papers = []
+        seen_pmids: set[str] = set()
+        unique_papers: list[dict[str, Any]] = []
         for paper in all_papers:
             if paper["pmid"] and paper["pmid"] not in seen_pmids:
                 seen_pmids.add(paper["pmid"])
@@ -419,7 +424,7 @@ class PaperSearcher:
 
     def search_papers(
         self, query: str, limit: int = 50, source: str | None = None
-    ) -> list[dict[str, any]]:
+    ) -> list[dict[str, Any]]:
         """
         通过指定数据源搜索文献
 

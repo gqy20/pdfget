@@ -6,6 +6,7 @@ PMCID 批量获取模块
 """
 
 import time
+from typing import Any
 
 import requests
 
@@ -45,7 +46,7 @@ class PMCIDRetriever:
 
         self.last_request_time = time.time()
 
-    def _collect_pmids(self, papers: list[dict[str, any]]) -> list[str]:
+    def _collect_pmids(self, papers: list[dict[str, Any]]) -> list[str]:
         """
         从论文列表中提取有效的 PMIDs
 
@@ -254,8 +255,8 @@ class PMCIDRetriever:
             return None
 
     def process_papers(
-        self, papers: list[dict[str, any]], use_fallback: bool = True
-    ) -> list[dict[str, any]]:
+        self, papers: list[dict[str, Any]], use_fallback: bool = True
+    ) -> list[dict[str, Any]]:
         """
         为论文列表批量添加 PMCID 信息
 
@@ -297,7 +298,7 @@ class PMCIDRetriever:
 
         for paper in papers:
             updated_paper = paper.copy()
-            pmid = updated_paper.get("pmid")
+            pmid = updated_paper.get("pmid", "")
 
             if pmid and pmid in pmid_to_pmcid:
                 updated_paper["pmcid"] = pmid_to_pmcid[pmid]
@@ -310,7 +311,7 @@ class PMCIDRetriever:
         )
         return updated_papers
 
-    def get_single_pmcid(self, paper: dict[str, any]) -> str | None:
+    def get_single_pmcid(self, paper: dict[str, Any]) -> str | None:
         """
         获取单篇论文的 PMCID（兼容原接口）
 

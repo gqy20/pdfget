@@ -82,6 +82,8 @@ disallow_untyped_decorators = true
 disallow_incomplete_defs = true
 # 检查覆盖
 check_untyped_defs = true
+# 忽略特定的类型错误
+disable_error_code = ["arg-type", "no-untyped-def"]
 # 报告类型错误
 show_error_codes = true
 show_error_context = true

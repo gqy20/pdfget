@@ -8,7 +8,9 @@
 import hashlib
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import requests
 
@@ -65,12 +67,16 @@ class PaperFetcher:
         hash_key = hashlib.md5(content).hexdigest()
         return self.cache_dir / f"search_{hash_key}.json"
 
-    def _load_cache(self, cache_file: Path) -> list[dict] | None:
+    def _load_cache(self, cache_file: Path) -> list[dict[str, Any]] | None:
         """加载搜索缓存"""
         try:
             if cache_file.exists():
                 with open(cache_file, encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    # 确保 data 是正确的类型
+                    if isinstance(data, list):
+                        return data
+                    return []
         except Exception as e:
             self.logger.error(f"读取缓存失败 {cache_file}: {str(e)}")
         return None
@@ -133,11 +139,54 @@ class PaperFetcher:
         self.logger.info(f"为 {len(papers)} 篇论文添加 PMCID")
         return self.pmcid_retriever.process_papers(papers, use_fallback)
 
+    def fetch_by_doi(
+        self, doi: str, pmcid: str | None = None, timeout: int = 30
+    ) -> dict:
+        """
+        通过 DOI 获取文献
+
+        Args:
+            doi: DOI
+            pmcid: 可选的 PMCID（如果已知）
+            timeout: 请求超时时间
+
+        Returns:
+            获取结果字典
+        """
+        self.logger.info(f"获取文献: DOI={doi}")
+
+        # 如果没有 PMCID，尝试通过 DOI 搜索
+        if not pmcid:
+            # 使用 DOI 作为查询词搜索
+            papers = self.search_papers(doi, limit=1, source="europe_pmc")
+            if papers:
+                paper = papers[0]
+                pmcid = paper.get("pmcid")
+                if pmcid:
+                    self.logger.info(f"找到 PMCID: {pmcid}")
+
+        # 如果有 PMCID，尝试下载 PDF
+        if pmcid:
+            result = self.pdf_downloader.download_pdf(pmcid, doi)
+            result["doi"] = doi
+            result["pmcid"] = pmcid
+            return result
+
+        # 没有找到 PMCID 或下载失败
+        return {
+            "doi": doi,
+            "pmcid": "",
+            "success": False,
+            "error": "未找到 PMCID 或无法下载",
+            "pdf_path": None,
+            "full_text_url": None,
+        }
+
     def download_pdfs(
         self,
         papers: list[dict],
         skip_existing: bool = True,
-        progress_callback: "callable | None" = None,
+        progress_callback: "Callable[[int, int, dict], None] | None" = None,
     ) -> dict:
         """
         批量下载 PDF
@@ -150,7 +199,7 @@ class PaperFetcher:
         Returns:
             下载结果统计
         """
-        results = {
+        results: dict[str, Any] = {
             "total": len(papers),
             "success": 0,
             "failed": 0,
@@ -272,11 +321,11 @@ class PaperFetcher:
         self.logger.info(f"结果已导出到: {output_path}")
         return str(output_path)
 
-    def __enter__(self):
+    def __enter__(self) -> "PaperFetcher":
         """支持上下文管理器"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """退出时清理资源"""
         self.session.close()
 

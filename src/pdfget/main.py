@@ -147,7 +147,8 @@ def main() -> None:
                 logger.info(f"   期刊: {paper['journal']} ({paper['year']})")
                 if paper["doi"]:
                     logger.info(f"   DOI: {paper['doi']}")
-                logger.info(f"   开放获取: {'是' if paper['isOpenAccess'] else '否'}")
+                logger.info(f"   PMCID: {paper.get('pmcid', '无')}")
+                logger.info(f"   开放获取: {'是' if paper.get('pmcid') else '否'}")
 
             # 保存搜索结果
             search_results_file = (
