@@ -176,7 +176,7 @@ def main() -> None:
                 logger.info("\n📥 开始下载PDF...")
 
                 # 只下载有PMCID的开放获取文献
-                oa_papers = [p for p in papers if p["pmcid"]]
+                oa_papers = [p for p in papers if p.get("pmcid")]
                 logger.info(f"   找到 {len(oa_papers)} 篇开放获取文献")
 
                 if oa_papers:

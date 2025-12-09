@@ -36,7 +36,7 @@ class PaperSearcher:
         self.last_request_time = 0.0
 
         # Europe PMC 配置
-        self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/api"
+        self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 
         # 默认搜索源
         self.default_source = "pubmed"
@@ -281,6 +281,9 @@ class PaperSearcher:
                 "resulttype": "core",
                 "format": "json",
                 "pageSize": min(limit, 100),  # Europe PMC 限制每页最多100条
+                "cursor": "*",
+                "synonym": "true",
+                "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid",  # 明确请求PMCID字段
             }
 
             self.logger.debug(f"Europe PMC 查询: {query}")
@@ -316,6 +319,7 @@ class PaperSearcher:
                         "journal": journal,
                         "year": year,
                         "abstract": item.get("abstractText", ""),
+                        "pmcid": item.get("pmcid", ""),  # 添加PMCID字段
                     }
 
                     papers.append(self._normalize_paper_data(paper, "europe_pmc"))
