@@ -31,11 +31,15 @@ class PDFDownloader:
         # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # PDF 下载源（按成功率排序，EuropePMC成功率最高）
+        # PMC OA Service 实例
+        from .pmc_oa_service import PMCOAService
+
+        self.pmc_oa_service = PMCOAService(str(self.output_dir), session)
+
+        # PDF 下载源（按成功率排序，PMC OA Service最可靠）
+        # NCBI直接下载链接由于JavaScript PoW保护已失效，故移除
         self.pdf_sources = [
             "https://europepmc.org/articles/{pmcid}?pdf=render",
-            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/{pmcid}.pdf",
-            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/",
         ]
 
     def _get_safe_filename(self, pmcid: str, doi: str) -> str:
@@ -155,6 +159,7 @@ class PDFDownloader:
         下载 PDF 文件
 
         尝试多个源，按优先级返回第一个成功的结果
+        首先尝试 PMC OA Service，然后尝试其他源
 
         Args:
             pmcid: PMCID
@@ -169,7 +174,38 @@ class PDFDownloader:
         if not pmcid.startswith("PMC"):
             pmcid = f"PMC{pmcid}"
 
-        # 尝试每个下载源
+        # 首先尝试 PMC OA Service（最可靠）
+        self.logger.info("尝试 PMC OA Service")
+        if self.pmc_oa_service.process_pmcid(pmcid, doi):
+            # 检查是否成功下载了PDF文件
+            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+            pdf_path = self.output_dir / pdf_name
+
+            # 如果直接PDF不存在，检查是否有从tar.gz提取的PDF
+            if not pdf_path.exists():
+                # 查找可能被提取的PDF文件
+                pdf_files = list(self.output_dir.glob(f"{pmcid}*/**/*.pdf"))
+                if pdf_files:
+                    pdf_path = pdf_files[0]
+                    # 重命名为标准格式
+                    new_path = self.output_dir / pdf_name
+                    pdf_path.rename(new_path)
+                    pdf_path = new_path
+
+            if pdf_path.exists():
+                self.logger.info(f"PDF 下载成功（PMC OA Service）: {pdf_path}")
+                return {
+                    "success": True,
+                    "path": str(pdf_path),
+                    "source": "PMC OA Service",
+                    "content_length": pdf_path.stat().st_size,
+                }
+            else:
+                self.logger.warning("PMC OA Service 处理成功但未找到PDF文件")
+        else:
+            self.logger.info("PMC OA Service 失败，尝试其他源")
+
+        # 尝试其他下载源
         for i, url_template in enumerate(self.pdf_sources):
             url = url_template.format(pmcid=pmcid)
             self.logger.info(f"尝试源 {i + 1}/{len(self.pdf_sources)}: {url}")

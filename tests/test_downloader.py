@@ -153,26 +153,7 @@ class TestPDFDownloader:
             downloader.pdf_sources[0].format(pmcid=pmcid), pmcid, doi
         )
 
-    def test_download_pdf_success_second_source(self, downloader):
-        """
-        测试: 第一个源失败，第二个源成功
-        """
-        pmcid = "PMC123456"
-        doi = "10.1000/test"
-
-        # Mock 第一次失败，第二次成功
-        def side_effect(url, pmcid, doi):
-            if url == downloader.pdf_sources[0].format(pmcid=pmcid):
-                return {"success": False, "error": "Not found"}
-            else:
-                return {"success": True, "path": "/path/to/file.pdf"}
-
-        downloader._try_download_from_url = Mock(side_effect=side_effect)
-
-        result = downloader.download_pdf(pmcid, doi)
-
-        assert result["success"] is True
-        assert downloader._try_download_from_url.call_count == 2
+    # 已删除 test_download_pdf_success_second_source，因为现在只有一个下载源
 
     def test_download_pdf_all_sources_failed(self, downloader):
         """
@@ -188,7 +169,7 @@ class TestPDFDownloader:
         result = downloader.download_pdf(pmcid, doi)
 
         assert result["success"] is False
-        assert "所有 3 个 PDF 源都失败" in result["error"]
+        assert "所有 1 个 PDF 源都失败" in result["error"]
         assert downloader._try_download_from_url.call_count == len(
             downloader.pdf_sources
         )

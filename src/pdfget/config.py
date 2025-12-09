@@ -25,6 +25,7 @@ RATE_LIMIT = 3  # PubMed API 每秒最多3次请求
 # 批处理大小设置
 SUMMARY_BATCH_SIZE = 200  # PubMed摘要批量大小
 PMCID_BATCH_SIZE = 100  # PMCID批量大小
+DEFAULT_SEARCH_LIMIT = 200  # 默认搜索/统计的文献数量
 
 # 统计计算设置
 AVG_PDF_SIZE_MB = 1.5  # 平均PDF大小(MB)
@@ -50,5 +51,5 @@ COUNT_MAX_WORKERS = 5  # 并行处理的线程数
 COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
 
 # 数据源设置
-DEFAULT_SOURCE = "pubmed"  # 默认数据源: pubmed, europe_pmc
-SOURCES = ["pubmed", "europe_pmc"]  # 支持的数据源列表
+DEFAULT_SOURCE = "europe_pmc"  # 默认数据源: europe_pmc, pubmed
+SOURCES = ["europe_pmc", "pubmed"]  # 支持的数据源列表，优先使用Europe PMC
