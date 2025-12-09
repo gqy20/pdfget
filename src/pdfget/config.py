@@ -47,5 +47,5 @@ COUNT_MAX_WORKERS = 5  # 并行处理的线程数
 COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
 
 # 数据源设置
-DEFAULT_SOURCE = "europe_pmc"  # 默认数据源: europe_pmc, pubmed
-SOURCES = ["europe_pmc", "pubmed"]  # 支持的数据源列表，优先使用Europe PMC
+DEFAULT_SOURCE = "pubmed"  # 默认数据源: europe_pmc, pubmed
+SOURCES = ["pubmed", "europe_pmc"]  # 支持的数据源列表，优先使用PubMed

@@ -103,9 +103,21 @@ class UnifiedDownloadManager:
             self.logger.info(f"\n📄 进度: {i}/{len(papers)}")
 
             try:
-                result = self.fetcher.fetch_by_doi(
-                    str(doi), pmcid=pmcid, timeout=timeout
-                )
+                # 直接使用PDFDownloader下载
+                if pmcid:
+                    result = self.fetcher.pdf_downloader.download_pdf(pmcid, doi)
+                else:
+                    # 如果没有PMCID，尝试搜索
+                    papers = self.fetcher.search_papers(doi, limit=1)
+                    if papers and papers[0].get("pmcid"):
+                        pmcid = papers[0]["pmcid"]
+                        result = self.fetcher.pdf_downloader.download_pdf(pmcid, doi)
+                    else:
+                        result = {"success": False, "error": "No PMCID found"}
+
+                # 添加必要的信息
+                result["doi"] = doi
+                result["pmcid"] = pmcid or ""
                 results.append(result)
             except Exception as e:
                 self.logger.error(f"获取文献失败 ({doi}): {e}")
@@ -233,11 +245,25 @@ class UnifiedDownloadManager:
             # 添加随机延迟
             time.sleep(self._get_delay())
 
-            result = fetcher.fetch_by_doi(doi, pmcid=pmcid, timeout=timeout)
+            # 直接使用PDFDownloader下载
+            if pmcid:
+                result = fetcher.pdf_downloader.download_pdf(pmcid, doi)
+            else:
+                # 如果没有PMCID，尝试搜索
+                papers = fetcher.search_papers(doi, limit=1)
+                if papers and papers[0].get("pmcid"):
+                    pmcid = papers[0]["pmcid"]
+                    result = fetcher.pdf_downloader.download_pdf(pmcid, doi)
+                else:
+                    result = {"success": False, "error": "No PMCID found"}
+
+            # 添加必要的信息
+            result["doi"] = doi
+            result["pmcid"] = pmcid or ""
 
             # 更新进度
             success = result.get("success", False)
-            pdf_downloaded = bool(result.get("pdf_path"))
+            pdf_downloaded = bool(result.get("path"))
             self._update_progress(success, pdf_downloaded)
 
             return result

@@ -109,16 +109,34 @@ def main() -> None:
         if args.doi:
             # 单个DOI下载
             logger.info(f"\n📄 下载单个文献: {args.doi}")
-            result = fetcher.fetch_by_doi(args.doi, timeout=TIMEOUT)
 
-            if result.get("success"):
-                logger.info("✅ 下载成功!")
-                if result.get("path"):
-                    logger.info(f"   PDF路径: {result['path']}")
+            # 先搜索获取PMCID
+            papers = fetcher.search_papers(
+                args.doi, limit=1, source=fetcher.default_source
+            )
+            if papers and papers[0].get("pmcid"):
+                paper = papers[0]
+                pmcid = paper["pmcid"]
+                doi = paper["doi"]
+
+                # 使用PDFDownloader直接下载
+                result = fetcher.pdf_downloader.download_pdf(pmcid, doi)
+
+                # 合并结果信息
+                result["doi"] = doi
+                result["pmcid"] = pmcid
+                result["title"] = paper.get("title")
+
+                if result.get("success"):
+                    logger.info("✅ 下载成功!")
+                    if result.get("path"):
+                        logger.info(f"   PDF路径: {result['path']}")
+                    else:
+                        logger.info(f"   HTML链接: {result.get('full_text_url')}")
                 else:
-                    logger.info(f"   HTML链接: {result.get('full_text_url')}")
+                    logger.error(f"❌ 下载失败: {result.get('error', 'Unknown error')}")
             else:
-                logger.error(f"❌ 下载失败: {result.get('error', 'Unknown error')}")
+                logger.error(f"❌ 未找到文献或无PMCID: {args.doi}")
 
         elif args.s:
             # 搜索文献
@@ -173,10 +191,15 @@ def main() -> None:
 
             else:
                 # 统计模式：获取全部文献的PMCID信息
-                import config
+                try:
+                    import config
 
-                email = getattr(config, "NCBI_EMAIL", None)
-                api_key = getattr(config, "NCBI_API_KEY", None)
+                    email = getattr(config, "NCBI_EMAIL", None)
+                    api_key = getattr(config, "NCBI_API_KEY", None)
+                except ImportError:
+                    # 如果没有外部配置文件，使用默认值
+                    email = None
+                    api_key = None
 
                 counter = PMCIDCounter(email=email, api_key=api_key)
 

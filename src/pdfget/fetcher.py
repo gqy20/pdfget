@@ -8,7 +8,6 @@
 import hashlib
 import json
 import time
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -159,117 +158,6 @@ class PaperFetcher:
         self.logger.info(f"为 {len(papers)} 篇论文添加 PMCID")
         return self.pmcid_retriever.process_papers(papers, use_fallback)
 
-    def fetch_by_doi(
-        self, doi: str, pmcid: str | None = None, timeout: int = 30
-    ) -> dict:
-        """
-        通过 DOI 获取文献
-
-        Args:
-            doi: DOI
-            pmcid: 可选的 PMCID（如果已知）
-            timeout: 请求超时时间
-
-        Returns:
-            获取结果字典
-        """
-        self.logger.info(f"获取文献: DOI={doi}")
-
-        # 如果没有 PMCID，尝试通过 DOI 搜索
-        if not pmcid:
-            # 使用 DOI 作为查询词搜索
-            papers = self.search_papers(doi, limit=1, source=self.default_source)
-            if papers:
-                paper = papers[0]
-                pmcid = paper.get("pmcid")
-                if pmcid:
-                    self.logger.info(f"找到 PMCID: {pmcid}")
-
-        # 如果有 PMCID，尝试下载 PDF
-        if pmcid:
-            result = self.pdf_downloader.download_pdf(pmcid, doi)
-            result["doi"] = doi
-            result["pmcid"] = pmcid
-            return result
-
-        # 没有找到 PMCID 或下载失败
-        return {
-            "doi": doi,
-            "pmcid": "",
-            "success": False,
-            "error": "未找到 PMCID 或无法下载",
-            "pdf_path": None,
-            "full_text_url": None,
-        }
-
-    def download_pdfs(
-        self,
-        papers: list[dict],
-        skip_existing: bool = True,
-        progress_callback: "Callable[[int, int, dict], None] | None" = None,
-    ) -> dict:
-        """
-        批量下载 PDF
-
-        Args:
-            papers: 论文列表（需要包含 pmcid 字段）
-            skip_existing: 跳过已存在的文件
-            progress_callback: 进度回调函数
-
-        Returns:
-            下载结果统计
-        """
-        results: dict[str, Any] = {
-            "total": len(papers),
-            "success": 0,
-            "failed": 0,
-            "skipped": 0,
-            "errors": [],
-        }
-
-        self.logger.info(f"开始下载 {len(papers)} 个 PDF")
-
-        for i, paper in enumerate(papers):
-            pmcid = paper.get("pmcid", "")
-            doi = paper.get("doi", "")
-
-            if not pmcid:
-                self.logger.warning(
-                    f"跳过没有 PMCID 的论文: {paper.get('title', 'Unknown')[:50]}"
-                )
-                results["failed"] += 1
-                continue
-
-            # 检查是否已存在
-            if skip_existing and self.pdf_downloader.check_pdf_exists(pmcid, doi):
-                results["skipped"] += 1
-                continue
-
-            # 下载 PDF
-            download_result = self.pdf_downloader.download_if_not_exists(pmcid, doi)
-
-            if download_result["success"]:
-                results["success"] += 1
-                self.logger.info(f"  ✓ [{i + 1}/{len(papers)}] {pmcid}")
-            else:
-                results["failed"] += 1
-                error_msg = f"  ✗ [{i + 1}/{len(papers)}] {pmcid}: {download_result.get('error', 'Unknown error')}"
-                self.logger.error(error_msg)
-                results["errors"].append(error_msg)
-
-            # 调用进度回调
-            if progress_callback:
-                progress_callback(i + 1, len(papers), results)
-
-        # 输出统计
-        self.logger.info(
-            f"下载完成: 成功 {results['success']}, "
-            f"失败 {results['failed']}, "
-            f"跳过 {results['skipped']}"
-        )
-
-        return results
-
     def get_cache_info(self) -> dict:
         """获取缓存信息"""
         cache_files = list(self.cache_dir.glob("search_*.json"))
@@ -365,18 +253,3 @@ def quick_search(query: str, limit: int = 20, source: str | None = None) -> list
     """
     with PaperFetcher() as fetcher:
         return fetcher.search_papers(query, limit, source or DEFAULT_SOURCE)
-
-
-def quick_download(papers: list[dict], output_dir: str = "data/pdfs") -> dict:
-    """
-    快速下载 PDF
-
-    Args:
-        papers: 论文列表（需要包含 pmcid）
-        output_dir: 输出目录
-
-    Returns:
-        下载结果统计
-    """
-    with PaperFetcher(output_dir=output_dir) as fetcher:
-        return fetcher.download_pdfs(papers)
