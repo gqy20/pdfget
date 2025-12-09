@@ -238,11 +238,11 @@ class PaperFetcher:
 
                 paper = {
                     "title": record.get("title", ""),
-                    "authors": [
-                        a.strip() for a in record.get("authorString", "").split(",")
-                    ]
-                    if record.get("authorString")
-                    else [],
+                    "authors": (
+                        [a.strip() for a in record.get("authorString", "").split(",")]
+                        if record.get("authorString")
+                        else []
+                    ),
                     "journal": journal_info.get("journal", {}).get("title", ""),
                     "year": record.get("pubYear", ""),
                     "doi": record.get("doi", ""),
@@ -664,11 +664,11 @@ class PaperFetcher:
         if source == "Europe PMC":
             standardized.update(
                 {
-                    "authors": [
-                        a.strip() for a in paper.get("authorString", "").split(",")
-                    ]
-                    if paper.get("authorString")
-                    else [],
+                    "authors": (
+                        [a.strip() for a in paper.get("authorString", "").split(",")]
+                        if paper.get("authorString")
+                        else []
+                    ),
                     "journal": paper.get("journalInfo", {})
                     .get("journal", {})
                     .get("title", ""),
@@ -829,11 +829,11 @@ class PaperFetcher:
                     "journal": record.get("journalInfo", {})
                     .get("journal", {})
                     .get("title"),
-                    "authors": [
-                        a.strip() for a in record.get("authorString", "").split(",")
-                    ]
-                    if record.get("authorString")
-                    else [],
+                    "authors": (
+                        [a.strip() for a in record.get("authorString", "").split(",")]
+                        if record.get("authorString")
+                        else []
+                    ),
                     "year": record.get("pubYear"),
                     "abstract": record.get("abstractText"),
                 }
@@ -846,11 +846,11 @@ class PaperFetcher:
                 "full_text_url": f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/",
                 "content_type": "html",
                 "title": record.get("title"),
-                "authors": [
-                    a.strip() for a in record.get("authorString", "").split(",")
-                ]
-                if record.get("authorString")
-                else [],
+                "authors": (
+                    [a.strip() for a in record.get("authorString", "").split(",")]
+                    if record.get("authorString")
+                    else []
+                ),
                 "year": record.get("pubYear"),
                 "abstract": record.get("abstractText"),
             }
