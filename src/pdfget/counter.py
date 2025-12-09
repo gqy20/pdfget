@@ -33,6 +33,8 @@ class PMCIDCounter:
         email: str | None = None,
         api_key: str | None = None,
         cache_dir: str | None = None,
+        source: str = "pubmed",
+        fetcher=None,
     ):
         """初始化计数器
 
@@ -40,14 +42,28 @@ class PMCIDCounter:
             email: NCBI API邮箱（可选）
             api_key: NCBI API密钥（可选）
             cache_dir: 缓存目录（可选，默认使用配置中的CACHE_DIR）
+            source: 数据源（"pubmed" 或 "europe_pmc"）
+            fetcher: PaperFetcher实例（可选）
         """
         self.email = email or NCBI_EMAIL
         self.api_key = api_key or NCBI_API_KEY
+        self.source = source
         self.logger = get_logger(__name__)
         self.session = requests.Session()
         # 使用传入的cache_dir或配置中的CACHE_DIR
         self.cache_dir = Path(cache_dir) if cache_dir else CACHE_DIR
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # 如果提供了fetcher，直接使用；否则创建新的
+        if fetcher:
+            self.fetcher = fetcher
+        else:
+            from .fetcher import PaperFetcher
+
+            self.fetcher = PaperFetcher(
+                default_source=source,
+                cache_dir=str(self.cache_dir),
+            )
 
         # 设置请求头
         self.session.headers.update(config.HEADERS)
@@ -180,6 +196,7 @@ class PMCIDCounter:
         limit: int = 5000,
         use_cache: bool = True,
         trigger_search: bool = True,
+        source: str | None = None,
     ) -> dict:
         """统计查询结果中有PMCID的文献数量
 
@@ -188,12 +205,20 @@ class PMCIDCounter:
             limit: 最大结果数
             use_cache: 是否使用缓存
             trigger_search: 如果没有缓存是否触发搜索创建缓存
+            source: 数据源（"pubmed" 或 "europe_pmc"），覆盖初始化时的设置
 
         Returns:
             统计结果字典
         """
-        self.logger.info(f"🔍 统计PMCID: {query}")
+        # 使用传入的 source 或初始化时的 source
+        actual_source = source or self.source
+
+        self.logger.info(f"🔍 统计PMCID: {query} (数据源: {actual_source})")
         self._current_query = query
+
+        # 对于 Europe PMC，直接使用搜索结果中的 PMCID
+        if actual_source == "europe_pmc":
+            return self._count_pmcid_from_europe_pmc(query, limit)
 
         # 1. 首先检查缓存
         if use_cache:
@@ -325,4 +350,43 @@ class PMCIDCounter:
             "estimated_size_mb": estimated_size_mb,
             "elapsed_seconds": elapsed,
             "processing_speed": total_checked / elapsed if elapsed > 0 else 0,
+        }
+
+    def _count_pmcid_from_europe_pmc(self, query: str, limit: int) -> dict:
+        """从 Europe PMC 搜索结果统计 PMCID"""
+        start_time = time.time()
+
+        # 直接使用 fetcher 搜索（已经包含 PMCID）
+        papers = self.fetcher.search_papers(
+            query,
+            limit=limit,
+            source="europe_pmc",
+            use_cache=True,
+            fetch_pmcid=False,  # 不需要额外获取 PMCID
+        )
+
+        # 统计 PMCID
+        with_pmcid = sum(1 for p in papers if p.get("pmcid"))
+        without_pmcid = len(papers) - with_pmcid
+
+        elapsed = time.time() - start_time
+
+        self.logger.info("📊 Europe PMC 统计完成:")
+        self.logger.info(f"   获取文献: {len(papers)} 篇")
+        self.logger.info(f"   有PMCID: {with_pmcid} 篇")
+        self.logger.info(f"   无PMCID: {without_pmcid} 篇")
+        self.logger.info(f"   PMCID率: {(with_pmcid / len(papers) * 100):.1f}%")
+        self.logger.info(f"   耗时: {elapsed:.1f} 秒")
+
+        # 返回统计信息
+        return {
+            "query": query,
+            "total": len(papers),  # Europe PMC 不返回总数，只返回实际获取的数量
+            "checked": len(papers),
+            "with_pmcid": with_pmcid,
+            "without_pmcid": without_pmcid,
+            "rate": (with_pmcid / len(papers) * 100) if papers else 0,
+            "estimated_size_mb": with_pmcid * AVG_PDF_SIZE_MB,
+            "elapsed_seconds": elapsed,
+            "processing_speed": len(papers) / elapsed if elapsed > 0 else 0,
         }

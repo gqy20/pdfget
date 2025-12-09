@@ -204,7 +204,9 @@ def main() -> None:
                 email = args.e or NCBI_EMAIL
                 api_key = args.k or NCBI_API_KEY
 
-                counter = PMCIDCounter(email=email, api_key=api_key)
+                counter = PMCIDCounter(
+                    email=email, api_key=api_key, source=args.S  # 传递数据源
+                )
 
                 # 执行统计
                 stats = counter.count_pmcid(args.s, limit=args.l)
