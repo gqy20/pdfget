@@ -12,7 +12,7 @@ from pathlib import Path
 import logging
 
 from .fetcher import PaperFetcher
-from .downloader import ConcurrentDownloader
+from .manager import UnifiedDownloadManager
 from .counter import PMCIDCounter
 from .formatter import StatsFormatter
 from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
@@ -182,24 +182,15 @@ def main() -> None:
                     papers_to_fetch = oa_papers  # 已经是有PMCID的论文列表
 
                     if papers_to_fetch:
-                        # 根据线程数决定是否使用并发下载
-                        if len(papers_to_fetch) > 1 and args.t > 1:
-                            logger.info(
-                                f"\n🚀 使用 {args.t} 个线程并发下载 {len(papers_to_fetch)} 篇文献"
-                            )
-                            concurrent_downloader = ConcurrentDownloader(
-                                max_workers=args.t,
-                                base_delay=args.delay,
-                                fetcher=fetcher,
-                            )
-                            results = concurrent_downloader.download_batch(
-                                papers_to_fetch, timeout=TIMEOUT
-                            )
-                        else:
-                            # 单线程下载（保持原有逻辑）
-                            results = fetcher.fetch_batch(
-                                papers_to_fetch, delay=args.delay
-                            )
+                        # 使用统一下载管理器
+                        download_manager = UnifiedDownloadManager(
+                            fetcher=fetcher,
+                            max_workers=args.t,
+                            base_delay=args.delay,
+                        )
+                        results = download_manager.download_batch(
+                            papers_to_fetch, timeout=TIMEOUT
+                        )
 
                         # 统计结果
                         success_count = sum(1 for r in results if r.get("success"))
@@ -275,16 +266,13 @@ def main() -> None:
                     logger.error(f"❌ 读取文件失败: {e}")
                     exit(1)
 
-            # 根据线程数决定是否使用并发下载
-            if len(dois) > 1 and args.t > 1:
-                logger.info(f"\n🚀 使用 {args.t} 个线程并发下载 {len(dois)} 篇文献")
-                concurrent_downloader = ConcurrentDownloader(
-                    max_workers=args.t, base_delay=args.delay, fetcher=fetcher
-                )
-                results = concurrent_downloader.download_batch(dois, timeout=TIMEOUT)
-            else:
-                # 单线程下载（保持原有逻辑）
-                results = fetcher.fetch_batch(dois, delay=args.delay)
+            # 使用统一下载管理器
+            download_manager = UnifiedDownloadManager(
+                fetcher=fetcher,
+                max_workers=args.t,
+                base_delay=args.delay,
+            )
+            results = download_manager.download_batch(dois, timeout=TIMEOUT)
 
             # 统计结果
             success_count = sum(1 for r in results if r.get("success"))
