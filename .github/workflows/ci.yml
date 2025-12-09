@@ -25,22 +25,33 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@v2
 
+    - name: Cache uv dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
     - name: Install dependencies
       run: |
         uv sync --dev
 
-    - name: Run code quality checks
+    - name: Run ruff (linting and fixes)
       run: |
-        uv run ruff check .
-        uv run ruff format --check .
+        uv run ruff check . --fix
 
-    - name: Run type checking
+    - name: Run black (formatting check)
+      run: |
+        uv run black --check .
+
+    - name: Run mypy (type checking)
       run: |
         uv run mypy src/
 
-    - name: Run tests
+    - name: Run tests with pytest
       run: |
-        uv run pytest tests/ -v --cov=pdfget --cov-report=xml
+        uv run pytest tests/ -v --cov=src/pdfget --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -57,3 +68,57 @@ jobs:
     - name: Check package
       run: |
         uv run twine check dist/*
+
+  # Security scan job
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run safety check
+      run: |
+        uv pip install safety
+        uv run safety check --json || true
+
+    - name: Run bandit security linter
+      run: |
+        uv pip install bandit
+        uv run bandit -r src/ -f json || true
+
+  # Performance test job (optional)
+  performance:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run performance tests
+      run: |
+        # Test with a small dataset to verify performance
+        timeout 60s uv run python -m pdfget -s "machine learning" -l 100 --count || true
