@@ -6,16 +6,16 @@ PDF下载器主程序
 
 import argparse
 import json
+import logging
 import time
 from pathlib import Path
-
-import logging
 
 from .fetcher import PaperFetcher
 from .manager import UnifiedDownloadManager
 from .counter import PMCIDCounter
 from .formatter import StatsFormatter
-from .config import TIMEOUT, DELAY, LOG_LEVEL, LOG_FORMAT
+from .logger import get_main_logger
+from .config import TIMEOUT, DELAY
 
 
 def main() -> None:
@@ -72,8 +72,9 @@ def main() -> None:
     args = parser.parse_args()
 
     # 设置日志
-    logging.basicConfig(level=logging.DEBUG if args.v else LOG_LEVEL, format=LOG_FORMAT)
-    logger = logging.getLogger("PDFDownloader")
+    logger = get_main_logger()
+    if args.v:
+        logger.setLevel(logging.DEBUG)
 
     # 初始化下载器
     fetcher = PaperFetcher(

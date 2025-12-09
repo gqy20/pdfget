@@ -25,7 +25,6 @@ RATE_LIMIT = 3  # PubMed API 每秒最多3次请求
 # 批处理大小设置
 SUMMARY_BATCH_SIZE = 200  # PubMed摘要批量大小
 PMCID_BATCH_SIZE = 100  # PMCID批量大小
-COUNT_BATCH_SIZE = 80  # 统计时每批处理的PMID数量
 
 # 统计计算设置
 AVG_PDF_SIZE_MB = 1.5  # 平均PDF大小(MB)
@@ -43,7 +42,7 @@ HEADERS = {
 
 # 日志设置
 LOG_LEVEL = "INFO"
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # PMCID统计设置
 COUNT_BATCH_SIZE = 80  # 每批处理的PMID数量

@@ -4,7 +4,6 @@
 根据参数自动选择单线程或多线程下载策略
 """
 
-import logging
 import random
 import threading
 import time
@@ -13,6 +12,7 @@ from typing import List, Dict, Any, Optional
 
 from .fetcher import PaperFetcher
 from .config import DOWNLOAD_BASE_DELAY, DOWNLOAD_RANDOM_DELAY
+from .logger import get_logger
 
 
 class UnifiedDownloadManager:
@@ -34,7 +34,7 @@ class UnifiedDownloadManager:
             base_delay: 基础延迟时间（秒）
             random_delay_range: 随机延迟范围（秒）
         """
-        self.logger = logging.getLogger("DownloadManager")
+        self.logger = get_logger(__name__)
         self.fetcher = fetcher
         self.max_workers = max_workers
         self.base_delay = base_delay

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """PMCID统计器 - 并行统计开放获取文献数量"""
 
-import logging
 import random
 import re
 import time
@@ -12,6 +11,7 @@ import requests
 
 from . import config
 from .config import AVG_PDF_SIZE_MB, PUBMED_MAX_RESULTS
+from .logger import get_logger
 
 
 class PMCIDCounter:
@@ -26,7 +26,7 @@ class PMCIDCounter:
         """
         self.email = email
         self.api_key = api_key
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.session = requests.Session()
 
         # 设置请求头

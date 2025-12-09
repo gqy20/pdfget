@@ -11,5 +11,13 @@ from .fetcher import PaperFetcher
 from .manager import UnifiedDownloadManager
 from .counter import PMCIDCounter
 from .formatter import StatsFormatter
+from .logger import get_logger, setup_logger
 
-__all__ = ["PaperFetcher", "UnifiedDownloadManager", "PMCIDCounter", "StatsFormatter"]
+__all__ = [
+    "PaperFetcher",
+    "UnifiedDownloadManager",
+    "PMCIDCounter",
+    "StatsFormatter",
+    "get_logger",
+    "setup_logger",
+]

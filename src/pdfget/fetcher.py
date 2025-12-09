@@ -14,9 +14,8 @@ from urllib.parse import quote
 
 import requests
 
-import logging
-
 from .config import RATE_LIMIT, SUMMARY_BATCH_SIZE, PMCID_BATCH_SIZE
+from .logger import get_logger
 
 
 class PaperFetcher:
@@ -38,7 +37,7 @@ class PaperFetcher:
             default_source: 默认数据源 (pubmed, europe_pmc)
             sources: 支持的数据源列表
         """
-        self.logger = logging.getLogger("PaperFetcher")
+        self.logger = get_logger(__name__)
         self.cache_dir = Path(cache_dir)
         self.output_dir = Path(output_dir)
         self.default_source = default_source
@@ -790,7 +789,7 @@ class PaperFetcher:
         try:
             # 搜索PMCID
             search_url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:{quote(doi)}&resulttype=core&format=json"
-            self.logger.debug(f"  🔍 Europe PMC URL: {search_url}")
+            self.logger.info(f"  🔍 Europe PMC URL: {search_url}")
 
             response = self.session.get(search_url, timeout=timeout)
             response.raise_for_status()
@@ -874,7 +873,7 @@ class PaperFetcher:
 
         for i, pdf_url in enumerate(pdf_urls):
             try:
-                self.logger.debug(f"  📥 尝试PDF源 {i + 1}: {pdf_url}")
+                self.logger.info(f"  📥 尝试PDF源 {i + 1}: {pdf_url}")
                 response = self.session.get(pdf_url, timeout=30, stream=True)
                 response.raise_for_status()
 
