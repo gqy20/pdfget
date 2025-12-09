@@ -121,4 +121,4 @@ jobs:
     - name: Run performance tests
       run: |
         # Test with a small dataset to verify performance
-        timeout 60s uv run python -m pdfget -s "machine learning" -l 100 --count || true
+        timeout 60s uv run python -m pdfget -s "machine learning" -l 100 || true
