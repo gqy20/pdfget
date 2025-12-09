@@ -41,6 +41,10 @@ HEADERS = {
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+# NCBI API 设置
+NCBI_EMAIL = "test@gmail.com"
+NCBI_API_KEY = ""  # 可以在这里设置 API 密钥
+
 # PMCID统计设置
 COUNT_BATCH_SIZE = 80  # 每批处理的PMID数量
 COUNT_MAX_WORKERS = 5  # 并行处理的线程数

@@ -226,9 +226,13 @@ def main() -> None:
                     )
                     print(f"   无PMCID: {stats['without_pmcid']:,} 篇")
                     print(f"   耗时: {stats['elapsed_seconds']:.1f} 秒")
-                    print(
-                        f"   处理速度: {stats['checked'] / stats['elapsed_seconds']:.1f} 篇/秒"
-                    )
+                    # 避免除零错误
+                    if stats["elapsed_seconds"] > 0:
+                        print(
+                            f"   处理速度: {stats['checked'] / stats['elapsed_seconds']:.1f} 篇/秒"
+                        )
+                    else:
+                        print("   处理速度: N/A (使用缓存)")
 
                     if stats["with_pmcid"] > 0:
                         print("\n💾 如果下载所有开放获取文献:")

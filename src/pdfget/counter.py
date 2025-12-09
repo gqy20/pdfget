@@ -1,32 +1,52 @@
 #!/usr/bin/env python3
 """PMCID统计器 - 并行统计开放获取文献数量"""
 
+import hashlib
+import json
 import random
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 import requests
 
 from . import config
-from .config import AVG_PDF_SIZE_MB, PUBMED_MAX_RESULTS
+from .config import (
+    AVG_PDF_SIZE_MB,
+    CACHE_DIR,
+    COUNT_BATCH_SIZE,
+    COUNT_MAX_WORKERS,
+    NCBI_API_KEY,
+    NCBI_EMAIL,
+    PUBMED_MAX_RESULTS,
+)
 from .logger import get_logger
 
 
 class PMCIDCounter:
     """PMCID统计器"""
 
-    def __init__(self, email: str | None = None, api_key: str | None = None):
+    def __init__(
+        self,
+        email: str | None = None,
+        api_key: str | None = None,
+        cache_dir: str | None = None,
+    ):
         """初始化计数器
 
         Args:
             email: NCBI API邮箱（可选）
             api_key: NCBI API密钥（可选）
+            cache_dir: 缓存目录（可选，默认使用配置中的CACHE_DIR）
         """
-        self.email = email
-        self.api_key = api_key
+        self.email = email or NCBI_EMAIL
+        self.api_key = api_key or NCBI_API_KEY
         self.logger = get_logger(__name__)
         self.session = requests.Session()
+        # 使用传入的cache_dir或配置中的CACHE_DIR
+        self.cache_dir = Path(cache_dir) if cache_dir else CACHE_DIR
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # 设置请求头
         self.session.headers.update(config.HEADERS)
@@ -92,6 +112,53 @@ class PMCIDCounter:
             )
             return 0, len(batch_pmids)
 
+    def _get_cache_file(self, query: str, source: str = "pubmed") -> Path:
+        """获取缓存文件路径"""
+        content = f"{query}:{source}".encode()
+        hash_key = hashlib.md5(content).hexdigest()
+        return self.cache_dir / f"search_{hash_key}.json"
+
+    def _load_cache(self, query: str) -> list[dict] | None:
+        """加载 PaperFetcher 的搜索缓存"""
+        # 尝试多个可能的源
+        sources = ["pubmed", "europe_pmc"]
+        for source in sources:
+            cache_file = self._get_cache_file(query, source)
+            if cache_file.exists():
+                try:
+                    with open(cache_file, encoding="utf-8") as f:
+                        data = json.load(f)
+                        if isinstance(data, list) and data:
+                            self.logger.info(f"从 {source} 缓存加载 {len(data)} 条结果")
+                            return data
+                except Exception as e:
+                    self.logger.warning(f"读取缓存失败 {cache_file}: {str(e)}")
+
+        return None
+
+    def _statistics_from_cache(self, papers: list[dict]) -> dict:
+        """从缓存的文献列表生成统计信息"""
+        total = len(papers)
+        with_pmcid = sum(1 for p in papers if p.get("pmcid"))
+        without_pmcid = total - with_pmcid
+        rate = (with_pmcid / total) * 100 if total > 0 else 0
+
+        # 估算总文献数（如果有更多信息，可以使用）
+        total_available = total  # 简化处理，实际可以从搜索API获取
+
+        return {
+            "query": getattr(self, "_current_query", ""),
+            "total": total_available,
+            "checked": total,
+            "with_pmcid": with_pmcid,
+            "without_pmcid": without_pmcid,
+            "rate": rate,
+            "estimated_size_mb": with_pmcid * AVG_PDF_SIZE_MB,
+            "elapsed_seconds": 0,  # 从缓存加载，耗时为0
+            "processing_speed": 0.0,  # 从缓存加载，速度设为0
+            "from_cache": True,
+        }
+
     def _rate_limit(self) -> None:
         """PubMed API速率限制"""
         # 免费用户：3请求/秒
@@ -101,18 +168,66 @@ class PMCIDCounter:
         else:
             time.sleep(0.34)  # 约3请求/秒
 
-    def count_pmcid(self, query: str, limit: int = 5000) -> dict:
+    def count_pmcid(
+        self,
+        query: str,
+        limit: int = 5000,
+        use_cache: bool = True,
+        trigger_search: bool = True,
+    ) -> dict:
         """统计查询结果中有PMCID的文献数量
 
         Args:
             query: 搜索查询
             limit: 最大结果数
+            use_cache: 是否使用缓存
+            trigger_search: 如果没有缓存是否触发搜索创建缓存
 
         Returns:
             统计结果字典
         """
         self.logger.info(f"🔍 统计PMCID: {query}")
+        self._current_query = query
 
+        # 1. 首先检查缓存
+        if use_cache:
+            cached_papers = self._load_cache(query)
+            if cached_papers:
+                self.logger.info("✅ 使用缓存数据生成统计")
+                return self._statistics_from_cache(cached_papers)
+
+        # 2. 如果没有缓存且不触发搜索，只做基本统计
+        if not trigger_search:
+            self.logger.info("📊 执行基本统计（不创建缓存）")
+            return self._count_without_cache(query, limit)
+
+        # 3. 触发搜索以创建缓存
+        self.logger.info("📥 无缓存，触发搜索以生成缓存...")
+        try:
+            # 动态导入避免循环依赖
+            from .fetcher import PaperFetcher
+
+            fetcher = PaperFetcher(
+                cache_dir=str(self.cache_dir), default_source="pubmed"
+            )
+
+            # 搜索并缓存结果
+            papers = fetcher.search_papers(query, limit=limit, fetch_pmcid=True)
+
+            if papers:
+                self.logger.info(f"✅ 搜索并缓存了 {len(papers)} 篇文献")
+                return self._statistics_from_cache(papers)
+            else:
+                self.logger.warning("⚠ 未找到文献")
+                return self._count_without_cache(query, limit)
+
+        except Exception as e:
+            self.logger.error(f"触发搜索失败: {str(e)}")
+            self.logger.info("📊 回退到基本统计模式")
+            return self._count_without_cache(query, limit)
+
+    def _count_without_cache(self, query: str, limit: int = 5000) -> dict:
+        """不使用缓存的原始统计方法（原有逻辑）"""
         # 1. 获取PMID列表
         search_url = f"{self.ncbi_base_url}esearch.fcgi"
         search_params: dict[str, str | int] = {
@@ -154,8 +269,8 @@ class PMCIDCounter:
             }
 
         # 2. 分批并行处理
-        batch_size = config.COUNT_BATCH_SIZE
-        max_workers = config.COUNT_MAX_WORKERS
+        batch_size = COUNT_BATCH_SIZE
+        max_workers = COUNT_MAX_WORKERS
         batches = [pmids[i : i + batch_size] for i in range(0, len(pmids), batch_size)]
 
         self.logger.info(

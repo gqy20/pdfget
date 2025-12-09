@@ -9,14 +9,19 @@ from typing import Any
 
 import requests
 
-from .config import DEFAULT_SOURCE, RATE_LIMIT
+from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, RATE_LIMIT
 from .logger import get_logger
 
 
 class PaperSearcher:
     """文献搜索器"""
 
-    def __init__(self, session: requests.Session, email: str = "", api_key: str = ""):
+    def __init__(
+        self,
+        session: requests.Session,
+        email: str | None = None,
+        api_key: str | None = None,
+    ):
         """
         初始化文献搜索器
 
@@ -27,8 +32,8 @@ class PaperSearcher:
         """
         self.logger = get_logger(__name__)
         self.session = session
-        self.email = email
-        self.api_key = api_key
+        self.email = email or NCBI_EMAIL
+        self.api_key = api_key or NCBI_API_KEY
 
         # NCBI 配置
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"

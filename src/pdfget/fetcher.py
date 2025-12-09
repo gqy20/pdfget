@@ -13,7 +13,7 @@ from typing import Any
 
 import requests
 
-from .config import DEFAULT_SOURCE, SOURCES
+from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, SOURCES
 from .downloader import PDFDownloader
 from .logger import get_logger
 from .pmcid import PMCIDRetriever
@@ -58,8 +58,8 @@ class PaperFetcher:
         self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
 
         # NCBI 配置（用于缓存）
-        self.email = ""  # 可配置邮箱以提高请求限制
-        self.api_key = ""  # 可选 API 密钥
+        self.email = NCBI_EMAIL
+        self.api_key = NCBI_API_KEY
 
     def _get_cache_file(self, query: str, source: str) -> Path:
         """获取缓存文件路径"""
