@@ -13,8 +13,30 @@ from pathlib import Path
 from .config import DEFAULT_SEARCH_LIMIT, DEFAULT_SOURCE, DELAY, TIMEOUT
 from .counter import PMCIDCounter
 from .fetcher import PaperFetcher
+from .formatter import StatsFormatter
 from .logger import get_main_logger
 from .manager import UnifiedDownloadManager
+
+
+def log_download_stats(logger, results: list[dict]) -> dict:
+    """记录下载统计信息并返回统计结果"""
+    success_count = sum(1 for r in results if r.get("success"))
+    pdf_count = sum(1 for r in results if r.get("path"))
+    html_count = sum(1 for r in results if r.get("full_text_url"))
+
+    logger.info("\n📊 下载统计:")
+    logger.info(f"   总计: {len(results)}")
+    logger.info(f"   成功: {success_count}")
+    logger.info(f"   PDF: {pdf_count}")
+    logger.info(f"   HTML: {html_count}")
+    logger.info(f"   失败: {len(results) - success_count}")
+
+    return {
+        "total": len(results),
+        "success_count": success_count,
+        "pdf_count": pdf_count,
+        "html_count": html_count,
+    }
 
 
 def main() -> None:
@@ -151,8 +173,7 @@ def main() -> None:
 
             else:
                 # 统计模式：获取全部文献的PMCID信息
-                from . import config
-                from .formatter import StatsFormatter
+                import config
 
                 email = getattr(config, "NCBI_EMAIL", None)
                 api_key = getattr(config, "NCBI_API_KEY", None)
@@ -189,9 +210,9 @@ def main() -> None:
                     if stats["with_pmcid"] > 0:
                         print("\n💾 如果下载所有开放获取文献:")
                         print(f"   文件数量: {stats['with_pmcid']:,} 个PDF")
-                        print(
-                            f"   估算大小: {stats['estimated_size_mb']:.1f} MB ({stats['estimated_size_mb']/1024:.2f} GB)"
-                        )
+                        size_mb = stats["estimated_size_mb"]
+                        size_gb = size_mb / 1024
+                        print(f"   估算大小: {size_mb:.1f} MB ({size_gb:.2f} GB)")
 
                     # 如果检查的样本数小于总数，提供说明
                     if stats["checked"] < stats["total"]:
@@ -209,51 +230,34 @@ def main() -> None:
             logger.info(f"   找到 {len(oa_papers)} 篇开放获取文献")
 
             if oa_papers:
-                # 传递论文信息（包含PMCID）
-                papers_to_fetch = oa_papers  # 已经是有PMCID的论文列表
+                # 使用统一下载管理器
+                download_manager = UnifiedDownloadManager(
+                    fetcher=fetcher,
+                    max_workers=args.t,
+                    base_delay=args.delay,
+                )
+                results = download_manager.download_batch(oa_papers, timeout=TIMEOUT)
 
-                if papers_to_fetch:
-                    # 使用统一下载管理器
-                    download_manager = UnifiedDownloadManager(
-                        fetcher=fetcher,
-                        max_workers=args.t,
-                        base_delay=args.delay,
-                    )
-                    results = download_manager.download_batch(
-                        papers_to_fetch, timeout=TIMEOUT
-                    )
+                # 统计结果
+                stats = log_download_stats(logger, results)
 
-                    # 统计结果
-                    success_count = sum(1 for r in results if r.get("success"))
-                    pdf_count = sum(1 for r in results if r.get("path"))
-                    html_count = sum(1 for r in results if r.get("full_text_url"))
+                # 保存下载结果
+                if stats["success_count"] > 0:
+                    download_results_file = Path(args.o) / "download_results.json"
+                    with open(download_results_file, "w", encoding="utf-8") as f:
+                        json.dump(
+                            {
+                                "timestamp": time.time(),
+                                "total": stats["total"],
+                                "success": stats["success_count"],
+                                "results": results,
+                            },
+                            f,
+                            indent=2,
+                            ensure_ascii=False,
+                        )
 
-                    logger.info("\n📊 下载统计:")
-                    logger.info(f"   总计: {len(results)}")
-                    logger.info(f"   成功: {success_count}")
-                    logger.info(f"   PDF: {pdf_count}")
-                    logger.info(f"   HTML: {html_count}")
-                    logger.info(f"   失败: {len(results) - success_count}")
-
-                    # 保存下载结果
-                    if success_count > 0:
-                        download_results_file = Path(args.o) / "download_results.json"
-                        with open(download_results_file, "w", encoding="utf-8") as f:
-                            json.dump(
-                                {
-                                    "timestamp": time.time(),
-                                    "total": len(results),
-                                    "success": success_count,
-                                    "results": results,
-                                },
-                                f,
-                                indent=2,
-                                ensure_ascii=False,
-                            )
-
-                            logger.info(
-                                f"\n💾 下载结果已保存到: {download_results_file}"
-                            )
+                    logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
 
         else:
             # 批量下载
@@ -302,19 +306,10 @@ def main() -> None:
             results = download_manager.download_batch(dois, timeout=TIMEOUT)
 
             # 统计结果
-            success_count = sum(1 for r in results if r.get("success"))
-            pdf_count = sum(1 for r in results if r.get("path"))
-            html_count = sum(1 for r in results if r.get("full_text_url"))
-
-            logger.info("\n📊 下载统计:")
-            logger.info(f"   总计: {len(results)}")
-            logger.info(f"   成功: {success_count}")
-            logger.info(f"   PDF: {pdf_count}")
-            logger.info(f"   HTML: {html_count}")
-            logger.info(f"   失败: {len(results) - success_count}")
+            stats = log_download_stats(logger, results)
 
             # 保存结果
-            if success_count > 0:
+            if stats["success_count"] > 0:
                 output_file = Path(args.o) / "download_results.json"
                 output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -322,8 +317,8 @@ def main() -> None:
                     json.dump(
                         {
                             "timestamp": time.time(),
-                            "total": len(results),
-                            "success": success_count,
+                            "total": stats["total"],
+                            "success": stats["success_count"],
                             "results": results,
                         },
                         f,

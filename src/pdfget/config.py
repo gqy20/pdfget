@@ -16,15 +16,11 @@ for d in [DATA_DIR, OUTPUT_DIR, CACHE_DIR]:
 TIMEOUT = 30
 MAX_RETRIES = 3
 DELAY = 1.0
-MAX_CONCURRENT = 5
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 
 # API请求设置
 RATE_LIMIT = 3  # PubMed API 每秒最多3次请求
 
-# 批处理大小设置
-SUMMARY_BATCH_SIZE = 200  # PubMed摘要批量大小
-PMCID_BATCH_SIZE = 100  # PMCID批量大小
+# 默认搜索限制
 DEFAULT_SEARCH_LIMIT = 200  # 默认搜索/统计的文献数量
 
 # 统计计算设置
