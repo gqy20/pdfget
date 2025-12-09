@@ -233,7 +233,12 @@ pdfget -s "machine learning" -l 500 -e your-email@example.com -k your-api-key
 - 下载通过以下公开服务进行：
   - PMC Open Access Web Service
   - Europe PMC 直接下载链接
-- 只有搜索和 PMCID 获取需要使用 NCBI E-utilities API
+- 只有 PubMed 搜索和 PMCID 获取需要使用 NCBI E-utilities API
+
+**Europe PMC 说明**：
+- Europe PMC 搜索不需要 API 密钥或邮箱
+- 使用开放的 REST API，无严格的速率限制
+- 如果主要使用 Europe PMC 数据源，可以不配置任何认证信息
 
 ## 5. 输出格式与文件结构
 
