@@ -56,12 +56,12 @@ twine upload dist/*
 ## 项目架构
 
 ### 核心模块结构
-- **PaperFetcher** (`fetcher.py`) - 核心协调器，整合所有功能
-- **PaperSearcher** (`searcher.py`) - 文献搜索，支持 PubMed 和 Europe PMC
-- **PDFDownloader** (`downloader.py`) - PDF 下载，多源智能重试
+- **PaperFetcher** (`fetcher.py`) - 核心协调器，整合所有功能，包括 CSV PMCID 下载
+- **PaperSearcher** (`searcher.py`) - 文献搜索，支持 PubMed 和 Europe PMC，支持高级过滤语法
+- **PDFDownloader** (`downloader.py`) - PDF 下载，从 PMC OA Service 下载
 - **PMCIDRetriever** (`pmcid.py`) - 批量 PMCID 获取，使用 ESummary API 优化
-- **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器
-- **Counter** (`counter.py`) - PMCID 统计分析
+- **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器，支持 PMCID 优先的并发下载
+- **Counter** (`counter.py`) - PMCID 统计分析，显示 PMC 比例
 - **Formatter** (`formatter.py`) - 结果格式化输出
 
 ### 配置管理
@@ -77,13 +77,16 @@ twine upload dist/*
 
 ### API 集成
 - **NCBI E-utilities**：用于 PubMed 搜索和 PMCID 获取
+  - 支持 `pubmed pmc[sb]` 过滤器确保 100% PMC 收录
+  - 支持 `filter[free full text]` 过滤器获取所有免费全文
 - **Europe PMC REST API**：用于开放获取文献搜索和下载
 
 ### 命令行工具
 项目提供 `pdfget` 命令行工具，主要功能：
 - 文献搜索：`pdfget -s "query" -l 50`
+- PMC 过滤搜索：`pdfget -s "cancer AND pubmed pmc[sb]" -l 100`
 - PDF 下载：`pdfget -s "query" -d`
-- PMCID 获取：`pdfget -s "query" --pmcid`
+- CSV PMCID 下载：`pdfget -m examples/pmcids.csv`
 - 统计分析：`pdfget -s "query" --count`
 
 ### 扩展性设计
@@ -94,4 +97,10 @@ twine upload dist/*
 ### 数据流
 1. 搜索流程：搜索 → 缓存 → 结果格式化
 2. 下载流程：搜索结果 → PMCID 获取 → PDF 下载 → 文件保存
-3. 统计流程：搜索结果 → PMCID 批量查询 → 统计分析
+3. CSV 下载流程：CSV 读取 → PMCID 标准化 → 并发下载
+4. 统计流程：搜索结果 → PMCID 批量查询 → 统计分析
+
+### 重要功能说明
+- **PMC 过滤优化**：使用 `pubmed pmc[sb]` 确保所有结果都有 PMCID，100% 可下载
+- **CSV 批量下载**：支持从 CSV 文件读取 PMCID 列表，自动处理格式
+- **并发下载管理**：PMCID 优先的并发策略，自动处理标识符映射

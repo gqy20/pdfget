@@ -76,7 +76,55 @@ uv run pdfget -s "machine learning" -l 20
 
 PDFGet 支持两种主要模式：**统计模式**（默认）和**下载模式**（使用 `-d` 参数）。
 
-### 3.1 布尔运算符
+### 3.1 免费全文过滤
+
+#### 方法一：PMC 全文过滤（推荐，100% 可下载）
+
+使用 `pubmed pmc[sb]` 过滤器只返回在 PubMed Central 中收录的文献，所有结果都可以下载：
+
+```bash
+# 搜索 PMC 收录的癌症文献（100% 可下载）
+pdfget -s "cancer AND pubmed pmc[sb]" -l 100 -d
+
+# 基因家族研究
+pdfget -s '"gene family" AND pubmed pmc[sb]' -l 200
+
+# 配合年份限制
+pdfget -s '"machine learning" AND pubmed pmc[sb] 2020:2023[pd]' -l 100 -d
+```
+
+#### 方法二：免费全文过滤
+
+使用 `filter[free full text]` 包含所有类型的免费全文：
+
+```bash
+# 搜索有免费全文的高血压文献
+pdfget -s "hypertension filter[free full text]" -l 100
+
+# 搜索特定领域的免费全文文献
+pdfget -s "machine learning filter[free full text]" -l 50 -d
+```
+
+**重要说明**：
+- **`pubmed pmc[sb]`**：只返回 PMC 收录文献，**100% 可下载**（推荐）
+- **`filter[free full text]`**：包含所有免费全文，约 30-40% 可下载
+  - 包括：期刊官网免费全文、作者主页、机构仓库等
+  - 这些免费全文**不一定被 PMC 收录**，PDFGet 无法下载
+- 较新的文献（<1年）被 PMC 收录的概率较低
+- 配合年份过滤效果更好，例如：`"cancer AND pubmed pmc[sb] 2020:2023[pd]"`
+
+**为什么有这种差异？**
+许多期刊提供免费的开放获取（Open Access），但这些文献：
+1. 可能只存在于期刊官网
+2. 可能需要 6-12 个月的延迟才被 PMC 收录
+3. 有些期刊选择不在 PMC 存放全文
+4. PDFGet 只能从 PMC 下载，无法处理其他来源
+
+**建议**：
+- 如果需要**确保可下载**：使用 `pubmed pmc[sb]`
+- 如果想**发现更多免费文献**（即使不能使用当前软件下载）：使用 `filter[free full text]`
+
+### 3.2 布尔运算符
 ```bash
 # AND: 同时包含多个关键词
 pdfget -s "cancer AND immunotherapy" -l 30
