@@ -31,11 +31,11 @@ class PDFDownloader:
         # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # PDF 下载源（按优先级排序）
+        # PDF 下载源（按成功率排序，EuropePMC成功率最高）
         self.pdf_sources = [
-            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/",
-            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/{pmcid}.pdf",
             "https://europepmc.org/articles/{pmcid}?pdf=render",
+            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/{pmcid}.pdf",
+            "https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/",
         ]
 
     def _get_safe_filename(self, pmcid: str, doi: str) -> str:

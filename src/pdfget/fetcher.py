@@ -14,6 +14,7 @@ from typing import Any
 
 import requests
 
+from .config import DEFAULT_SOURCE, SOURCES
 from .downloader import PDFDownloader
 from .logger import get_logger
 from .pmcid import PMCIDRetriever
@@ -27,7 +28,7 @@ class PaperFetcher:
         self,
         cache_dir: str = "data/cache",
         output_dir: str = "data/pdfs",
-        default_source: str = "pubmed",
+        default_source: str | None = None,
         sources: "list[str] | None" = None,
     ):
         """
@@ -42,8 +43,8 @@ class PaperFetcher:
         self.logger = get_logger(__name__)
         self.cache_dir = Path(cache_dir)
         self.output_dir = Path(output_dir)
-        self.default_source = default_source
-        self.sources = sources or ["pubmed", "europe_pmc"]
+        self.default_source = default_source or DEFAULT_SOURCE
+        self.sources = sources or SOURCES
 
         # 确保目录存在
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -95,6 +96,7 @@ class PaperFetcher:
         limit: int = 50,
         source: "str | None" = None,
         use_cache: bool = True,
+        fetch_pmcid: bool = False,
     ) -> list[dict]:
         """
         搜索文献
@@ -104,6 +106,7 @@ class PaperFetcher:
             limit: 返回数量限制
             source: 数据源
             use_cache: 是否使用缓存
+            fetch_pmcid: 是否自动获取PMCID
 
         Returns:
             文献列表
@@ -114,13 +117,30 @@ class PaperFetcher:
             cached_papers = self._load_cache(cache_file)
             if cached_papers:
                 self.logger.info(f"从缓存加载 {len(cached_papers)} 条结果")
+                # 如果需要PMCID且缓存中没有，检查并添加
+                if fetch_pmcid and not any(p.get("pmcid") for p in cached_papers):
+                    cached_papers = self.add_pmcids(cached_papers)
+                    # 更新缓存
+                    self._save_cache(cache_file, cached_papers)
                 return cached_papers
 
         # 执行搜索
         papers = self.searcher.search_papers(query, limit, source)
 
-        # 保存到缓存
+        # 自动获取PMCID（如果需要且是PubMed数据源）
+        if (
+            fetch_pmcid
+            and papers
+            and (
+                source == "pubmed"
+                or (source is None and self.default_source == "pubmed")
+            )
+        ):
+            papers = self.add_pmcids(papers)
+
+        # 保存到缓存（包含PMCID信息）
         if use_cache and papers:
+            cache_file = self._get_cache_file(query, source or self.default_source)
             self._save_cache(cache_file, papers)
 
         return papers
@@ -158,7 +178,7 @@ class PaperFetcher:
         # 如果没有 PMCID，尝试通过 DOI 搜索
         if not pmcid:
             # 使用 DOI 作为查询词搜索
-            papers = self.search_papers(doi, limit=1, source="europe_pmc")
+            papers = self.search_papers(doi, limit=1, source=self.default_source)
             if papers:
                 paper = papers[0]
                 pmcid = paper.get("pmcid")
@@ -331,7 +351,7 @@ class PaperFetcher:
 
 
 # 便捷函数
-def quick_search(query: str, limit: int = 20, source: str = "pubmed") -> list[dict]:
+def quick_search(query: str, limit: int = 20, source: str | None = None) -> list[dict]:
     """
     快速搜索文献
 
@@ -344,7 +364,7 @@ def quick_search(query: str, limit: int = 20, source: str = "pubmed") -> list[di
         文献列表
     """
     with PaperFetcher() as fetcher:
-        return fetcher.search_papers(query, limit, source)
+        return fetcher.search_papers(query, limit, source or DEFAULT_SOURCE)
 
 
 def quick_download(papers: list[dict], output_dir: str = "data/pdfs") -> dict:

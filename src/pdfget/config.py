@@ -48,3 +48,7 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 COUNT_BATCH_SIZE = 80  # 每批处理的PMID数量
 COUNT_MAX_WORKERS = 5  # 并行处理的线程数
 COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
+
+# 数据源设置
+DEFAULT_SOURCE = "pubmed"  # 默认数据源: pubmed, europe_pmc
+SOURCES = ["pubmed", "europe_pmc"]  # 支持的数据源列表

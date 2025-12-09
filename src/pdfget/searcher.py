@@ -9,7 +9,7 @@ from typing import Any
 
 import requests
 
-from .config import RATE_LIMIT
+from .config import DEFAULT_SOURCE, RATE_LIMIT
 from .logger import get_logger
 
 
@@ -39,7 +39,7 @@ class PaperSearcher:
         self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 
         # 默认搜索源
-        self.default_source = "pubmed"
+        self.default_source = DEFAULT_SOURCE
 
     def _rate_limit(self) -> None:
         """处理 NCBI API 请求频率限制"""
@@ -235,9 +235,18 @@ class PaperSearcher:
                         if year_match:
                             year = year_match.group()
 
+                    # 提取DOI
+                    doi = ""
+                    if "articleids" in article_data:
+                        for aid in article_data["articleids"]:
+                            if aid.get("idtype") == "doi":
+                                doi = aid.get("value", "")
+                                break
+
                     # 构建论文数据
                     paper: dict[str, Any] = {
                         "pmid": pmid,
+                        "doi": doi,
                         "title": article_data.get("title", ""),
                         "authors": authors,
                         "journal": article_data.get("fulljournalname", ""),

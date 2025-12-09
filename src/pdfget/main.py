@@ -10,7 +10,7 @@ import logging
 import time
 from pathlib import Path
 
-from .config import DELAY, TIMEOUT
+from .config import DEFAULT_SOURCE, DELAY, TIMEOUT
 from .counter import PMCIDCounter
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
@@ -60,8 +60,8 @@ def main() -> None:
     parser.add_argument(
         "-S",
         choices=["pubmed", "europe_pmc", "both"],
-        default="pubmed",
-        help="数据源（默认: pubmed）",
+        default=DEFAULT_SOURCE,
+        help=f"数据源（默认: {DEFAULT_SOURCE}）",
     )
     parser.add_argument(
         "--format",
@@ -121,8 +121,8 @@ def main() -> None:
 
             if result.get("success"):
                 logger.info("✅ 下载成功!")
-                if result.get("pdf_path"):
-                    logger.info(f"   PDF路径: {result['pdf_path']}")
+                if result.get("path"):
+                    logger.info(f"   PDF路径: {result['path']}")
                 else:
                     logger.info(f"   HTML链接: {result.get('full_text_url')}")
             else:
@@ -131,7 +131,11 @@ def main() -> None:
         elif args.s:
             # 搜索文献
             logger.info(f"\n🔍 搜索文献: {args.s} (数据源: {args.S})")
-            papers = fetcher.search_papers(args.s, limit=args.l, source=args.S)
+            # 如果是PubMed数据源，需要额外获取PMCID（Europe PMC已包含PMCID）
+            fetch_pmcid = args.S == "pubmed"
+            papers = fetcher.search_papers(
+                args.s, limit=args.l, source=args.S, fetch_pmcid=fetch_pmcid
+            )
 
             if not papers:
                 logger.error("❌ 未找到匹配的文献")
@@ -196,7 +200,7 @@ def main() -> None:
 
                         # 统计结果
                         success_count = sum(1 for r in results if r.get("success"))
-                        pdf_count = sum(1 for r in results if r.get("pdf_path"))
+                        pdf_count = sum(1 for r in results if r.get("path"))
                         html_count = sum(1 for r in results if r.get("full_text_url"))
 
                         logger.info("\n📊 下载统计:")
@@ -278,7 +282,7 @@ def main() -> None:
 
             # 统计结果
             success_count = sum(1 for r in results if r.get("success"))
-            pdf_count = sum(1 for r in results if r.get("pdf_path"))
+            pdf_count = sum(1 for r in results if r.get("path"))
             html_count = sum(1 for r in results if r.get("full_text_url"))
 
             logger.info("\n📊 下载统计:")
