@@ -237,7 +237,8 @@ pdfget -s "machine learning" -l 500 -e your-email@example.com -k your-api-key
 
 **Europe PMC 说明**：
 - Europe PMC 搜索不需要 API 密钥或邮箱
-- 使用开放的 REST API，无严格的速率限制
+- 使用开放的 REST API，建议将请求速率控制在 10-15 次/秒以下
+- 官方未明确说明速率限制，但根据第三方资料约为 20 次/秒
 - 如果主要使用 Europe PMC 数据源，可以不配置任何认证信息
 
 ## 5. 输出格式与文件结构
