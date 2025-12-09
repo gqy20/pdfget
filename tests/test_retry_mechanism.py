@@ -177,15 +177,19 @@ class TestBackoffIntegration:
         mock_response = Mock()
         mock_response.status_code = 429
 
+        # 创建一个会在第一次调用时抛出429错误，第二次调用成功的函数
+        call_count = 0
+
         def raise_429_then_success():
-            if mock_response.raise_for_status.call_count == 1:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
                 error = requests.HTTPError("Too Many Requests")
                 error.response = mock_response
                 raise error
             return "success"
 
         mock_func = Mock(side_effect=raise_429_then_success)
-        mock_response.raise_for_status = Mock(side_effect=lambda: None)
 
         decorated_func = retry_with_backoff(max_retries=2)(mock_func)
         result = decorated_func()
