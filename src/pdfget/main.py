@@ -227,7 +227,7 @@ def main() -> None:
                     print(f"   无PMCID: {stats['without_pmcid']:,} 篇")
                     print(f"   耗时: {stats['elapsed_seconds']:.1f} 秒")
                     print(
-                        f"   处理速度: {stats['checked']/stats['elapsed_seconds']:.1f} 篇/秒"
+                        f"   处理速度: {stats['checked'] / stats['elapsed_seconds']:.1f} 篇/秒"
                     )
 
                     if stats["with_pmcid"] > 0:
