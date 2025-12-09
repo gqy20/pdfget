@@ -10,12 +10,12 @@ import logging
 import time
 from pathlib import Path
 
-from .fetcher import PaperFetcher
-from .manager import UnifiedDownloadManager
+from .config import DELAY, TIMEOUT
 from .counter import PMCIDCounter
+from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
 from .logger import get_main_logger
-from .config import TIMEOUT, DELAY
+from .manager import UnifiedDownloadManager
 
 
 def main() -> None:
@@ -259,7 +259,7 @@ def main() -> None:
             else:
                 # 读取文本文件（每行一个DOI）
                 try:
-                    with open(input_path, "r") as f:
+                    with open(input_path) as f:
                         dois = [line.strip() for line in f if line.strip()]
                     logger.info(f"   找到 {len(dois)} 个DOI")
 

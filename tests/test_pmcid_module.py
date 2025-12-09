@@ -3,8 +3,9 @@
 测试 PMCID 模块的功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.pdfget.pmcid import PMCIDRetriever
 

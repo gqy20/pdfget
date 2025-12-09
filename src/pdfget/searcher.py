@@ -5,7 +5,6 @@
 """
 
 import re
-from typing import Dict, List, Optional
 
 import requests
 
@@ -109,8 +108,8 @@ class PaperSearcher:
         return query
 
     def _normalize_paper_data(
-        self, paper: Dict[str, any], source: str
-    ) -> Dict[str, any]:
+        self, paper: dict[str, any], source: str
+    ) -> dict[str, any]:
         """
         标准化论文数据格式
 
@@ -146,7 +145,7 @@ class PaperSearcher:
 
         return normalized
 
-    def _search_pubmed_api(self, query: str, limit: int = 50) -> List[Dict[str, any]]:
+    def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, any]]:
         """
         执行 PubMed API 搜索
 
@@ -258,7 +257,7 @@ class PaperSearcher:
 
     def _search_europepmc_api(
         self, query: str, limit: int = 50
-    ) -> List[Dict[str, any]]:
+    ) -> list[dict[str, any]]:
         """
         执行 Europe PMC API 搜索
 
@@ -329,7 +328,7 @@ class PaperSearcher:
             self.logger.error(f"Europe PMC 搜索出错: {str(e)}")
             return []
 
-    def search_pubmed(self, query: str, limit: int = 50) -> List[Dict[str, any]]:
+    def search_pubmed(self, query: str, limit: int = 50) -> list[dict[str, any]]:
         """
         通过 NCBI PubMed 搜索文献
 
@@ -357,7 +356,7 @@ class PaperSearcher:
 
         return papers
 
-    def search_europepmc(self, query: str, limit: int = 50) -> List[Dict[str, any]]:
+    def search_europepmc(self, query: str, limit: int = 50) -> list[dict[str, any]]:
         """
         通过 Europe PMC 搜索文献
 
@@ -385,7 +384,7 @@ class PaperSearcher:
 
         return papers
 
-    def search_all_sources(self, query: str, limit: int = 50) -> List[Dict[str, any]]:
+    def search_all_sources(self, query: str, limit: int = 50) -> list[dict[str, any]]:
         """
         从所有可用源搜索文献
 
@@ -419,8 +418,8 @@ class PaperSearcher:
         return unique_papers
 
     def search_papers(
-        self, query: str, limit: int = 50, source: Optional[str] = None
-    ) -> List[Dict[str, any]]:
+        self, query: str, limit: int = 50, source: str | None = None
+    ) -> list[dict[str, any]]:
         """
         通过指定数据源搜索文献
 

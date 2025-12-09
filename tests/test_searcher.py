@@ -3,8 +3,9 @@
 测试文献搜索模块
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.pdfget.searcher import PaperSearcher
 

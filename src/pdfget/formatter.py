@@ -3,7 +3,6 @@
 
 import json
 from datetime import datetime
-from typing import Dict
 
 from . import config
 
@@ -12,7 +11,7 @@ class StatsFormatter:
     """统计结果格式化器"""
 
     @staticmethod
-    def format_console(stats: Dict) -> str:
+    def format_console(stats: dict) -> str:
         """格式化为控制台输出"""
         output = []
         output.append("\n📈 PMCID统计结果:")
@@ -48,7 +47,7 @@ class StatsFormatter:
         return "\n".join(output)
 
     @staticmethod
-    def format_json(stats: Dict) -> str:
+    def format_json(stats: dict) -> str:
         """格式化为JSON输出"""
         # 添加时间戳
         stats_with_meta = {
@@ -60,7 +59,7 @@ class StatsFormatter:
         return json.dumps(stats_with_meta, indent=2, ensure_ascii=False)
 
     @staticmethod
-    def format_markdown(stats: Dict) -> str:
+    def format_markdown(stats: dict) -> str:
         """格式化为Markdown报告"""
         output = []
         output.append("# PMCID统计报告")
@@ -115,7 +114,7 @@ class StatsFormatter:
         return "\n".join(output)
 
     @classmethod
-    def format(cls, stats: Dict, format_type: str | None = None) -> str:
+    def format(cls, stats: dict, format_type: str | None = None) -> str:
         """根据配置格式化输出
 
         Args:
@@ -138,7 +137,7 @@ class StatsFormatter:
 
     @classmethod
     def save_report(
-        cls, stats: Dict, filename: str, format_type: str | None = None
+        cls, stats: dict, filename: str, format_type: str | None = None
     ) -> None:
         """保存报告到文件
 

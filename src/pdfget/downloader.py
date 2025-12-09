@@ -6,7 +6,6 @@ PDF 下载模块
 
 import re
 from pathlib import Path
-from typing import Dict, Optional
 
 import requests
 
@@ -75,7 +74,7 @@ class PDFDownloader:
         filename = f"{pmcid}_{safe_doi}.pdf"
         return filename
 
-    def _save_pdf(self, content: bytes, pmcid: str, doi: str) -> Dict[str, str]:
+    def _save_pdf(self, content: bytes, pmcid: str, doi: str) -> dict[str, str]:
         """
         保存 PDF 到本地
 
@@ -100,7 +99,7 @@ class PDFDownloader:
             self.logger.error(f"PDF 保存失败: {str(e)}")
             return {"success": False, "error": str(e), "path": str(file_path)}
 
-    def _try_download_from_url(self, url: str, pmcid: str, doi: str) -> Dict[str, any]:
+    def _try_download_from_url(self, url: str, pmcid: str, doi: str) -> dict[str, any]:
         """
         尝试从单个 URL 下载 PDF
 
@@ -148,7 +147,7 @@ class PDFDownloader:
         except Exception as e:
             return {"success": False, "error": f"未知错误: {str(e)}"}
 
-    def download_pdf(self, pmcid: str, doi: str) -> Dict[str, any]:
+    def download_pdf(self, pmcid: str, doi: str) -> dict[str, any]:
         """
         下载 PDF 文件
 
@@ -199,7 +198,7 @@ class PDFDownloader:
         file_path = self.output_dir / filename
         return file_path.exists()
 
-    def get_pdf_path(self, pmcid: str, doi: str) -> Optional[str]:
+    def get_pdf_path(self, pmcid: str, doi: str) -> str | None:
         """
         获取 PDF 文件路径（如果存在）
 
@@ -214,7 +213,7 @@ class PDFDownloader:
         file_path = self.output_dir / filename
         return str(file_path) if file_path.exists() else None
 
-    def download_if_not_exists(self, pmcid: str, doi: str) -> Dict[str, any]:
+    def download_if_not_exists(self, pmcid: str, doi: str) -> dict[str, any]:
         """
         如果 PDF 不存在则下载
 
@@ -237,7 +236,7 @@ class PDFDownloader:
 
         return self.download_pdf(pmcid, doi)
 
-    def list_downloaded_pdfs(self) -> Dict[str, Dict[str, any]]:
+    def list_downloaded_pdfs(self) -> dict[str, dict[str, any]]:
         """
         列出所有已下载的 PDF
 
@@ -320,7 +319,7 @@ class PDFDownloader:
 
         return deleted_count
 
-    def get_cache_info(self) -> Dict[str, any]:
+    def get_cache_info(self) -> dict[str, any]:
         """
         获取缓存信息
 

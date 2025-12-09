@@ -6,10 +6,11 @@
 
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
-from .config import LOG_LEVEL, LOG_FORMAT
+from .config import LOG_FORMAT, LOG_LEVEL
 
 
 # 日志颜色配置
@@ -45,10 +46,10 @@ class ColoredFormatter(logging.Formatter):
 
 def setup_logger(
     name: str,
-    level: Optional[str] = None,
-    log_format: Optional[str] = None,
+    level: str | None = None,
+    log_format: str | None = None,
     use_colors: bool = True,
-    log_file: Optional[Path] = None,
+    log_file: Path | None = None,
 ) -> logging.Logger:
     """
     设置并返回一个配置好的logger
@@ -138,7 +139,7 @@ def get_counter_logger() -> logging.Logger:
 
 
 # 日志装饰器
-def log_function_call(logger: Optional[logging.Logger] = None) -> Callable:
+def log_function_call(logger: logging.Logger | None = None) -> Callable:
     """
     装饰器：记录函数调用
 
@@ -178,7 +179,7 @@ class LogContext:
     def __init__(self, logger: logging.Logger, level: str):
         self.logger = logger
         self.new_level = getattr(logging, level.upper())
-        self.old_level: Optional[int] = None
+        self.old_level: int | None = None
 
     def __enter__(self) -> "LogContext":
         self.old_level = self.logger.level

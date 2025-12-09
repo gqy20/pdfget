@@ -3,9 +3,10 @@
 测试 PDF 下载模块
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 
 from src.pdfget.downloader import PDFDownloader
 
@@ -76,11 +77,13 @@ class TestPDFDownloader:
 
         import unittest.mock
 
-        with unittest.mock.patch(
-            "builtins.open", side_effect=IOError("Permission denied")
+        with (
+            unittest.mock.patch(
+                "builtins.open", side_effect=OSError("Permission denied")
+            ),
+            unittest.mock.patch("pathlib.Path.mkdir"),
         ):
-            with unittest.mock.patch("pathlib.Path.mkdir"):
-                result = downloader._save_pdf(b"pdf content", pmcid, doi)
+            result = downloader._save_pdf(b"pdf content", pmcid, doi)
 
         assert result["success"] is False
         assert "error" in result

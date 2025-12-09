@@ -12,10 +12,10 @@ from pathlib import Path
 
 import requests
 
+from .downloader import PDFDownloader
 from .logger import get_logger
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
-from .downloader import PDFDownloader
 
 
 class PaperFetcher:
@@ -61,7 +61,7 @@ class PaperFetcher:
 
     def _get_cache_file(self, query: str, source: str) -> Path:
         """获取缓存文件路径"""
-        content = f"{query}:{source}".encode("utf-8")
+        content = f"{query}:{source}".encode()
         hash_key = hashlib.md5(content).hexdigest()
         return self.cache_dir / f"search_{hash_key}.json"
 
@@ -69,7 +69,7 @@ class PaperFetcher:
         """加载搜索缓存"""
         try:
             if cache_file.exists():
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             self.logger.error(f"读取缓存失败 {cache_file}: {str(e)}")
@@ -181,10 +181,10 @@ class PaperFetcher:
 
             if download_result["success"]:
                 results["success"] += 1
-                self.logger.info(f"  ✓ [{i+1}/{len(papers)}] {pmcid}")
+                self.logger.info(f"  ✓ [{i + 1}/{len(papers)}] {pmcid}")
             else:
                 results["failed"] += 1
-                error_msg = f"  ✗ [{i+1}/{len(papers)}] {pmcid}: {download_result.get('error', 'Unknown error')}"
+                error_msg = f"  ✗ [{i + 1}/{len(papers)}] {pmcid}: {download_result.get('error', 'Unknown error')}"
                 self.logger.error(error_msg)
                 results["errors"].append(error_msg)
 

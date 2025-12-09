@@ -6,7 +6,6 @@ PMCID 批量获取模块
 """
 
 import time
-from typing import Dict, List, Optional
 
 import requests
 
@@ -46,7 +45,7 @@ class PMCIDRetriever:
 
         self.last_request_time = time.time()
 
-    def _collect_pmids(self, papers: List[Dict[str, any]]) -> List[str]:
+    def _collect_pmids(self, papers: list[dict[str, any]]) -> list[str]:
         """
         从论文列表中提取有效的 PMIDs
 
@@ -91,8 +90,8 @@ class PMCIDRetriever:
         return pmcid
 
     def _fetch_pmcid_batch(
-        self, pmids: List[str], batch_size: int = 100
-    ) -> Dict[str, str]:
+        self, pmids: list[str], batch_size: int = 100
+    ) -> dict[str, str]:
         """
         使用 ESummary 批量获取 PMCID
 
@@ -205,7 +204,7 @@ class PMCIDRetriever:
         )
         return pmid_to_pmcid
 
-    def _fetch_pmcid_individual(self, pmid: str) -> Optional[str]:
+    def _fetch_pmcid_individual(self, pmid: str) -> str | None:
         """
         逐个获取 PMCID（作为批量获取的备选方案）
 
@@ -255,8 +254,8 @@ class PMCIDRetriever:
             return None
 
     def process_papers(
-        self, papers: List[Dict[str, any]], use_fallback: bool = True
-    ) -> List[Dict[str, any]]:
+        self, papers: list[dict[str, any]], use_fallback: bool = True
+    ) -> list[dict[str, any]]:
         """
         为论文列表批量添加 PMCID 信息
 
@@ -311,7 +310,7 @@ class PMCIDRetriever:
         )
         return updated_papers
 
-    def get_single_pmcid(self, paper: Dict[str, any]) -> Optional[str]:
+    def get_single_pmcid(self, paper: dict[str, any]) -> str | None:
         """
         获取单篇论文的 PMCID（兼容原接口）
 

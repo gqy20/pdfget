@@ -8,10 +8,10 @@ import random
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-from .fetcher import PaperFetcher
 from .config import DOWNLOAD_BASE_DELAY, DOWNLOAD_RANDOM_DELAY
+from .fetcher import PaperFetcher
 from .logger import get_logger
 
 
@@ -49,8 +49,8 @@ class UnifiedDownloadManager:
         self._total = 0
 
     def _normalize_input(
-        self, items: List[str] | List[dict]
-    ) -> tuple[List[dict], List[str]]:
+        self, items: list[str] | list[dict]
+    ) -> tuple[list[dict], list[str]]:
         """
         标准化输入格式
 
@@ -60,7 +60,7 @@ class UnifiedDownloadManager:
         Returns:
             (论文信息列表, DOI列表)
         """
-        papers: List[dict] = []
+        papers: list[dict] = []
         if items and isinstance(items[0], dict):
             # 输入是论文信息列表
             papers = items  # type: ignore
@@ -80,8 +80,8 @@ class UnifiedDownloadManager:
         return self.base_delay
 
     def _download_sequential(
-        self, papers: List[dict], delay: float = 1.0, timeout: int = 30
-    ) -> List[dict]:
+        self, papers: list[dict], delay: float = 1.0, timeout: int = 30
+    ) -> list[dict]:
         """
         单线程顺序下载
 
@@ -150,7 +150,7 @@ class UnifiedDownloadManager:
         )
         return fetcher
 
-    def _download_concurrent(self, papers: List[dict], timeout: int = 30) -> List[dict]:
+    def _download_concurrent(self, papers: list[dict], timeout: int = 30) -> list[dict]:
         """
         多线程并发下载
 
@@ -226,8 +226,8 @@ class UnifiedDownloadManager:
         return ordered_results
 
     def _download_single_task(
-        self, doi: str, pmcid: Optional[str], fetcher: PaperFetcher, timeout: int = 30
-    ) -> Dict[str, Any]:
+        self, doi: str, pmcid: str | None, fetcher: PaperFetcher, timeout: int = 30
+    ) -> dict[str, Any]:
         """单个文献的下载任务（线程池中的任务）"""
         try:
             # 添加随机延迟
@@ -249,10 +249,10 @@ class UnifiedDownloadManager:
 
     def download_batch(
         self,
-        items: List[str] | List[dict],
-        delay: Optional[float] = None,
+        items: list[str] | list[dict],
+        delay: float | None = None,
         timeout: int = 30,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         批量下载文献（自动选择单线程或多线程）
 

@@ -6,13 +6,13 @@ import os
 from pathlib import Path
 
 from pdfget.config import (
-    TIMEOUT,
-    MAX_RETRIES,
     DELAY,
-    OUTPUT_DIR,
-    LOG_LEVEL,
-    LOG_FORMAT,
     HEADERS,
+    LOG_FORMAT,
+    LOG_LEVEL,
+    MAX_RETRIES,
+    OUTPUT_DIR,
+    TIMEOUT,
 )
 
 
@@ -74,6 +74,7 @@ class TestConfig:
 
         # 重新导入模块以测试环境变量覆盖
         import importlib
+
         import pdfget.config
 
         importlib.reload(pdfget.config)

@@ -5,7 +5,6 @@ import random
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Tuple
 
 import requests
 
@@ -36,8 +35,8 @@ class PMCIDCounter:
         self.ncbi_base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 
     def _fetch_batch_pmcid(
-        self, batch_pmids: List[str], batch_num: int, total_batches: int
-    ) -> Tuple[int, int]:
+        self, batch_pmids: list[str], batch_num: int, total_batches: int
+    ) -> tuple[int, int]:
         """获取一批PMIDs中是否有PMCID的统计
 
         Args:
@@ -102,7 +101,7 @@ class PMCIDCounter:
         else:
             time.sleep(0.34)  # 约3请求/秒
 
-    def count_pmcid(self, query: str, limit: int = 5000) -> Dict:
+    def count_pmcid(self, query: str, limit: int = 5000) -> dict:
         """统计查询结果中有PMCID的文献数量
 
         Args:
