@@ -1,24 +1,27 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        language_version: python3.12
-        args: [--line-length=88]
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.1.14
-    hooks:
-      # Run the linter.
-      - id: ruff
-        args: [--fix]
-      # Run the formatter.
-      - id: ruff-format
-
   - repo: local
     hooks:
-      - id: mypy-local
+      - id: black
+        name: black
+        entry: uv run black
+        language: system
+        types: [python]
+        args: [--line-length=88]
+
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        args: [--check]
+
+      - id: mypy
         name: mypy
         entry: uv run mypy src/
         language: system
@@ -26,7 +29,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
