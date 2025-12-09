@@ -192,8 +192,8 @@ class TestPaperSearcher:
         """
         测试: 使用默认源搜索
         """
-        # 由于默认数据源是 europe_pmc，应该调用 search_europepmc
-        with patch.object(searcher, "search_europepmc", return_value=[]) as mock_search:
+        # 由于默认数据源是 pubmed，应该调用 search_pubmed
+        with patch.object(searcher, "search_pubmed", return_value=[]) as mock_search:
             searcher.search_papers("test query")
             mock_search.assert_called_once_with("test query", 50)
 
