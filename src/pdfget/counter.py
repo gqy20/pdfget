@@ -22,6 +22,7 @@ from .config import (
     PUBMED_MAX_RESULTS,
 )
 from .logger import get_logger
+from .retry import retry_with_backoff
 
 
 class PMCIDCounter:
@@ -57,7 +58,7 @@ class PMCIDCounter:
     def _fetch_batch_pmcid(
         self, batch_pmids: list[str], batch_num: int, total_batches: int
     ) -> tuple[int, int]:
-        """获取一批PMIDs中是否有PMCID的统计
+        """获取一批PMIDs中是否有PMCID的统计（带重试）
 
         Args:
             batch_pmids: PMIDs列表
@@ -84,12 +85,23 @@ class PMCIDCounter:
         # 随机延迟，避免所有线程同时请求
         time.sleep(random.uniform(0.05, 0.15))
 
-        try:
+        # 使用重试机制
+        @retry_with_backoff(
+            max_retries=3,
+            base_delay=0.5,  # 较长的初始延迟，因为是批量请求
+            max_delay=10.0,
+            jitter=0.2,
+            retryable_status_codes=(429, 502, 503, 504),
+        )
+        def _fetch():
             response = self.session.get(
                 fetch_url, params=params, timeout=config.TIMEOUT
             )
             response.raise_for_status()
-            xml = response.text
+            return response.text
+
+        try:
+            xml = _fetch()
 
             # 按 PubmedArticle 分割
             article_pattern = r"<PubmedArticle>(.*?)</PubmedArticle>"
@@ -108,7 +120,7 @@ class PMCIDCounter:
 
         except Exception as e:
             self.logger.warning(
-                f"批次 {batch_num:2d}/{total_batches} 错误: {str(e)[:50]}..."
+                f"批次 {batch_num:2d}/{total_batches} 重试后仍失败: {str(e)[:50]}..."
             )
             return 0, len(batch_pmids)
 

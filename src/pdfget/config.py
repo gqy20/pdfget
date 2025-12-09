@@ -46,9 +46,14 @@ NCBI_EMAIL = "test@gmail.com"
 NCBI_API_KEY = ""  # 可以在这里设置 API 密钥
 
 # PMCID统计设置
-COUNT_BATCH_SIZE = 80  # 每批处理的PMID数量
-COUNT_MAX_WORKERS = 5  # 并行处理的线程数
+COUNT_BATCH_SIZE = 50  # 每批处理的PMID数量（原80，减少以避免414错误）
+COUNT_MAX_WORKERS = 10  # 并行处理的线程数（原5，增加以提高处理速度）
 COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
+
+# PMCID获取设置
+PMCID_USE_FALLBACK = (
+    False  # 是否对批量获取失败的PMIDs使用逐个获取（默认关闭以提高性能）
+)
 
 # 数据源设置
 DEFAULT_SOURCE = "pubmed"  # 默认数据源: europe_pmc, pubmed

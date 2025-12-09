@@ -10,8 +10,9 @@ from typing import Any
 
 import requests
 
-from .config import RATE_LIMIT
+from .config import PMCID_USE_FALLBACK, RATE_LIMIT
 from .logger import get_logger
+from .retry import retry_with_backoff
 
 
 class PMCIDRetriever:
@@ -71,6 +72,58 @@ class PMCIDRetriever:
         self.logger.debug(f"从 {len(papers)} 篇论文中收集到 {len(pmids)} 个有效 PMIDs")
         return pmids
 
+    def _fetch_batch_with_retry(self, url: str, params: dict):
+        """
+        带重试的批量获取请求
+
+        Args:
+            url: 请求URL
+            params: 请求参数
+
+        Returns:
+            响应对象
+        """
+        # 为NCBI API创建专用的重试装饰器
+        ncbi_retry = retry_with_backoff(
+            max_retries=3,
+            base_delay=0.5,
+            max_delay=8.0,
+            jitter=0.2,
+            retryable_status_codes=(429, 502, 503, 504),
+        )
+
+        @ncbi_retry
+        def _fetch():
+            return self.session.get(url, params=params, timeout=30)
+
+        return _fetch()
+
+    def _fetch_single_with_retry(self, url: str, params: dict):
+        """
+        带重试的单个获取请求
+
+        Args:
+            url: 请求URL
+            params: 请求参数
+
+        Returns:
+            响应对象
+        """
+        # 单个请求的重试可以更激进一些
+        single_retry = retry_with_backoff(
+            max_retries=2,
+            base_delay=0.2,
+            max_delay=2.0,
+            jitter=0.1,
+            retryable_status_codes=(429, 502, 503, 504),
+        )
+
+        @single_retry
+        def _fetch():
+            return self.session.get(url, params=params, timeout=30)
+
+        return _fetch()
+
     def _format_pmcid(self, pmcid: str) -> str:
         """
         标准化 PMCID 格式，确保包含 PMC 前缀
@@ -91,7 +144,7 @@ class PMCIDRetriever:
         return pmcid
 
     def _fetch_pmcid_batch(
-        self, pmids: list[str], batch_size: int = 100
+        self, pmids: list[str], batch_size: int = 50
     ) -> dict[str, str]:
         """
         使用 ESummary 批量获取 PMCID
@@ -136,8 +189,8 @@ class PMCIDRetriever:
                 # 应用速率限制
                 self._rate_limit()
 
-                # 发送请求
-                response = self.session.get(url, params=params, timeout=30)
+                # 发送请求（带重试）
+                response = self._fetch_batch_with_retry(url, params)
                 response.raise_for_status()
 
                 # 解析响应
@@ -230,7 +283,8 @@ class PMCIDRetriever:
 
             self._rate_limit()
 
-            response = self.session.get(url, params=params, timeout=30)
+            # 使用重试机制
+            response = self._fetch_single_with_retry(url, params)
             response.raise_for_status()
 
             data = response.json()
@@ -255,7 +309,7 @@ class PMCIDRetriever:
             return None
 
     def process_papers(
-        self, papers: list[dict[str, Any]], use_fallback: bool = True
+        self, papers: list[dict[str, Any]], use_fallback: bool | None = None
     ) -> list[dict[str, Any]]:
         """
         为论文列表批量添加 PMCID 信息
@@ -263,6 +317,7 @@ class PMCIDRetriever:
         Args:
             papers: 论文列表
             use_fallback: 如果批量获取失败的部分是否使用逐个获取作为备选
+                         如果为None，则使用配置文件中的PMCID_USE_FALLBACK值
 
         Returns:
             更新后的论文列表，添加了 pmcid 字段
@@ -270,7 +325,13 @@ class PMCIDRetriever:
         if not papers:
             return papers
 
-        self.logger.info(f"开始为 {len(papers)} 篇论文批量获取 PMCID")
+        # 使用配置中的默认值（如果未明确指定）
+        if use_fallback is None:
+            use_fallback = PMCID_USE_FALLBACK
+
+        self.logger.info(
+            f"开始为 {len(papers)} 篇论文批量获取 PMCID（备选方案: {'启用' if use_fallback else '禁用'}）"
+        )
 
         # 收集有效 PMIDs
         pmids = self._collect_pmids(papers)

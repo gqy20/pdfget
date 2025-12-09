@@ -195,35 +195,54 @@ class PaperSearcher:
                 self.logger.debug("PubMed 搜索未找到结果")
                 return []
 
-            # 第二步：使用 ESummary 获取详细信息
-            self._rate_limit()
+            # 第二步：使用 ESummary 获取详细信息（分批处理以避免414错误）
+            all_papers = []
+            batch_size = 50  # ESummary API的批次大小限制，与PMCID处理保持一致
 
-            summary_url = f"{self.base_url}esummary.fcgi"
-            summary_params = {
-                "db": "pubmed",
-                "id": ",".join(pmids),
-                "retmode": "json",
-            }
+            for i in range(0, len(pmids), batch_size):
+                batch_pmids = pmids[i : i + batch_size]
+                batch_num = i // batch_size + 1
+                total_batches = (len(pmids) + batch_size - 1) // batch_size
 
-            if self.email:
-                summary_params["email"] = self.email
-            if self.api_key:
-                summary_params["api_key"] = self.api_key
+                self.logger.debug(
+                    f"获取第 {batch_num}/{total_batches} 批文献详情 ({len(batch_pmids)} 个PMID)"
+                )
 
-            summary_response = self.session.get(
-                summary_url,
-                params=summary_params,
-                timeout=30,  # type: ignore[arg-type]
-            )
-            summary_response.raise_for_status()
+                self._rate_limit()
 
-            summary_data = summary_response.json()
+                summary_url = f"{self.base_url}esummary.fcgi"
+                summary_params = {
+                    "db": "pubmed",
+                    "id": ",".join(batch_pmids),
+                    "retmode": "json",
+                }
+
+                if self.email:
+                    summary_params["email"] = self.email
+                if self.api_key:
+                    summary_params["api_key"] = self.api_key
+
+                summary_response = self.session.get(
+                    summary_url,
+                    params=summary_params,
+                    timeout=30,  # type: ignore[arg-type]
+                )
+                summary_response.raise_for_status()
+
+                batch_data = summary_response.json()
+                all_papers.append(batch_data)
             papers = []
 
+            # 合并所有批次的数据
             for pmid in pmids:
-                if pmid in summary_data.get("result", {}):
-                    article_data = summary_data["result"][pmid]
+                article_data = None
+                # 在每个批次中查找这个PMID
+                for batch_data in all_papers:
+                    if pmid in batch_data.get("result", {}):
+                        article_data = batch_data["result"][pmid]
+                        break
 
+                if article_data:
                     # 提取作者
                     authors = []
                     if "authors" in article_data:

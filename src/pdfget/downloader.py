@@ -11,6 +11,7 @@ from typing import Any
 import requests
 
 from .logger import get_logger
+from .retry import retry_with_backoff
 
 
 class PDFDownloader:
@@ -121,7 +122,8 @@ class PDFDownloader:
         try:
             self.logger.debug(f"尝试下载 PDF: {url}")
 
-            response = self.session.get(url, timeout=30, stream=True)
+            # 使用重试机制下载
+            response = self._download_with_retry(url)
             response.raise_for_status()
 
             # 检查内容类型
@@ -375,3 +377,28 @@ class PDFDownloader:
             "output_dir": str(self.output_dir),
             "pdf_sources": self.pdf_sources,
         }
+
+    def _download_with_retry(self, url: str):
+        """
+        带重试的PDF下载请求
+
+        Args:
+            url: PDF URL
+
+        Returns:
+            响应对象
+        """
+        # PDF下载使用较短的重试延迟
+        download_retry = retry_with_backoff(
+            max_retries=3,
+            base_delay=0.2,
+            max_delay=5.0,
+            jitter=0.1,
+            retryable_status_codes=(429, 502, 503, 504),
+        )
+
+        @download_retry
+        def _fetch():
+            return self.session.get(url, timeout=30, stream=True)
+
+        return _fetch()

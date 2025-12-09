@@ -13,7 +13,12 @@ from typing import Any
 
 import requests
 
-from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, SOURCES
+from .config import (
+    DEFAULT_SOURCE,
+    NCBI_API_KEY,
+    NCBI_EMAIL,
+    SOURCES,
+)
 from .downloader import PDFDownloader
 from .logger import get_logger
 from .pmcid import PMCIDRetriever
@@ -144,18 +149,22 @@ class PaperFetcher:
 
         return papers
 
-    def add_pmcids(self, papers: list[dict], use_fallback: bool = True) -> list[dict]:
+    def add_pmcids(
+        self, papers: list[dict], use_fallback: bool | None = None
+    ) -> list[dict]:
         """
         批量添加 PMCID
 
         Args:
             papers: 论文列表
             use_fallback: 是否使用逐个获取作为备选
+                         如果为None，则使用配置文件中的PMCID_USE_FALLBACK值
 
         Returns:
             更新后的论文列表
         """
         self.logger.info(f"为 {len(papers)} 篇论文添加 PMCID")
+        # 传递None让PMCIDRetriever自己使用配置的默认值
         return self.pmcid_retriever.process_papers(papers, use_fallback)
 
     def get_cache_info(self) -> dict:
