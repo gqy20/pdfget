@@ -145,8 +145,6 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 - `-t NUM` : 并发线程数（默认3）
 - `--format FORMAT` : 统计输出格式（console/json/markdown，默认console）
 - `-v` : 详细输出
-- `--delay SEC` : 请求延迟秒数
-- `--email EMAIL` : NCBI API邮箱（提高请求限制）
 
 ## 5. 输出格式与文件结构
 
@@ -244,16 +242,16 @@ pdfget -m pmcids.csv -t 5
 pdfget -m pmcids.csv -l 10
 ```
 
-## 7. 许可证
+## 6. 许可证
 
 本项目采用 MIT License，允许自由使用和修改。
 
-## 8. 获取帮助
+## 7. 获取帮助
 
 - 🔗 **完整更新日志**: [CHANGELOG.md](CHANGELOG.md)
 - 📧 **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
 
-## 9. 相关链接
+## 8. 相关链接
 
 - **项目源码**: [GitHub Repository](https://github.com/gqy20/pdfget)
 - **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
