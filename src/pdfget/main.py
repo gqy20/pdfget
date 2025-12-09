@@ -10,7 +10,7 @@ import logging
 import time
 from pathlib import Path
 
-from .config import DEFAULT_SEARCH_LIMIT, DEFAULT_SOURCE, DELAY, TIMEOUT
+from .config import DEFAULT_SEARCH_LIMIT, DEFAULT_SOURCE, TIMEOUT
 from .counter import PMCIDCounter
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
@@ -66,12 +66,13 @@ def main() -> None:
     group.add_argument("--doi", help="单个DOI")
     group.add_argument("-i", help="输入文件（CSV或TXT）")
     group.add_argument("-s", help="搜索文献")
+    group.add_argument("-m", help="从CSV文件读取PMCID列表下载")
 
     # 可选参数
 
     parser.add_argument("-c", default="doi", help="CSV列名（默认: doi）")
+    parser.add_argument("-p", default="PMCID", help="PMCID列名（默认: PMCID）")
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
-    parser.add_argument("--delay", type=float, default=DELAY, help="请求延迟秒数")
     parser.add_argument(
         "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
     )
@@ -261,7 +262,6 @@ def main() -> None:
                 download_manager = UnifiedDownloadManager(
                     fetcher=fetcher,
                     max_workers=args.t,
-                    base_delay=args.delay,
                 )
                 results = download_manager.download_batch(oa_papers, timeout=TIMEOUT)
 
@@ -285,6 +285,40 @@ def main() -> None:
                         )
 
                     logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
+
+        elif args.m:
+            # 从 CSV 文件读取 PMCID 列表并下载
+            logger.info(f"\n📋 从 CSV 文件下载 PMCID 列表: {args.m}")
+
+            # 调用 PaperFetcher 的下载方法
+            results = fetcher.download_from_pmcid_csv(
+                csv_path=args.m, limit=args.l, max_workers=args.t, pmcid_column=args.p
+            )
+
+            # 统计结果
+            stats = log_download_stats(logger, results)
+
+            # 保存下载结果
+            if stats["success_count"] > 0:
+                download_results_file = Path(args.o) / "download_results.json"
+                download_results_file.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(download_results_file, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {
+                            "timestamp": time.time(),
+                            "source": "pmcid_csv",
+                            "csv_file": args.m,
+                            "total": stats["total"],
+                            "success": stats["success_count"],
+                            "results": results,
+                        },
+                        f,
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+
+                logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
 
         else:
             # 批量下载
@@ -328,7 +362,6 @@ def main() -> None:
             download_manager = UnifiedDownloadManager(
                 fetcher=fetcher,
                 max_workers=args.t,
-                base_delay=args.delay,
             )
             results = download_manager.download_batch(dois, timeout=TIMEOUT)
 

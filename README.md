@@ -11,6 +11,7 @@ PDFGet是一个专为科研工作者设计的智能文献搜索与批量下载�
 - 🔍 **智能文献搜索**：支持高级检索语法，可按作者、期刊、年份等精确搜索
 - 📊 **PMCID统计分析**：快速统计文献的开放获取情况，支持多种输出格式
 - 📥 **批量PDF下载**：自动下载开放获取文献，支持并发下载和智能重试
+- 📋 **PMCID批量导入**：支持从CSV文件读取PMCID列表批量下载
 - 🔗 **多数据源支持**：集成PubMed（默认）和Europe PMC数据库
 - 💾 **智能缓存机制**：避免重复API请求和下载，提升效率
 - 🎯 **双模式操作**：统计模式（默认）和下载模式，满足不同需求
@@ -55,6 +56,9 @@ pdfget -s "quantum" -S europe_pmc -l 30
 
 # 使用多个数据源搜索
 pdfget -s "cancer immunotherapy" -S both -l 100
+
+# 从CSV文件读取PMCID列表下载
+pdfget -m pmcids.csv
 ```
 
 如果您使用 uv 作为包管理器，也可以：
@@ -131,6 +135,8 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 - `-s QUERY` : 搜索文献
 - `--doi DOI` : 通过DOI下载单个文献
 - `-i FILE` : 批量输入文件
+- `-m FILE` : 从CSV文件读取PMCID列表下载
+- `-p COLUMN` : PMCID列名（默认: PMCID）
 - `-d` : 下载PDF（不指定则为统计模式）
 
 ### 4.2 优化参数
@@ -206,6 +212,36 @@ pdfget -s "cancer" -l 100 --format json
 
 # 生成Markdown格式的统计报告
 pdfget -s "cancer" -l 100 --format markdown
+```
+
+### 5.4 PMCID CSV文件格式
+
+使用 `-m` 参数时，CSV文件需满足：
+- 包含PMCID列（默认列名为"PMCID"）
+- 支持带或不带PMC前缀的格式（如"123456"或"PMC123456"）
+- 可包含标题行（会自动跳过）
+
+示例CSV文件：
+```csv
+PMCID,Title,Journal
+PMC123456,Study on AI,Nature
+PMC789012,Deep Learning Review,Science
+345678,Machine Learning Methods,Cell
+```
+
+使用示例：
+```bash
+# 下载所有PMCID对应的PDF（默认查找PMCID列）
+pdfget -m pmcids.csv
+
+# 指定PMCID列名
+pdfget -m pmcids.csv -p "ID"
+
+# 使用5个并发线程
+pdfget -m pmcids.csv -t 5
+
+# 限制只下载前10个
+pdfget -m pmcids.csv -l 10
 ```
 
 ## 7. 许可证

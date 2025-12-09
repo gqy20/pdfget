@@ -197,6 +197,133 @@ class PaperFetcher:
             deleted_count = self.pdf_downloader.cleanup_old_pdfs(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
 
+    def _normalize_pmcid(self, pmcid: str) -> str:
+        """
+        标准化 PMCID 格式
+
+        Args:
+            pmcid: 原始 PMCID
+
+        Returns:
+            标准化的 PMCID（PMC前缀+数字）
+        """
+        if not pmcid:
+            return ""
+
+        # 去除空格和制表符
+        pmcid = pmcid.strip()
+
+        # 如果已经是标准格式
+        if pmcid.startswith("PMC"):
+            # 验证后面是否都是数字
+            if pmcid[3:].isdigit():
+                return pmcid
+            else:
+                return ""
+
+        # 如果是纯数字，添加 PMC 前缀
+        if pmcid.isdigit():
+            return f"PMC{pmcid}"
+
+        # 无效格式
+        return ""
+
+    def _read_pmcid_from_csv(
+        self, csv_path: str, pmcid_column: str = "PMCID"
+    ) -> list[str]:
+        """
+        从 CSV 文件读取 PMCID 列表
+
+        Args:
+            csv_path: CSV 文件路径
+            pmcid_column: PMCID 列名（默认 "PMCID"）
+
+        Returns:
+            有效的 PMCID 列表
+        """
+        import csv
+        import os
+
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
+
+        pmcid_list = []
+
+        with open(csv_path, encoding="utf-8") as f:
+            csv_reader = csv.reader(f)
+
+            # 读取第一行作为表头
+            header = next(csv_reader, None)
+
+            # 如果没有表头，假设第一列就是PMCID
+            if header is None:
+                return []
+
+            # 查找PMCID列的索引
+            pmcid_col_index = 0  # 默认第一列
+            if header:
+                # 尝试查找列名
+                for i, col in enumerate(header):
+                    if col.strip().lower() == pmcid_column.lower():
+                        pmcid_col_index = i
+                        break
+
+            # 读取数据行
+            for row in csv_reader:
+                if not row:  # 空行
+                    continue
+
+                if pmcid_col_index < len(row):
+                    # 尝试标准化 PMCID
+                    pmcid = self._normalize_pmcid(row[pmcid_col_index])
+                    if pmcid:
+                        pmcid_list.append(pmcid)
+
+        return pmcid_list
+
+    def download_from_pmcid_csv(
+        self,
+        csv_path: str,
+        limit: int | None = None,
+        max_workers: int = 1,
+        pmcid_column: str = "PMCID",
+    ) -> list[dict]:
+        """
+        从 CSV 文件读取 PMCID 列表并下载 PDF
+
+        Args:
+            csv_path: CSV 文件路径
+            limit: 限制下载数量
+            max_workers: 最大并发数
+            pmcid_column: PMCID 列名（默认 "PMCID"）
+
+        Returns:
+            下载结果列表
+        """
+        # 1. 读取并解析 CSV 文件
+        pmcid_list = self._read_pmcid_from_csv(csv_path, pmcid_column)
+
+        # 2. 转换为标准论文格式
+        papers = [
+            {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "direct_pmcid"}
+            for pmcid in pmcid_list
+        ]
+
+        # 3. 应用 limit 限制
+        if limit is not None and limit > 0:
+            papers = papers[:limit]
+
+        # 4. 如果没有论文，直接返回空列表
+        if not papers:
+            return []
+
+        # 5. 使用统一下载管理器下载
+        from .manager import UnifiedDownloadManager
+
+        download_manager = UnifiedDownloadManager(fetcher=self, max_workers=max_workers)
+
+        return download_manager.download_batch(papers)
+
     def export_results(
         self, papers: list[dict], format: str = "json", filename: "str | None" = None
     ) -> str:

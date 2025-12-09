@@ -30,9 +30,9 @@ class UnifiedDownloadManager:
 
         Args:
             fetcher: PaperFetcher实例
-            max_workers: 最大并发线程数（1表示单线程）
-            base_delay: 基础延迟时间（秒）
-            random_delay_range: 随机延迟范围（秒）
+            max_workers: 最大并发线程数
+            base_delay: 基础延迟时间（秒，从配置文件读取）
+            random_delay_range: 随机延迟范围（秒，从配置文件读取）
         """
         self.logger = get_logger(__name__)
         self.fetcher = fetcher
@@ -78,60 +78,6 @@ class UnifiedDownloadManager:
             random_delay = random.uniform(0, self.random_delay_range)
             return self.base_delay + random_delay
         return self.base_delay
-
-    def _download_sequential(
-        self, papers: list[dict], delay: float = 1.0, timeout: int = 30
-    ) -> list[dict]:
-        """
-        单线程顺序下载
-
-        Args:
-            papers: 论文信息列表
-            delay: 请求间延迟（秒）
-            timeout: 单个请求超时时间
-
-        Returns:
-            下载结果列表
-        """
-        self.logger.info(f"🚀 单线程下载 {len(papers)} 篇文献")
-        results = []
-
-        for i, paper in enumerate(papers, 1):
-            doi = paper["doi"] if isinstance(paper, dict) else paper
-            pmcid = paper.get("pmcid") if isinstance(paper, dict) else None
-
-            self.logger.info(f"\n📄 进度: {i}/{len(papers)}")
-
-            try:
-                # 直接使用PDFDownloader下载
-                if pmcid:
-                    result = self.fetcher.pdf_downloader.download_pdf(pmcid, doi)
-                else:
-                    # 如果没有PMCID，尝试搜索
-                    papers = self.fetcher.search_papers(doi, limit=1)
-                    if papers and papers[0].get("pmcid"):
-                        pmcid = papers[0]["pmcid"]
-                        result = self.fetcher.pdf_downloader.download_pdf(pmcid, doi)
-                    else:
-                        result = {"success": False, "error": "No PMCID found"}
-
-                # 添加必要的信息
-                result["doi"] = doi
-                result["pmcid"] = pmcid or ""
-                results.append(result)
-            except Exception as e:
-                self.logger.error(f"获取文献失败 ({doi}): {e}")
-                results.append({"doi": doi, "success": False, "error": str(e)})
-
-            # 延迟，避免被限制
-            if i < len(papers):
-                time.sleep(delay)
-
-        # 统计结果
-        success_count = sum(1 for r in results if r.get("success"))
-        self.logger.info(f"\n📊 单线程下载完成: {success_count}/{len(papers)} 成功")
-
-        return results
 
     def _update_progress(
         self, success: bool = False, pdf_downloaded: bool = False
@@ -185,18 +131,18 @@ class UnifiedDownloadManager:
         self._pdf_count = 0
 
         results = []
-        doi_list = [p["doi"] for p in papers]
 
         # 使用线程池执行并发下载
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # 提交所有下载任务
-            future_to_doi = {}
+            future_to_identifier = {}
 
             for paper in papers:
                 # 为每个线程创建独立的fetcher
                 thread_fetcher = self._create_thread_fetcher()
-                doi = paper["doi"] if isinstance(paper, dict) else paper
-                pmcid = paper.get("pmcid") if isinstance(paper, dict) else None
+                doi = paper.get("doi")
+                pmcid = paper.get("pmcid")
+                identifier = doi or pmcid  # 使用 DOI 或 PMCID 作为标识符
 
                 future = executor.submit(
                     self._download_single_task,
@@ -205,24 +151,51 @@ class UnifiedDownloadManager:
                     thread_fetcher,
                     timeout,
                 )
-                future_to_doi[future] = doi
+                future_to_identifier[future] = (doi, pmcid)
 
             # 收集结果
-            for future in as_completed(future_to_doi):
-                doi = future_to_doi[future]
+            for future in as_completed(future_to_identifier):
+                doi, pmcid = future_to_identifier[future]
                 try:
                     result = future.result()
                     results.append(result)
                 except Exception as e:
-                    self.logger.error(f"并发下载异常 ({doi}): {str(e)}")
-                    results.append({"doi": doi, "success": False, "error": str(e)})
+                    identifier = doi or pmcid or "unknown"
+                    self.logger.error(f"并发下载异常 ({identifier}): {str(e)}")
+                    results.append(
+                        {"doi": doi, "pmcid": pmcid, "success": False, "error": str(e)}
+                    )
 
-        # 按原始DOI顺序重新排列结果
-        doi_to_result = {r["doi"]: r for r in results}
-        ordered_results = [
-            doi_to_result.get(doi, {"doi": doi, "success": False, "error": "Not found"})
-            for doi in doi_list
-        ]
+        # 按原始顺序重新排列结果
+        # 创建一个标识符到结果的映射（优先使用DOI，其次是PMCID）
+        identifier_to_result = {}
+        for r in results:
+            if r.get("doi"):
+                identifier_to_result[r["doi"]] = r
+            elif r.get("pmcid"):
+                identifier_to_result[r["pmcid"]] = r
+
+        # 按原始论文顺序排列结果
+        ordered_results = []
+        for paper in papers:
+            doi = paper.get("doi")
+            pmcid = paper.get("pmcid")
+            identifier = doi or pmcid
+
+            if identifier:
+                lookup_result = identifier_to_result.get(identifier)
+                if lookup_result:
+                    ordered_results.append(lookup_result)
+                else:
+                    # 创建默认失败结果
+                    ordered_results.append(
+                        {
+                            "doi": doi or "",
+                            "pmcid": pmcid or "",
+                            "success": False,
+                            "error": "Not found",
+                        }
+                    )
 
         # 最终统计
         self.logger.info("\n📊 并发下载完成:")
@@ -276,15 +249,13 @@ class UnifiedDownloadManager:
     def download_batch(
         self,
         items: list[str] | list[dict],
-        delay: float | None = None,
         timeout: int = 30,
     ) -> list[dict[str, Any]]:
         """
-        批量下载文献（自动选择单线程或多线程）
+        批量下载文献（使用并发下载）
 
         Args:
             items: DOI列表或论文信息列表
-            delay: 请求间延迟（秒，仅单线程使用，None则使用默认值）
             timeout: 单个请求超时时间
 
         Returns:
@@ -296,15 +267,12 @@ class UnifiedDownloadManager:
         # 标准化输入
         papers, dois = self._normalize_input(items)
 
-        if not dois:
-            self.logger.warning("⚠️ 没有有效的DOI可以下载")
+        # 检查是否有 PMCID（即使没有 DOI 也可以下载）
+        pmcid_count = sum(1 for p in papers if p.get("pmcid"))
+
+        if not dois and not pmcid_count:
+            self.logger.warning("⚠️ 没有有效的DOI或PMCID可以下载")
             return []
 
-        # 根据参数选择下载策略
-        if self.max_workers > 1 and len(papers) > 1:
-            # 多线程并发下载
-            return self._download_concurrent(papers, timeout)
-        else:
-            # 单线程顺序下载
-            use_delay = delay if delay is not None else self.base_delay
-            return self._download_sequential(papers, use_delay, timeout)
+        # 总是使用并发下载（max_workers=1 时相当于单线程）
+        return self._download_concurrent(papers, timeout)
