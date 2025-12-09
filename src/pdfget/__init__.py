@@ -8,16 +8,16 @@ __email__ = "qingyu_ge@foxmail.com"
 __description__ = "智能文献搜索与批量下载工具，支持高级检索和并发下载"
 
 from .fetcher import PaperFetcher
-from .manager import UnifiedDownloadManager
-from .counter import PMCIDCounter
-from .formatter import StatsFormatter
+from .pmcid import PMCIDRetriever
+from .downloader import PDFDownloader
+from .searcher import PaperSearcher
 from .logger import get_logger, setup_logger
 
 __all__ = [
     "PaperFetcher",
-    "UnifiedDownloadManager",
-    "PMCIDCounter",
-    "StatsFormatter",
+    "PMCIDRetriever",
+    "PDFDownloader",
+    "PaperSearcher",
     "get_logger",
     "setup_logger",
 ]
