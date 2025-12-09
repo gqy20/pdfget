@@ -198,8 +198,8 @@ class TestPMCIDRetriever:
         """
         测试: 大量 PMIDs 的分批处理
         """
-        # 创建 250 个 PMIDs
-        pmids = [str(32353885 + i) for i in range(250)]
+        # 创建 150 个 PMIDs (减少数量以适应新的批次大小50)
+        pmids = [str(32353885 + i) for i in range(150)]
 
         # 模拟响应
         mock_response = Mock()
@@ -212,12 +212,12 @@ class TestPMCIDRetriever:
         # 调用方法
         retriever._fetch_pmcid_batch(pmids)
 
-        # 断言 - 应该调用 3 次 (100, 100, 50)
+        # 断言 - 应该调用 3 次 (50, 50, 50)
         assert retriever.session.get.call_count == 3
 
         # 验证第一批的参数
         first_call = retriever.session.get.call_args_list[0]
-        assert len(first_call[1]["params"]["id"].split(",")) == 100
+        assert len(first_call[1]["params"]["id"].split(",")) == 50
 
     @patch("time.sleep")
     def test_process_papers_integration(self, mock_sleep, retriever, sample_papers):
@@ -253,14 +253,21 @@ class TestPMCIDRetriever:
         assert "pmcid" not in processed[7]  # 重复的 PMIDs
 
     @patch("time.sleep")
-    def test_process_papers_with_fallback(self, mock_sleep, retriever, sample_papers):
+    def test_process_papers_batch_retry_mechanism(self, mock_sleep, retriever):
         """
-        测试: 使用备选方案处理失败的 PMIDs
+        测试: 批量重试机制
         """
-        # 第一次批量调用返回部分结果
-        mock_response = Mock()
-        mock_response.raise_for_status.return_value = None
-        mock_response.json.return_value = {
+        # 创建测试论文
+        papers = [
+            {"pmid": "32353885"},
+            {"pmid": "32353886"},
+            {"pmid": "32353887"},
+        ]
+
+        # 第一次批量调用只返回部分结果
+        first_response = Mock()
+        first_response.raise_for_status.return_value = None
+        first_response.json.return_value = {
             "result": {
                 "uids": ["32353885"],
                 "32353885": {"articleids": [{"idtype": "pmc", "value": "7439635"}]},
@@ -268,49 +275,131 @@ class TestPMCIDRetriever:
             }
         }
 
-        # 第二次逐个调用返回剩余的
-        def side_effect(*args, **kwargs):
-            # 第一次批量调用
-            if retriever.session.get.call_count == 1:
-                return mock_response
-            # 第二次逐个获取 32353886
-            elif retriever.session.get.call_count == 2:
-                response2 = Mock()
-                response2.raise_for_status.return_value = None
-                response2.json.return_value = {
-                    "result": {
-                        "uids": ["32353886"],
-                        "32353886": {
-                            "articleids": [{"idtype": "pmc", "value": "7439636"}]
-                        },
-                    }
-                }
-                return response2
-            # 第三次逐个获取 32353887
-            elif retriever.session.get.call_count == 3:
-                response3 = Mock()
-                response3.raise_for_status.return_value = None
-                response3.json.return_value = {
-                    "result": {
-                        "uids": ["32353887"],
-                        "32353887": {
-                            "articleids": [{"idtype": "pmc", "value": "7439637"}]
-                        },
-                    }
-                }
-                return response3
-            return mock_response
+        # 第二次批量调用返回剩余结果
+        second_response = Mock()
+        second_response.raise_for_status.return_value = None
+        second_response.json.return_value = {
+            "result": {
+                "uids": ["32353886"],
+                "32353886": {"articleids": [{"idtype": "pmc", "value": "7439636"}]},
+                # 仍然缺少 32353887
+            }
+        }
 
-        # 设置 session.get 的 mock
+        # 第三次批量调用没有新结果
+        third_response = Mock()
+        third_response.raise_for_status.return_value = None
+        third_response.json.return_value = {"result": {"uids": []}}
+
+        # 设置 side_effect 模拟重试
+        call_count = 0
+
+        def side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return first_response
+            elif call_count == 2:
+                return second_response
+            else:
+                return third_response
+
         retriever.session.get = Mock(side_effect=side_effect)
 
-        # 调用处理方法，启用备选方案
-        processed = retriever.process_papers(sample_papers, use_fallback=True)
+        # 调用处理方法（默认禁用逐个重试）
+        processed = retriever.process_papers(papers)
 
         # 验证结果
-        assert processed[0]["pmcid"] == "PMC7439635"  # 批量获取
-        assert processed[1]["pmcid"] == "PMC7439636"  # 备选方案获取
-        assert processed[2]["pmcid"] == "PMC7439637"  # 备选方案获取
+        assert processed[0]["pmcid"] == "PMC7439635"  # 第一次批量获取
+        assert processed[1]["pmcid"] == "PMC7439636"  # 第二次批量重试获取
+        assert "pmcid" not in processed[2]  # 3次重试后仍失败
+
+        # 验证 API 调用次数（3次批量调用）
+        assert retriever.session.get.call_count == 3
+
+    @patch("time.sleep")
+    def test_process_papers_respects_use_fallback_config(
+        self, mock_sleep, retriever, sample_papers
+    ):
+        """
+        测试: process_papers 应该使用配置中的 fallback 设置（批量重试而非单个重试）
+        """
+        # 模拟部分成功的批量获取
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "result": {
+                "uids": ["32353885"],
+                "32353885": {"articleids": [{"idtype": "pmc", "value": "7439635"}]},
+                # 只成功一个，其他失败
+            }
+        }
+
+        retriever.session.get = Mock(return_value=mock_response)
+
+        # 调用处理方法，不指定 use_fallback（应该使用配置中的默认值）
+        processed = retriever.process_papers(sample_papers)
+
+        # 只应该有批量获取的结果，不应该有单个重试的结果
+        assert processed[0]["pmcid"] == "PMC7439635"
+        assert "pmcid" not in processed[1]  # 没有使用单个重试
+
+        # 由于启用了批量重试机制（最多3次），应该有3次批量调用
+        # 而不是之前的单个重试
+        assert retriever.session.get.call_count == 3
+
+    @patch("time.sleep")
+    def test_process_papers_max_three_retries(self, mock_sleep, retriever):
+        """
+        测试: 批量重试最多重试3次
+        """
+        papers = [{"pmid": "32353885"}, {"pmid": "32353886"}]
+
+        # 模拟始终失败的响应
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {"result": {"uids": []}}  # 始终返回空结果
+
+        retriever.session.get = Mock(return_value=mock_response)
+
+        # 调用处理方法
+        processed = retriever.process_papers(papers)
+
+        # 验证没有任何论文获得 PMCID
+        assert all("pmcid" not in p for p in processed)
+
+        # 验证恰好调用了3次（1次初始 + 2次重试）
+        assert retriever.session.get.call_count == 3
+
+    @patch("time.sleep")
+    def test_process_papers_early_stop_on_success(self, mock_sleep, retriever):
+        """
+        测试: 如果所有 PMIDs 都成功获取，应该提前停止重试
+        """
+        papers = [{"pmid": "32353885"}, {"pmid": "32353886"}]
+
+        # 模拟第一次就完全成功的响应
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "result": {
+                "uids": ["32353885", "32353886"],
+                "32353885": {"articleids": [{"idtype": "pmc", "value": "7439635"}]},
+                "32353886": {"articleids": [{"idtype": "pmc", "value": "7439636"}]},
+            }
+        }
+
+        retriever.session.get = Mock(return_value=mock_response)
+
+        # 调用处理方法
+        processed = retriever.process_papers(papers)
+
+        # 验证所有论文都获得了 PMCID
+        assert processed[0]["pmcid"] == "PMC7439635"
+        assert processed[1]["pmcid"] == "PMC7439636"
+
+        # 验证只调用了一次（没有重试）
+        assert retriever.session.get.call_count == 1
 
 
 if __name__ == "__main__":

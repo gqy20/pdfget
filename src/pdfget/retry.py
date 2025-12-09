@@ -12,24 +12,23 @@ from .logger import get_logger
 
 
 def retry_with_backoff(
-    max_retries: int = 3,
-    base_delay: float = 0.1,
-    max_delay: float = 60.0,
-    jitter: float = 0.1,
+    max_retries: int = 4,  # 默认重试4次，总共尝试5次
     retryable_status_codes: tuple[int, ...] = (429, 502, 503, 504),
 ) -> Callable:
     """
-    指数退避重试装饰器
+    固定梯度重试装饰器
 
     Args:
-        max_retries: 最大重试次数
-        base_delay: 基础延迟时间（秒）
-        max_delay: 最大延迟时间（秒）
-        jitter: 随机抖动范围（秒）
+        max_retries: 最大重试次数（默认4次，总共尝试5次）
         retryable_status_codes: 需要重试的HTTP状态码
 
     Returns:
         装饰器函数
+
+    Note:
+        使用固定的5个等待时间梯度：5s, 15s, 30s, 45s, 60s
+        每次重试的等待时间：第1次重试等待5秒，第2次15秒，以此类推
+        每次等待时间有±10%的随机抖动
     """
 
     def decorator(func: Callable) -> Callable:
@@ -45,7 +44,7 @@ def retry_with_backoff(
 
                     # 检查是否应该重试
                     if retry < max_retries and _should_retry(e, retryable_status_codes):
-                        wait_time = _get_wait_time(retry, base_delay, max_delay, jitter)
+                        wait_time = _get_wait_time(retry)
 
                         # 记录重试信息
                         logger = get_logger(func.__module__)
@@ -87,17 +86,26 @@ def _should_retry(exception: Exception, status_codes: tuple[int, ...]) -> bool:
     return isinstance(exception, (requests.Timeout, requests.ConnectionError))
 
 
-def _get_wait_time(
-    retry: int, base_delay: float, max_delay: float, jitter: float
-) -> float:
-    """计算等待时间"""
-    # 指数退避：delay = base_delay * (2 ^ retry)
-    exponential_delay = base_delay * (2**retry)
+def _get_wait_time(retry: int) -> float:
+    """
+    计算等待时间
 
-    # 应用最大延迟限制
-    capped_delay = min(exponential_delay, max_delay)
+    使用固定的5个时间梯度：5s, 15s, 30s, 45s, 60s
 
-    # 添加随机抖动
-    jitter_value = random.uniform(0, min(jitter, capped_delay * 0.1))
+    Args:
+        retry: 重试次数（从0开始）
 
-    return float(capped_delay + jitter_value)
+    Returns:
+        计算后的等待时间（包含±10%的随机抖动）
+    """
+    # 预定义的5个等待时间梯度
+    wait_times = [5, 15, 30, 45, 60]
+
+    # 获取对应的等待时间，如果超出范围则使用最大值
+    base_wait = wait_times[retry] if retry < len(wait_times) else wait_times[-1]
+
+    # 添加少量随机抖动（±10%）
+    jitter_range = base_wait * 0.1
+    jitter_value = random.uniform(-jitter_range, jitter_range)
+
+    return float(max(0, base_wait + jitter_value))

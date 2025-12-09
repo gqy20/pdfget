@@ -388,14 +388,8 @@ class PDFDownloader:
         Returns:
             响应对象
         """
-        # PDF下载使用较短的重试延迟
-        download_retry = retry_with_backoff(
-            max_retries=3,
-            base_delay=0.2,
-            max_delay=5.0,
-            jitter=0.1,
-            retryable_status_codes=(429, 502, 503, 504),
-        )
+        # PDF下载使用重试机制（与PMCID获取保持一致）
+        download_retry = retry_with_backoff()
 
         @download_retry
         def _fetch():

@@ -85,14 +85,8 @@ class PMCIDCounter:
         # 随机延迟，避免所有线程同时请求
         time.sleep(random.uniform(0.05, 0.15))
 
-        # 使用重试机制
-        @retry_with_backoff(
-            max_retries=3,
-            base_delay=0.5,  # 较长的初始延迟，因为是批量请求
-            max_delay=10.0,
-            jitter=0.2,
-            retryable_status_codes=(429, 502, 503, 504),
-        )
+        # 使用重试机制（使用默认的5次重试和固定等待时间梯度）
+        @retry_with_backoff()
         def _fetch():
             response = self.session.get(
                 fetch_url, params=params, timeout=config.TIMEOUT

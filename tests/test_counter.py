@@ -190,8 +190,8 @@ class TestPMCIDCounter:
 
         # 通过访问 _count_without_cache 方法来验证配置被正确使用
         # 这里我们只需要确认导入的值是正确的
-        assert expected_batch_size == 80
-        assert expected_max_workers == 5
+        assert expected_batch_size == 50  # 已从80更新为50（避免414错误）
+        assert expected_max_workers == 20  # 已从5更新为20（提高并发性能）
 
     def test_load_cache_tries_multiple_sources(self):
         """测试尝试从多个数据源加载缓存"""

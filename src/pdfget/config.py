@@ -47,7 +47,7 @@ NCBI_API_KEY = ""  # 可以在这里设置 API 密钥
 
 # PMCID统计设置
 COUNT_BATCH_SIZE = 50  # 每批处理的PMID数量（原80，减少以避免414错误）
-COUNT_MAX_WORKERS = 10  # 并行处理的线程数（原5，增加以提高处理速度）
+COUNT_MAX_WORKERS = 20  # 并行处理的线程数（从10增加到20以进一步提高处理速度）
 COUNT_OUTPUT_FORMAT = "console"  # 输出格式: console, json, markdown
 
 # PMCID获取设置

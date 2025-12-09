@@ -83,14 +83,8 @@ class PMCIDRetriever:
         Returns:
             响应对象
         """
-        # 为NCBI API创建专用的重试装饰器
-        ncbi_retry = retry_with_backoff(
-            max_retries=3,
-            base_delay=0.5,
-            max_delay=8.0,
-            jitter=0.2,
-            retryable_status_codes=(429, 502, 503, 504),
-        )
+        # 为NCBI API创建专用的重试装饰器（使用默认的5次重试）
+        ncbi_retry = retry_with_backoff()
 
         @ncbi_retry
         def _fetch():
@@ -109,14 +103,8 @@ class PMCIDRetriever:
         Returns:
             响应对象
         """
-        # 单个请求的重试可以更激进一些
-        single_retry = retry_with_backoff(
-            max_retries=2,
-            base_delay=0.2,
-            max_delay=2.0,
-            jitter=0.1,
-            retryable_status_codes=(429, 502, 503, 504),
-        )
+        # 单个请求的重试使用默认机制
+        single_retry = retry_with_backoff()
 
         @single_retry
         def _fetch():
@@ -340,18 +328,41 @@ class PMCIDRetriever:
             self.logger.info("没有有效的 PMIDs，跳过 PMCID 获取")
             return papers
 
-        # 批量获取 PMCID
-        pmid_to_pmcid = self._fetch_pmcid_batch(pmids)
+        # 批量获取 PMCID，最多重试3次
+        pmid_to_pmcid = {}
+        remaining_pmids = pmids.copy()
+        retry_count = 0
 
-        # 处理获取失败的 PMIDs（如果启用备选方案）
-        if use_fallback:
-            failed_pmids = [pmid for pmid in pmids if pmid not in pmid_to_pmcid]
-            if failed_pmids:
-                self.logger.info(f"对 {len(failed_pmids)} 个失败的 PMIDs 使用逐个获取")
-                for pmid in failed_pmids[:10]:  # 限制备选数量，避免太慢
-                    pmcid = self._fetch_pmcid_individual(pmid)
-                    if pmcid:
-                        pmid_to_pmcid[pmid] = pmcid
+        while remaining_pmids and retry_count < 3:
+            self.logger.info(
+                f"第 {retry_count + 1} 批量获取 {len(remaining_pmids)} 个 PMIDs"
+            )
+
+            # 批量获取当前剩余的 PMIDs
+            batch_results = self._fetch_pmcid_batch(remaining_pmids)
+            pmid_to_pmcid.update(batch_results)
+
+            # 找出仍然失败的 PMIDs
+            remaining_pmids = [
+                pmid for pmid in remaining_pmids if pmid not in batch_results
+            ]
+
+            if remaining_pmids:
+                retry_count += 1
+                if retry_count < 3:
+                    self.logger.info(
+                        f"剩余 {len(remaining_pmids)} 个 PMIDs，准备第 {retry_count + 1} 次重试"
+                    )
+                    # 等待一段时间再重试（避免立即重试）
+                    time.sleep(2)  # 短暂等待
+            else:
+                self.logger.info("所有 PMCID 获取成功")
+                break
+
+        if remaining_pmids:
+            self.logger.warning(
+                f"经过 {retry_count + 1} 次尝试后，仍有 {len(remaining_pmids)} 个 PMIDs 无法获取"
+            )
 
         # 更新论文信息
         updated_papers = []
