@@ -375,7 +375,8 @@ class PMCIDCounter:
         self.logger.info(f"   获取文献: {len(papers)} 篇")
         self.logger.info(f"   有PMCID: {with_pmcid} 篇")
         self.logger.info(f"   无PMCID: {without_pmcid} 篇")
-        self.logger.info(f"   PMCID率: {(with_pmcid / len(papers) * 100):.1f}%")
+        pmcid_rate = (with_pmcid / len(papers) * 100) if papers else 0
+        self.logger.info(f"   PMCID率: {pmcid_rate:.1f}%")
         self.logger.info(f"   耗时: {elapsed:.1f} 秒")
 
         # 返回统计信息

@@ -135,6 +135,8 @@ class PaperSearcher:
             "year": paper.get("year", ""),
             "abstract": paper.get("abstract", ""),
             "source": source,
+            "pmcid": paper.get("pmcid", ""),  # 保留 PMCID 字段
+            "inPMC": paper.get("inPMC", ""),  # 保留 inPMC 字段
         }
 
         # 处理作者字段 - 确保是列表
@@ -294,14 +296,15 @@ class PaperSearcher:
             return []
 
     def _search_europepmc_api(
-        self, query: str, limit: int = 50
+        self, query: str, limit: int = 50, require_pmcid: bool = False
     ) -> list[dict[str, Any]]:
         """
-        执行 Europe PMC API 搜索
+        执行 Europe PMC API 搜索（支持分页）
 
         Args:
             query: 查询字符串
             limit: 结果数量限制
+            require_pmcid: 是否只返回有 PMCID 的结果
 
         Returns:
             搜索结果列表
@@ -309,56 +312,124 @@ class PaperSearcher:
         try:
             # 使用 Europe PMC REST API
             search_url = f"{self.europe_pmc_url}/search"
-            params = {
-                "query": query,
-                "resulttype": "core",
-                "format": "json",
-                "pageSize": min(limit, 100),  # Europe PMC 限制每页最多100条
-                "cursor": "*",
-                "synonym": "true",
-                "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid",  # 明确请求PMCID字段
-            }
+            all_papers = []
+            cursor_mark = "*"
+            page_size = min(500, limit)  # 使用较大的页面大小，最大500条/页
+            total_fetched = 0
 
-            self.logger.debug(f"Europe PMC 查询: {query}")
-            response = self.session.get(search_url, params=params, timeout=30)  # type: ignore[arg-type]
-            response.raise_for_status()
+            # 如果需要 PMCID，添加过滤器
+            if require_pmcid:
+                full_query = f"({query}) AND pmcid:*" if query.strip() else "pmcid:*"
+            else:
+                full_query = query
 
-            data = response.json()
-            papers = []
+            self.logger.debug(f"Europe PMC 查询: {full_query}, 需要获取 {limit} 条记录")
 
-            if "resultList" in data and "result" in data["resultList"]:
-                for item in data["resultList"]["result"]:
-                    # 提取作者
-                    authors = []
-                    if "authorString" in item:
-                        authors = [
-                            a.strip()
-                            for a in item["authorString"].split(";")
-                            if a.strip()
-                        ]
+            while total_fetched < limit:
+                params = {
+                    "query": full_query,
+                    "resulttype": "core",
+                    "format": "json",
+                    "pageSize": page_size,
+                    "cursorMark": cursor_mark,  # 使用正确的参数名 cursorMark
+                    "synonym": "true",
+                    "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid,inPMC,source",  # 明确请求PMCID相关字段
+                }
 
-                    # 提取期刊和年份
-                    journal = item.get("journalTitle", "")
-                    year = ""
-                    if "pubYear" in item:
-                        year = str(item["pubYear"])
+                response = self.session.get(search_url, params=params, timeout=30)  # type: ignore[arg-type]
+                response.raise_for_status()
+                data = response.json()
 
-                    # 构建论文数据
-                    paper: dict[str, Any] = {
-                        "pmid": item.get("pmid", ""),
-                        "doi": item.get("doi", ""),
-                        "title": item.get("title", ""),
-                        "authors": authors,
-                        "journal": journal,
-                        "year": year,
-                        "abstract": item.get("abstractText", ""),
-                        "pmcid": item.get("pmcid", ""),  # 添加PMCID字段
-                    }
+                # 获取当前页的论文
+                page_papers = []
+                if "resultList" in data and "result" in data["resultList"]:
+                    for item in data["resultList"]["result"]:
+                        # 提取作者
+                        authors = []
+                        if "authorString" in item:
+                            authors = [
+                                a.strip()
+                                for a in item["authorString"].split(";")
+                                if a.strip()
+                            ]
 
-                    papers.append(self._normalize_paper_data(paper, "europe_pmc"))
+                        # 提取期刊和年份
+                        journal = item.get("journalTitle", "")
+                        year = ""
+                        if "pubYear" in item:
+                            year = str(item["pubYear"])
 
-            self.logger.debug(f"Europe PMC 搜索返回 {len(papers)} 条结果")
-            return papers[:limit]  # 确保不超过请求的限制
+                        # 检查 PMCID 相关字段
+                        pmcid = item.get("pmcid", "")
+                        inPMC = item.get("inPMC", "")
+                        source = item.get("source", "")
+
+                        # PMCID 字段已正确提取
+
+                        # 构建论文数据
+                        paper: dict[str, Any] = {
+                            "pmid": item.get("pmid", ""),
+                            "doi": item.get("doi", ""),
+                            "title": item.get("title", ""),
+                            "authors": authors,
+                            "journal": journal,
+                            "year": year,
+                            "abstract": item.get("abstractText", ""),
+                            "pmcid": pmcid,  # 添加PMCID字段
+                            "source": source,
+                            "inPMC": inPMC,
+                        }
+
+                        page_papers.append(
+                            self._normalize_paper_data(paper, "europe_pmc")
+                        )
+
+                # 添加到总结果中
+                all_papers.extend(page_papers)
+                total_fetched += len(page_papers)
+
+                # 记录调试信息
+                if "hitCount" in data:
+                    self.logger.debug(
+                        f"Europe PMC 本页获取 {len(page_papers)} 条, 总共 {data['hitCount']} 条记录"
+                    )
+
+                # 检查是否还有更多结果
+                next_cursor_mark = data.get("nextCursorMark", "")
+                if not next_cursor_mark or next_cursor_mark == cursor_mark:
+                    # 没有更多结果了
+                    break
+
+                # 更新游标
+                cursor_mark = next_cursor_mark
+
+                # 如果下一页会超出限制，调整页面大小
+                remaining = limit - total_fetched
+                if remaining < page_size:
+                    page_size = remaining
+
+                # 添加小延迟避免请求过快
+                import time
+
+                time.sleep(0.1)
+
+            # 确保不超过请求的限制
+            result = all_papers[:limit]
+
+            # 统计 PMCID 信息
+            pmcid_count = sum(1 for p in result if p.get("pmcid"))
+            pmcid_rate = (pmcid_count / len(result) * 100) if result else 0
+
+            if require_pmcid:
+                self.logger.info(
+                    f"Europe PMC (HAS_PMCID过滤) 搜索返回 {len(result)} 条结果，其中 {pmcid_count} 条有 PMCID ({pmcid_rate:.1f}%)"
+                )
+            else:
+                self.logger.info(
+                    f"Europe PMC 搜索返回 {len(result)} 条结果，其中 {pmcid_count} 条有 PMCID ({pmcid_rate:.1f}%)"
+                )
+
+            return result
 
         except requests.exceptions.Timeout:
             self.logger.error("Europe PMC 搜索超时")
@@ -389,7 +460,7 @@ class PaperSearcher:
             self.logger.debug(f"解析后的查询: {parsed_query}")
 
         # 执行搜索
-        papers = self._search_pubmed_api(parsed_query, limit)
+        papers = self._search_europepmc_api(parsed_query, limit)
 
         if papers:
             self.logger.info(f"  ✓ 找到 {len(papers)} 篇文献")
@@ -398,18 +469,24 @@ class PaperSearcher:
 
         return papers
 
-    def search_europepmc(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
+    def search_europepmc(
+        self, query: str, limit: int = 50, require_pmcid: bool = False
+    ) -> list[dict[str, Any]]:
         """
         通过 Europe PMC 搜索文献
 
         Args:
             query: 检索词（支持高级语法）
             limit: 返回结果数量限制
+            require_pmcid: 是否只返回有 PMCID 的结果
 
         Returns:
             文献列表，包含 DOI、标题、作者等信息
         """
-        self.logger.info(f"搜索文献 (Europe PMC): {query}")
+        if require_pmcid:
+            self.logger.info(f"搜索文献 (Europe PMC, 仅限有 PMCID): {query}")
+        else:
+            self.logger.info(f"搜索文献 (Europe PMC): {query}")
 
         # 解析检索词
         parsed_query = self._parse_query_europepmc(query)
@@ -417,7 +494,9 @@ class PaperSearcher:
             self.logger.debug(f"解析后的查询: {parsed_query}")
 
         # 执行搜索
-        papers = self._search_europepmc_api(parsed_query, limit)
+        papers = self._search_europepmc_api(
+            parsed_query, limit, require_pmcid=require_pmcid
+        )
 
         if papers:
             self.logger.info(f"  ✓ 找到 {len(papers)} 篇文献")

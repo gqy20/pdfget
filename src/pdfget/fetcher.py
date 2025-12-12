@@ -13,6 +13,7 @@ from typing import Any
 
 import requests
 
+from .abstract_supplementor import AbstractSupplementor
 from .config import (
     DEFAULT_SOURCE,
     NCBI_API_KEY,
@@ -61,6 +62,7 @@ class PaperFetcher:
         self.searcher = PaperSearcher(self.session)
         self.pmcid_retriever = PMCIDRetriever(self.session)
         self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
+        self.abstract_supplementor = AbstractSupplementor(timeout=5, delay=0.2)
 
         # NCBI 配置（用于缓存）
         self.email = NCBI_EMAIL
@@ -142,7 +144,18 @@ class PaperFetcher:
         ):
             papers = self.add_pmcids(papers)
 
-        # 保存到缓存（包含PMCID信息）
+        # 补充缺失的摘要（MVP版本：仅对Europe PMC数据源）
+        if papers and (source == "europe_pmc"):
+            self.logger.info("开始补充缺失的摘要...")
+            original_abstract_count = sum(1 for p in papers if p.get("abstract"))
+            papers = self.abstract_supplementor.supplement_abstracts_batch(papers)
+            supplemented_count = (
+                sum(1 for p in papers if p.get("abstract")) - original_abstract_count
+            )
+            if supplemented_count > 0:
+                self.logger.info(f"成功补充 {supplemented_count} 个摘要")
+
+        # 保存到缓存（包含PMCID和摘要信息）
         if use_cache and papers:
             cache_file = self._get_cache_file(query, source or self.default_source)
             self._save_cache(cache_file, papers)
