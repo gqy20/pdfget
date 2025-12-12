@@ -60,31 +60,37 @@ def main() -> None:
 
   # 并发下载（多线程）
   python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
-  python -m pdfget -i dois.csv -t 3
 
-  # 从CSV下载混合标识符（支持PMCID/PMID/DOI混合）
-  python -m pdfget -m identifiers.csv -p ID -t 5
-  python -m pdfget -m pmcids.csv -p PMCID -l 100
+  # 从CSV下载混合标识符（支持PMCID/PMID/DOI混合，自动检测列名）
+  python -m pdfget -m identifiers.csv -t 5
+  python -m pdfget -m pmcids.csv -c PMCID -l 100
 
-  # 下载单个文献
-  python -m pdfget --doi 10.1016/j.cell.2020.01.021
+  # 下载单个标识符
+  python -m pdfget -m "PMC10851947"
+  python -m pdfget -m "10.1016/j.cell.2020.01.021"
+
+  # 下载多个标识符（逗号分隔）
+  python -m pdfget -m "PMC123456,38238491,10.1038/xxx" -t 3
         """,
     )
 
     # 输入选项
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--doi", help="单个DOI")
-    group.add_argument("-i", help="输入文件（CSV或TXT）")
     group.add_argument("-s", help="搜索文献")
     group.add_argument(
-        "-m", help="从CSV文件读取标识符列表下载（支持混合PMCID/PMID/DOI）"
+        "-m",
+        help="批量输入（CSV文件/单个标识符/逗号分隔列表），支持混合PMCID/PMID/DOI",
     )
 
     # 可选参数
-
-    parser.add_argument("-c", default="doi", help="CSV列名（默认: doi）")
     parser.add_argument(
-        "-p", default="ID", help="标识符列名（默认: ID，支持PMCID/PMID/DOI混合）"
+        "-c",
+        help="CSV列名（默认自动检测: ID>PMCID>doi>pmid>第一列）",
+    )
+    parser.add_argument(
+        "-p",
+        dest="c",  # -p 参数映射到 -c，实现向后兼容
+        help="[向后兼容] 同 -c 参数",
     )
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
     parser.add_argument(
@@ -123,39 +129,7 @@ def main() -> None:
     logger.info(f"   输出目录: {args.o}")
 
     try:
-        if args.doi:
-            # 单个DOI下载
-            logger.info(f"\n📄 下载单个文献: {args.doi}")
-
-            # 先搜索获取PMCID
-            papers = fetcher.search_papers(
-                args.doi, limit=1, source=fetcher.default_source
-            )
-            if papers and papers[0].get("pmcid"):
-                paper = papers[0]
-                pmcid = paper["pmcid"]
-                doi = paper["doi"]
-
-                # 使用PDFDownloader直接下载
-                result = fetcher.pdf_downloader.download_pdf(pmcid, doi)
-
-                # 合并结果信息
-                result["doi"] = doi
-                result["pmcid"] = pmcid
-                result["title"] = paper.get("title")
-
-                if result.get("success"):
-                    logger.info("✅ 下载成功!")
-                    if result.get("path"):
-                        logger.info(f"   PDF路径: {result['path']}")
-                    else:
-                        logger.info(f"   HTML链接: {result.get('full_text_url')}")
-                else:
-                    logger.error(f"❌ 下载失败: {result.get('error', 'Unknown error')}")
-            else:
-                logger.error(f"❌ 未找到文献或无PMCID: {args.doi}")
-
-        elif args.s:
+        if args.s:
             # 搜索文献
             logger.info(f"\n🔍 搜索文献: {args.s} (数据源: {args.S})")
 
@@ -299,13 +273,12 @@ def main() -> None:
                     logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
 
         elif args.m:
-            # 从 CSV 文件读取标识符列表并下载（支持混合 PMCID/PMID/DOI）
-            logger.info(f"\n📋 从 CSV 文件下载标识符列表: {args.m}")
-            logger.info(f"   列名: {args.p} (支持 PMCID/PMID/DOI 混合)")
+            # 统一批量输入（CSV文件/单个标识符/逗号分隔列表）
+            logger.info(f"\n📋 批量输入下载: {args.m}")
 
-            # 调用 PaperFetcher 的下载方法
-            results = fetcher.download_from_identifiers(
-                csv_path=args.m, id_column=args.p, limit=args.l, max_workers=args.t
+            # 使用统一输入下载方法
+            results = fetcher.download_from_unified_input(
+                input_value=args.m, column=args.c, limit=args.l, max_workers=args.t
             )
 
             # 统计结果
@@ -320,8 +293,8 @@ def main() -> None:
                     json.dump(
                         {
                             "timestamp": time.time(),
-                            "source": "identifier_csv",
-                            "csv_file": args.m,
+                            "source": "unified_input",
+                            "input_value": args.m,
                             "total": stats["total"],
                             "success": stats["success_count"],
                             "results": results,
@@ -334,72 +307,9 @@ def main() -> None:
                 logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
 
         else:
-            # 批量下载
-            logger.info(f"\n📚 批量下载: {args.i}")
-
-            # 读取DOI列表
-            input_path = Path(args.i)
-            if not input_path.exists():
-                logger.error(f"❌ 输入文件不存在: {args.i}")
-                exit(1)
-
-            if input_path.suffix.lower() == ".csv":
-                # 读取CSV文件
-                import pandas as pd
-
-                try:
-                    df = pd.read_csv(input_path)
-                    if args.c not in df.columns:
-                        logger.error(f"❌ CSV文件中找不到列: {args.c}")
-                        exit(1)
-
-                    dois = df[args.c].dropna().unique().tolist()
-                    logger.info(f"   找到 {len(dois)} 个唯一DOI")
-
-                except Exception as e:
-                    logger.error(f"❌ 读取CSV文件失败: {e}")
-                    exit(1)
-
-            else:
-                # 读取文本文件（每行一个DOI）
-                try:
-                    with open(input_path) as f:
-                        dois = [line.strip() for line in f if line.strip()]
-                    logger.info(f"   找到 {len(dois)} 个DOI")
-
-                except Exception as e:
-                    logger.error(f"❌ 读取文件失败: {e}")
-                    exit(1)
-
-            # 使用统一下载管理器
-            download_manager = UnifiedDownloadManager(
-                fetcher=fetcher,
-                max_workers=args.t,
-            )
-            results = download_manager.download_batch(dois, timeout=TIMEOUT)
-
-            # 统计结果
-            stats = log_download_stats(logger, results)
-
-            # 保存结果
-            if stats["success_count"] > 0:
-                output_file = Path(args.o) / "download_results.json"
-                output_file.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(output_file, "w", encoding="utf-8") as f:
-                    json.dump(
-                        {
-                            "timestamp": time.time(),
-                            "total": stats["total"],
-                            "success": stats["success_count"],
-                            "results": results,
-                        },
-                        f,
-                        indent=2,
-                        ensure_ascii=False,
-                    )
-
-                logger.info(f"\n💾 结果已保存到: {output_file}")
+            # 不应该到达这里，因为参数是required=True
+            logger.error("❌ 请指定 -s 或 -m 参数")
+            exit(1)
 
     except KeyboardInterrupt:
         logger.info("\n⏹️ 用户中断下载")

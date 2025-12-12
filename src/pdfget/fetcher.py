@@ -588,6 +588,212 @@ class PaperFetcher:
         self.logger.info(f"结果已导出到: {output_path}")
         return str(output_path)
 
+    def _detect_input_type(self, input_str: str) -> str:
+        """
+        检测输入类型
+
+        Args:
+            input_str: 输入字符串
+
+        Returns:
+            'csv_file': CSV文件路径
+            'single': 单个标识符
+            'multiple': 多个标识符（逗号分隔）
+            'invalid': 无效输入
+        """
+        import os
+
+        # 检查空输入
+        if not input_str or not input_str.strip():
+            return "invalid"
+
+        input_str = input_str.strip()
+
+        # 检查是否是文件路径
+        if os.path.exists(input_str):
+            return "csv_file"
+
+        # 检查是否包含逗号（多个标识符）
+        if "," in input_str:
+            return "multiple"
+
+        # 单个标识符
+        return "single"
+
+    def _auto_detect_column(self, csv_path: str) -> str | None:
+        """
+        自动检测CSV列名
+
+        优先级: ID > PMCID > doi > pmid > 第一列
+
+        Args:
+            csv_path: CSV文件路径
+
+        Returns:
+            检测到的列名，如果文件为空返回None
+        """
+        import csv
+
+        priority_columns = ["ID", "PMCID", "doi", "pmid"]
+
+        try:
+            with open(csv_path, encoding="utf-8") as f:
+                csv_reader = csv.reader(f)
+                header = next(csv_reader, None)
+
+                if header is None or not header:
+                    return None
+
+                # 大小写不敏感的列名映射
+                header_map = {col.upper(): col for col in header}
+
+                # 按优先级查找
+                for priority_col in priority_columns:
+                    if priority_col.upper() in header_map:
+                        return header_map[priority_col.upper()]
+
+                # 都没找到，返回第一列
+                return header[0] if header else None
+
+        except Exception as e:
+            self.logger.error(f"自动检测列名失败: {e}")
+            return None
+
+    def _parse_identifier_string(self, id_str: str) -> list[str]:
+        """
+        解析标识符字符串
+
+        支持：
+        - 单个: "PMC123456"
+        - 多个: "PMC123456,38238491,10.1038/xxx"
+
+        Args:
+            id_str: 标识符字符串
+
+        Returns:
+            标识符列表
+        """
+        if not id_str or not id_str.strip():
+            return []
+
+        # 按逗号分隔
+        identifiers = [s.strip() for s in id_str.split(",")]
+
+        # 过滤掉空字符串
+        identifiers = [s for s in identifiers if s]
+
+        return identifiers
+
+    def download_from_unified_input(
+        self,
+        input_value: str,
+        column: str | None = None,
+        limit: int | None = None,
+        max_workers: int = 1,
+    ) -> list[dict]:
+        """
+        统一的输入处理入口
+
+        自动判断输入类型并调用相应的处理逻辑
+
+        Args:
+            input_value: 输入值（文件路径/标识符/逗号分隔列表）
+            column: CSV列名（可选，None时自动检测）
+            limit: 下载数量限制
+            max_workers: 并发线程数
+
+        Returns:
+            下载结果列表
+        """
+        # 检测输入类型
+        input_type = self._detect_input_type(input_value)
+
+        if input_type == "invalid":
+            raise ValueError(f"无效的输入: {input_value}")
+
+        if input_type == "csv_file":
+            # CSV文件输入
+            self.logger.info(f"检测到CSV文件输入: {input_value}")
+
+            # 如果未指定列名，自动检测
+            if column is None:
+                detected_column = self._auto_detect_column(input_value)
+                if detected_column:
+                    self.logger.info(f"自动检测到列名: {detected_column}")
+                    column = detected_column
+                else:
+                    raise ValueError(f"无法自动检测CSV列名: {input_value}")
+
+            # 使用现有的download_from_identifiers方法
+            return self.download_from_identifiers(
+                csv_path=input_value,
+                id_column=column,
+                limit=limit,
+                max_workers=max_workers,
+            )
+
+        elif input_type in ["single", "multiple"]:
+            # 直接输入的标识符
+            identifiers = self._parse_identifier_string(input_value)
+
+            if not identifiers:
+                raise ValueError(f"未找到有效的标识符: {input_value}")
+
+            self.logger.info(f"检测到 {len(identifiers)} 个标识符")
+
+            # 分类标识符
+            classified: dict[str, list[str]] = {"pmcids": [], "pmids": [], "dois": []}
+
+            for identifier in identifiers:
+                id_type = self._detect_id_type(identifier)
+
+                if id_type == "pmcid":
+                    normalized = self._normalize_pmcid(identifier)
+                    if normalized:
+                        classified["pmcids"].append(normalized)
+                elif id_type == "pmid":
+                    classified["pmids"].append(identifier)
+                elif id_type == "doi":
+                    classified["dois"].append(identifier)
+
+            # 转换PMID为PMCID
+            pmcids_from_pmids = []
+            if classified["pmids"]:
+                pmcids_from_pmids = self._convert_pmids_to_pmcids(classified["pmids"])
+
+            # 合并所有PMCID
+            all_pmcids = classified["pmcids"] + pmcids_from_pmids
+
+            # 处理DOI（暂不支持）
+            if classified["dois"]:
+                self.logger.warning(
+                    f"当前版本暂不支持DOI直接下载，已跳过 {len(classified['dois'])} 个DOI"
+                )
+
+            if not all_pmcids:
+                self.logger.warning("没有找到可下载的PMCID")
+                return []
+
+            # 构建论文列表
+            papers = [
+                {"pmcid": pmcid, "title": f"PMCID: {pmcid}"} for pmcid in all_pmcids
+            ]
+
+            # 应用限制
+            if limit:
+                papers = papers[:limit]
+
+            # 下载
+            from .manager import UnifiedDownloadManager
+
+            download_manager = UnifiedDownloadManager(
+                fetcher=self, max_workers=max_workers
+            )
+            return download_manager.download_batch(papers)
+
+        else:
+            raise ValueError(f"未知的输入类型: {input_type}")
+
     def __enter__(self) -> "PaperFetcher":
         """支持上下文管理器"""
         return self
