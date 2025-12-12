@@ -241,6 +241,120 @@ class PaperFetcher:
         # 无效格式
         return ""
 
+    def _detect_id_type(self, identifier: str) -> str:
+        """
+        自动检测标识符类型
+
+        Args:
+            identifier: 标识符字符串
+
+        Returns:
+            标识符类型: 'pmcid', 'pmid', 'doi', 'unknown'
+        """
+        if not identifier:
+            return "unknown"
+
+        # 去除首尾空格
+        identifier = identifier.strip()
+
+        # 检测 PMCID (PMC开头 + 数字)
+        if identifier.startswith("PMC"):
+            if identifier[3:].isdigit() and len(identifier) > 3:
+                return "pmcid"
+            else:
+                return "unknown"
+
+        # 检测 DOI (10.开头)
+        if identifier.startswith("10."):
+            # 基本验证：10. 后面应该有内容
+            if len(identifier) > 3:
+                return "doi"
+            else:
+                return "unknown"
+
+        # 检测 PMID (纯数字，6-10位)
+        if identifier.isdigit():
+            if 6 <= len(identifier) <= 10:
+                return "pmid"
+            else:
+                return "unknown"
+
+        return "unknown"
+
+    def _read_identifiers_from_csv(
+        self, csv_path: str, id_column: str = "ID"
+    ) -> dict[str, list[str]]:
+        """
+        从 CSV 文件读取混合类型的标识符列表
+
+        Args:
+            csv_path: CSV 文件路径
+            id_column: 标识符列名
+
+        Returns:
+            字典，包含分类后的标识符:
+            {
+                'pmcids': [PMCID列表],
+                'pmids': [PMID列表],
+                'dois': [DOI列表]
+            }
+        """
+        import csv
+        import os
+
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
+
+        identifiers: dict[str, list[str]] = {"pmcids": [], "pmids": [], "dois": []}
+
+        with open(csv_path, encoding="utf-8") as f:
+            csv_reader = csv.reader(f)
+
+            # 读取第一行作为表头
+            header = next(csv_reader, None)
+            if header is None:
+                return identifiers
+
+            # 查找标识符列的索引
+            id_col_index = 0  # 默认第一列
+            if header:
+                for i, col in enumerate(header):
+                    if col.strip().lower() == id_column.lower():
+                        id_col_index = i
+                        break
+
+            # 读取数据行
+            for row in csv_reader:
+                if not row:  # 跳过空行
+                    continue
+
+                if id_col_index < len(row):
+                    identifier = row[id_col_index].strip()
+
+                    if not identifier:  # 跳过空标识符
+                        continue
+
+                    # 检测标识符类型并分类
+                    id_type = self._detect_id_type(identifier)
+
+                    if id_type == "pmcid":
+                        # 标准化 PMCID 格式
+                        normalized = self._normalize_pmcid(identifier)
+                        if normalized:
+                            identifiers["pmcids"].append(normalized)
+                    elif id_type == "pmid":
+                        identifiers["pmids"].append(identifier)
+                    elif id_type == "doi":
+                        identifiers["dois"].append(identifier)
+                    # 忽略 'unknown' 类型
+
+        self.logger.info(
+            f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
+            f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}"
+        )
+
+        return identifiers
+
     def _read_pmcid_from_csv(
         self, csv_path: str, pmcid_column: str = "PMCID"
     ) -> list[str]:
@@ -331,6 +445,102 @@ class PaperFetcher:
             return []
 
         # 5. 使用统一下载管理器下载
+        from .manager import UnifiedDownloadManager
+
+        download_manager = UnifiedDownloadManager(fetcher=self, max_workers=max_workers)
+
+        return download_manager.download_batch(papers)
+
+    def _convert_pmids_to_pmcids(self, pmids: list[str]) -> list[str]:
+        """
+        将 PMID 列表转换为 PMCID 列表
+
+        Args:
+            pmids: PMID 列表
+
+        Returns:
+            PMCID 列表（只包含成功转换的）
+        """
+        if not pmids:
+            return []
+
+        self.logger.info(f"开始转换 {len(pmids)} 个 PMID 为 PMCID")
+
+        # 构建伪论文列表（只包含 PMID）
+        fake_papers = [{"pmid": pmid, "title": f"PMID: {pmid}"} for pmid in pmids]
+
+        # 使用 PMCIDRetriever 批量获取 PMCID
+        papers_with_pmcid = self.pmcid_retriever.process_papers(fake_papers)
+
+        # 提取成功获得 PMCID 的记录
+        pmcids = []
+        for paper in papers_with_pmcid:
+            pmcid = paper.get("pmcid", "")
+            if pmcid:
+                pmcids.append(pmcid)
+
+        success_rate = (len(pmcids) / len(pmids) * 100) if pmids else 0
+        self.logger.info(
+            f"PMID 转换完成: {len(pmcids)}/{len(pmids)} ({success_rate:.1f}%)"
+        )
+
+        return pmcids
+
+    def download_from_identifiers(
+        self,
+        csv_path: str,
+        id_column: str = "ID",
+        limit: int | None = None,
+        max_workers: int = 1,
+    ) -> list[dict]:
+        """
+        从 CSV 文件读取混合类型标识符（PMCID/PMID/DOI）并下载 PDF
+
+        Args:
+            csv_path: CSV 文件路径
+            id_column: 标识符列名（默认 "ID"）
+            limit: 限制下载数量
+            max_workers: 最大并发数
+
+        Returns:
+            下载结果列表
+        """
+        # 1. 读取并分类标识符
+        identifiers = self._read_identifiers_from_csv(csv_path, id_column)
+
+        # 2. 转换 PMID 为 PMCID
+        pmcids_from_pmids = []
+        if identifiers["pmids"]:
+            self.logger.info(f"发现 {len(identifiers['pmids'])} 个 PMID，开始转换...")
+            pmcids_from_pmids = self._convert_pmids_to_pmcids(identifiers["pmids"])
+
+        # 3. 合并所有 PMCID
+        all_pmcids = identifiers["pmcids"] + pmcids_from_pmids
+
+        # 4. 处理 DOI（目前暂不支持，记录日志）
+        if identifiers["dois"]:
+            self.logger.warning(
+                f"发现 {len(identifiers['dois'])} 个 DOI，"
+                f"当前版本暂不支持 DOI 直接下载，已跳过"
+            )
+
+        # 5. 构建论文列表
+        papers = [
+            {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "mixed_identifiers"}
+            for pmcid in all_pmcids
+        ]
+
+        # 6. 应用 limit 限制
+        if limit is not None and limit > 0:
+            papers = papers[:limit]
+
+        if not papers:
+            self.logger.warning("没有有效的 PMCID 可以下载")
+            return []
+
+        self.logger.info(f"准备下载 {len(papers)} 篇文献（PMCID）")
+
+        # 7. 使用统一下载管理器下载
         from .manager import UnifiedDownloadManager
 
         download_manager = UnifiedDownloadManager(fetcher=self, max_workers=max_workers)

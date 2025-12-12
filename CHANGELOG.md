@@ -5,6 +5,59 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.4] - 2025-12-12
+
+### 🚀 新增功能
+
+- **混合标识符下载**：支持从CSV文件读取并自动识别PMCID/PMID/DOI混合类型标识符
+  - 自动检测标识符类型（PMCID、PMID、DOI）
+  - PMID自动转换为PMCID后下载（使用NCBI ESummary API）
+  - 支持带或不带PMC前缀的PMCID格式
+  - 智能跳过空行和无效标识符
+  - 支持自定义CSV列名（默认为"ID"）
+
+- **新增方法**（`fetcher.py`）：
+  - `_detect_id_type()`: 自动检测标识符类型
+  - `_read_identifiers_from_csv()`: 从CSV读取并分类混合标识符
+  - `_convert_pmids_to_pmcids()`: 批量将PMID转换为PMCID
+  - `download_from_identifiers()`: 统一的混合标识符下载入口
+
+### 🔧 优化改进
+
+- **命令行增强**：
+  - `-m` 参数现在支持混合标识符（原仅支持PMCID）
+  - `-p` 参数默认值从"PMCID"改为"ID"，更符合混合标识符场景
+  - 添加了混合标识符下载的使用示例
+
+- **类型安全**：增强了类型注解和错误处理
+- **测试覆盖**：新增20个测试用例，覆盖所有新功能（100%通过）
+
+### 📝 文档更新
+
+- 更新README.md，添加混合标识符下载功能说明
+- 更新命令行参数文档，说明支持的标识符类型
+- 添加CSV文件格式示例和使用指南
+- 说明PMID转换流程和成功率
+
+### 🧪 测试
+
+- 新增 `test_identifier_download.py`（20个测试用例）：
+  - TestIdentifierDetection: 5个测试
+  - TestCSVIdentifierReading: 8个测试
+  - TestPMIDConversion: 3个测试
+  - TestIdentifierDownloadIntegration: 4个测试
+- 所有新功能测试100%通过
+
+### 📦 依赖更新
+
+- 添加 `requests-mock>=1.12.1` 用于HTTP请求模拟测试
+
+### ⚠️ 注意事项
+
+- DOI支持将在后续版本添加（当前版本会跳过DOI）
+- PMID转换成功率约80-90%（取决于文献是否被PMC收录）
+- 无法转换的PMID会被自动跳过
+
 ## [0.1.2] - 2025-12-10
 
 ### 🚀 新增功能

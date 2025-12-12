@@ -62,6 +62,10 @@ def main() -> None:
   python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
   python -m pdfget -i dois.csv -t 3
 
+  # 从CSV下载混合标识符（支持PMCID/PMID/DOI混合）
+  python -m pdfget -m identifiers.csv -p ID -t 5
+  python -m pdfget -m pmcids.csv -p PMCID -l 100
+
   # 下载单个文献
   python -m pdfget --doi 10.1016/j.cell.2020.01.021
         """,
@@ -72,12 +76,16 @@ def main() -> None:
     group.add_argument("--doi", help="单个DOI")
     group.add_argument("-i", help="输入文件（CSV或TXT）")
     group.add_argument("-s", help="搜索文献")
-    group.add_argument("-m", help="从CSV文件读取PMCID列表下载")
+    group.add_argument(
+        "-m", help="从CSV文件读取标识符列表下载（支持混合PMCID/PMID/DOI）"
+    )
 
     # 可选参数
 
     parser.add_argument("-c", default="doi", help="CSV列名（默认: doi）")
-    parser.add_argument("-p", default="PMCID", help="PMCID列名（默认: PMCID）")
+    parser.add_argument(
+        "-p", default="ID", help="标识符列名（默认: ID，支持PMCID/PMID/DOI混合）"
+    )
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
     parser.add_argument(
         "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
@@ -291,12 +299,13 @@ def main() -> None:
                     logger.info(f"\n💾 下载结果已保存到: {download_results_file}")
 
         elif args.m:
-            # 从 CSV 文件读取 PMCID 列表并下载
-            logger.info(f"\n📋 从 CSV 文件下载 PMCID 列表: {args.m}")
+            # 从 CSV 文件读取标识符列表并下载（支持混合 PMCID/PMID/DOI）
+            logger.info(f"\n📋 从 CSV 文件下载标识符列表: {args.m}")
+            logger.info(f"   列名: {args.p} (支持 PMCID/PMID/DOI 混合)")
 
             # 调用 PaperFetcher 的下载方法
-            results = fetcher.download_from_pmcid_csv(
-                csv_path=args.m, limit=args.l, max_workers=args.t, pmcid_column=args.p
+            results = fetcher.download_from_identifiers(
+                csv_path=args.m, id_column=args.p, limit=args.l, max_workers=args.t
             )
 
             # 统计结果
@@ -311,7 +320,7 @@ def main() -> None:
                     json.dump(
                         {
                             "timestamp": time.time(),
-                            "source": "pmcid_csv",
+                            "source": "identifier_csv",
                             "csv_file": args.m,
                             "total": stats["total"],
                             "success": stats["success_count"],
