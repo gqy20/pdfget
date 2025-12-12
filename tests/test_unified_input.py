@@ -340,47 +340,6 @@ class TestUnifiedInputDownload:
             self.fetcher.download_from_unified_input("")
 
 
-class TestBackwardCompatibility:
-    """测试向后兼容性"""
-
-    def test_column_parameter_c_still_works(self, tmp_path):
-        """测试：-c参数仍然有效（用于-i场景）"""
-        fetcher = PaperFetcher()
-        csv_file = tmp_path / "test.csv"
-        with open(csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["doi", "Title"])
-            writer.writerow(["10.1038/xxx", "Test"])
-
-        with patch.object(fetcher, "download_from_identifiers") as mock_download:
-            mock_download.return_value = []
-
-            # 使用-c参数指定列名应该正常工作
-            fetcher.download_from_unified_input(str(csv_file), column="doi")
-
-            # 验证调用时使用了正确的列名
-            assert mock_download.called
-
-    def test_column_parameter_p_as_alias(self, tmp_path):
-        """测试：-p参数作为-c的别名"""
-        # 这个测试主要在main.py层面处理
-        # 这里只是确保fetcher层面column参数工作正常
-        fetcher = PaperFetcher()
-        csv_file = tmp_path / "test.csv"
-        with open(csv_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["ID", "Title"])
-            writer.writerow(["PMC123456", "Test"])
-
-        with patch.object(fetcher, "download_from_identifiers") as mock_download:
-            mock_download.return_value = []
-
-            # column参数应该适用于所有CSV场景
-            fetcher.download_from_unified_input(str(csv_file), column="ID")
-
-            assert mock_download.called
-
-
 class TestEdgeCases:
     """测试边界情况"""
 

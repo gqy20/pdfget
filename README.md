@@ -198,7 +198,6 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
   * 单个标识符：`pdfget -m "PMC123456"`
   * 逗号分隔列表：`pdfget -m "PMC123,456,10.1038/xxx"`
 - `-c COLUMN` : CSV列名（默认自动检测：ID>PMCID>doi>pmid>第一列）
-- `-p COLUMN` : `[向后兼容]` 同 -c 参数
 - `-d` : 下载PDF（不指定则为统计模式）
 
 ### 4.2 优化参数
@@ -328,7 +327,7 @@ pdfget -m examples/identifiers.csv
 
 # 手动指定列名
 pdfget -m examples/identifiers.csv -c PMCID
-pdfget -m examples/identifiers.csv -p ID  # -p 是 -c 的别名（向后兼容）
+pdfget -m examples/identifiers.csv -c ID
 ```
 
 示例CSV文件：

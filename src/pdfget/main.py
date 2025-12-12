@@ -87,11 +87,6 @@ def main() -> None:
         "-c",
         help="CSV列名（默认自动检测: ID>PMCID>doi>pmid>第一列）",
     )
-    parser.add_argument(
-        "-p",
-        dest="c",  # -p 参数映射到 -c，实现向后兼容
-        help="[向后兼容] 同 -c 参数",
-    )
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
     parser.add_argument(
         "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
