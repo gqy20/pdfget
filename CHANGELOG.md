@@ -5,6 +5,79 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] - 2025-12-12
+
+### 🚀 新增功能
+
+- **统一批量输入接口**：重构参数结构，简化CLI使用
+  - 移除冗余参数：`--doi` 和 `-i` 参数
+  - 升级 `-m` 参数为统一批量输入入口，支持三种模式：
+    * CSV文件路径（支持自动列名检测）
+    * 单个标识符（PMCID/PMID/DOI）
+    * 逗号分隔的多个标识符
+  - 统一 `-c` 和 `-p` 参数（`-p` 作为 `-c` 的别名，向后兼容）
+
+- **智能输入识别**：
+  - CSV列名自动检测（优先级：ID>PMCID>doi>pmid>第一列）
+  - 输入类型智能识别（文件/单个/多个/无效）
+  - 标识符字符串解析（支持逗号分隔，自动去空格）
+
+- **新增方法**（`fetcher.py`）：
+  - `_detect_input_type()`: 检测输入类型
+  - `_auto_detect_column()`: 自动检测CSV列名
+  - `_parse_identifier_string()`: 解析标识符字符串
+  - `download_from_unified_input()`: 统一的输入处理入口
+
+### 🔧 优化改进
+
+- **参数简化**：CLI参数从4个输入参数（`--doi`、`-i`、`-m`、`-s`）简化为2个（`-m`、`-s`）
+- **用户体验**：使用更直观，无需记忆多个参数
+  - `pdfget -m "PMC123,456,10.1038/xxx"`
+  - `pdfget -m data.csv`（自动检测列名）
+- **向后兼容**：旧代码使用 `-p` 参数仍能正常工作
+- **TDD开发**：遵循测试驱动开发模式，37个测试用例先行
+
+### 🧪 测试
+
+- 新增 `test_unified_input.py`（37个测试用例）：
+  - TestInputTypeDetection: 9个测试（输入类型检测）
+  - TestColumnAutoDetection: 7个测试（CSV列名自动检测）
+  - TestIdentifierStringParsing: 9个测试（标识符字符串解析）
+  - TestUnifiedInputDownload: 7个测试（统一下载功能）
+  - TestBackwardCompatibility: 2个测试（向后兼容性）
+  - TestEdgeCases: 3个测试（边界情况）
+- 所有57个测试通过（37新增+20现有）
+- 通过pre-commit钩子检查（ruff, black, mypy）
+
+### 📝 文档更新
+
+- 更新README.md，反映新的参数结构和使用方式
+- 更新命令行参数文档，说明统一输入接口
+- 添加三种输入模式的使用示例
+- 说明列名自动检测优先级
+
+### ⚠️ 破坏性更改
+
+- 移除 `--doi` 参数：单个DOI下载现在通过 `-m` 参数实现
+- 移除 `-i` 参数：文件输入现在通过 `-m` 参数实现
+- `-c` 参数默认值改为自动检测（不再有默认列名）
+
+### 🔄 迁移指南
+
+**旧版本用法 → 新版本用法**：
+```bash
+# 单个DOI下载
+旧: pdfget --doi 10.1038/s41586-024-07146-0
+新: pdfget -m "10.1038/s41586-024-07146-0"
+
+# 批量文件输入
+旧: pdfget -i data.csv -p ID
+新: pdfget -m data.csv -c ID
+
+# 多个标识符
+新: pdfget -m "PMC123,456,10.1038/xxx"
+```
+
 ## [0.1.4] - 2025-12-12
 
 ### 🚀 新增功能

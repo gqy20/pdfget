@@ -61,9 +61,14 @@ pdfget -s "quantum" -S europe_pmc -l 30
 # 使用多个数据源搜索
 pdfget -s "cancer immunotherapy" -S both -l 100
 
-# 从CSV文件读取混合标识符下载（支持PMCID/PMID/DOI混合）
-pdfget -m examples/identifiers.csv -p ID
-pdfget -m examples/pmcids.csv -p PMCID
+# 从CSV文件批量下载（支持PMCID/PMID/DOI混合）
+pdfget -m examples/identifiers.csv
+pdfget -m examples/identifiers.csv -c ID
+pdfget -m examples/pmcids.csv -c PMCID
+
+# 单个或多个标识符下载
+pdfget -m "PMC123456"
+pdfget -m "PMC123456,38238491,10.1038/s41586-024-07146-0"
 ```
 
 如果您使用 uv 作为包管理器，也可以：
@@ -188,10 +193,12 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 
 ### 4.1 核心参数
 - `-s QUERY` : 搜索文献
-- `--doi DOI` : 通过DOI下载单个文献
-- `-i FILE` : 批量输入文件
-- `-m FILE` : 从CSV文件读取标识符列表下载（支持混合PMCID/PMID/DOI）
-- `-p COLUMN` : 标识符列名（默认: ID，支持PMCID/PMID/DOI混合）
+- `-m INPUT` : 批量输入（支持三种模式）
+  * CSV文件路径：`pdfget -m data.csv`
+  * 单个标识符：`pdfget -m "PMC123456"`
+  * 逗号分隔列表：`pdfget -m "PMC123,456,10.1038/xxx"`
+- `-c COLUMN` : CSV列名（默认自动检测：ID>PMCID>doi>pmid>第一列）
+- `-p COLUMN` : `[向后兼容]` 同 -c 参数
 - `-d` : 下载PDF（不指定则为统计模式）
 
 ### 4.2 优化参数
@@ -310,22 +317,21 @@ pdfget -s "cancer" -l 100 --format json
 pdfget -s "cancer" -l 100 --format markdown
 ```
 
-### 5.4 混合标识符CSV文件格式
+### 5.4 混合标识符输入格式
 
-使用 `-m` 参数时，CSV文件支持混合类型标识符：
-- **支持的标识符类型**：PMCID、PMID、DOI
-- **自动识别**：无需指定类型，程序自动检测
-- **列名**：默认为"ID"，可通过 `-p` 参数指定
-- **PMCID格式**：支持带或不带PMC前缀（如"123456"或"PMC123456"）
-- **PMID格式**：6-10位纯数字
-- **DOI格式**：以"10."开头的字符串
+`-m` 参数支持三种输入模式，自动识别：
 
-**标识符处理流程**：
-1. **PMCID**：直接下载
-2. **PMID**：自动转换为PMCID后下载（使用NCBI ESummary API）
-3. **DOI**：当前版本暂不支持（将在后续版本添加）
+#### 模式1：CSV文件路径
+```bash
+# 自动检测列名（优先级：ID>PMCID>doi>pmid>第一列）
+pdfget -m examples/identifiers.csv
 
-示例CSV文件（混合标识符）：
+# 手动指定列名
+pdfget -m examples/identifiers.csv -c PMCID
+pdfget -m examples/identifiers.csv -p ID  # -p 是 -c 的别名（向后兼容）
+```
+
+示例CSV文件：
 ```csv
 ID,Title,Journal
 PMC123456,Study on AI,Nature
@@ -334,25 +340,42 @@ PMC123456,Study on AI,Nature
 PMC789012,Machine Learning Methods,Cell
 ```
 
-使用示例：
+#### 模式2：单个标识符
 ```bash
-# 下载混合标识符列表（自动识别类型）
-pdfget -m examples/identifiers.csv -p ID
+pdfget -m "PMC123456"
+pdfget -m "38238491"
+pdfget -m "10.1038/s41586-024-07146-0"
+```
 
-# 下载纯PMCID列表
-pdfget -m examples/pmcids.csv -p PMCID
+#### 模式3：逗号分隔的多个标识符
+```bash
+pdfget -m "PMC123456,38238491,10.1038/s41586-024-07146-0"
+```
 
+**支持的标识符类型**：
+- **PMCID**：支持带或不带PMC前缀（如"123456"或"PMC123456"）
+- **PMID**：6-10位纯数字
+- **DOI**：以"10."开头的字符串
+
+**标识符处理流程**：
+1. **PMCID**：直接下载
+2. **PMID**：自动转换为PMCID后下载（使用NCBI ESummary API）
+3. **DOI**：当前版本暂不支持（将在后续版本添加）
+
+**高级用法**：
+```bash
 # 使用5个并发线程
-pdfget -m examples/identifiers.csv -p ID -t 5
+pdfget -m examples/identifiers.csv -t 5
 
 # 限制只下载前10个
-pdfget -m examples/identifiers.csv -p ID -l 10
+pdfget -m examples/identifiers.csv -l 10
 ```
 
 **注意事项**：
 - PMID会自动转换为PMCID，转换成功率约80-90%（取决于文献是否被PMC收录）
 - 无法转换的PMID会被跳过
 - DOI支持将在后续版本添加（当前会跳过DOI）
+- 列名检测不区分大小写
 
 ## 6. 许可证
 
