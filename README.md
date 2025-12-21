@@ -11,7 +11,7 @@ PDFGet是一个专为科研工作者设计的智能文献搜索与批量下载�
 - 🔍 **智能文献搜索**：支持高级检索语法，可按作者、期刊、年份等精确搜索
 - 📊 **PMCID统计分析**：快速统计文献的开放获取情况，支持多种输出格式
 - 📥 **批量PDF下载**：自动下载开放获取文献，支持并发下载和智能重试
-- 📋 **混合标识符下载**：支持从CSV文件读取PMCID/PMID/DOI混合列表，自动识别并下载
+- 📋 **混合标识符下载**：支持从CSV文件读取PMCID/PMID混合列表，自动识别并下载（DOI支持开发中）
 - 🔗 **多数据源支持**：集成PubMed（默认）和Europe PMC数据库
 - 💾 **智能缓存机制**：避免重复API请求和下载，提升效率
 - 🎯 **双模式操作**：统计模式（默认）和下载模式，满足不同需求
@@ -61,14 +61,14 @@ pdfget -s "quantum" -S europe_pmc -l 30
 # 使用多个数据源搜索
 pdfget -s "cancer immunotherapy" -S both -l 100
 
-# 从CSV文件批量下载（支持PMCID/PMID/DOI混合）
+# 从CSV文件批量下载（支持PMCID/PMID混合，DOI支持开发中）
 pdfget -m examples/identifiers.csv
 pdfget -m examples/identifiers.csv -c ID
 pdfget -m examples/pmcids.csv -c PMCID
 
 # 单个或多个标识符下载
 pdfget -m "PMC123456"
-pdfget -m "PMC123456,38238491,10.1038/s41586-024-07146-0"
+pdfget -m "PMC123456,38238491"  # PMCID和PMID混合
 ```
 
 如果您使用 uv 作为包管理器，也可以：
@@ -196,7 +196,7 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 - `-m INPUT` : 批量输入（支持三种模式）
   * CSV文件路径：`pdfget -m data.csv`
   * 单个标识符：`pdfget -m "PMC123456"`
-  * 逗号分隔列表：`pdfget -m "PMC123,456,10.1038/xxx"`
+  * 逗号分隔列表：`pdfget -m "PMC123,38238491"`（PMCID和PMID混合）
 - `-c COLUMN` : CSV列名（默认自动检测：ID>PMCID>doi>pmid>第一列）
 - `-d` : 下载PDF（不指定则为统计模式）
 
@@ -335,20 +335,20 @@ pdfget -m examples/identifiers.csv -c ID
 ID,Title,Journal
 PMC123456,Study on AI,Nature
 38238491,Deep Learning Review,Science
-10.1038/s41586-024-07146-0,Quantum Computing,Nature
 PMC789012,Machine Learning Methods,Cell
+37851234,Neural Network Research,Cell
 ```
 
 #### 模式2：单个标识符
 ```bash
-pdfget -m "PMC123456"
-pdfget -m "38238491"
-pdfget -m "10.1038/s41586-024-07146-0"
+pdfget -m "PMC123456"  # PMCID
+pdfget -m "38238491"    # PMID
+# DOI示例暂略，当前版本暂不支持
 ```
 
 #### 模式3：逗号分隔的多个标识符
 ```bash
-pdfget -m "PMC123456,38238491,10.1038/s41586-024-07146-0"
+pdfget -m "PMC123456,38238491"  # PMCID和PMID混合
 ```
 
 **支持的标识符类型**：
@@ -376,16 +376,85 @@ pdfget -m examples/identifiers.csv -l 10
 - DOI支持将在后续版本添加（当前会跳过DOI）
 - 列名检测不区分大小写
 
-## 6. 许可证
+## 6. 功能实现状态
+
+### 已实现功能 ✅
+- [x] PMCID直接下载（100%成功率）
+- [x] PMID自动转换为PMCID下载（80-90%成功率）
+- [x] 高级检索语法支持
+- [x] 并发下载管理
+- [x] 智能缓存机制
+- [x] 多种输出格式（console/json/markdown）
+- [x] 混合标识符输入（PMCID/PMID）
+- [x] 批量处理CSV文件
+- [x] PMC开放获取统计分析
+
+### 开发中功能 🚧
+- [ ] DOI到PMCID转换和下载
+  - [ ] Europe PMC API集成（计划Q1 2024）
+  - [ ] CrossRef API集成（计划Q1 2024）
+  - [ ] 批量DOI转换优化
+  - [ ] DOI转换缓存机制
+
+### 计划功能 📋
+- [ ] 增强DOI转换（更多数据源）
+- [ ] 用户认证支持（机构访问）
+- [ ] 下载进度持久化
+- [ ] GUI界面
+- [ ] 插件系统
+
+## 7. 故障排除
+
+### 常见问题
+
+#### PMID转换失败
+**问题**：PMID无法转换为PMCID
+**可能原因**：
+1. 文献未被PMC收录（约10-20%的文献）
+2. PMID格式不正确（应为6-10位数字）
+3. NCBI API临时限制
+
+**解决方案**：
+1. 检查PMID格式：`echo "38238491" | wc -c` 应返回9
+2. 使用PMC过滤搜索：`pdfget -s "your query AND pubmed pmc[sb]"`
+3. 配置API密钥提高请求限制：`-e your-email@example.com -k your-api-key`
+
+#### 下载速度较慢
+**问题**：批量下载耗时较长
+**优化建议**：
+1. 调整并发线程数：`-t 10`（默认3）
+2. 分批处理大量文献：`-l 100` 限制单次数量
+3. 使用PMC过滤确保100%可下载：`pubmed pmc[sb]`
+
+#### 网络连接问题
+**问题**：API请求超时或失败
+**解决方案**：
+1. 检查网络连接
+2. 配置代理（如需要）
+3. 使用Europe PMC数据源：`-S europe_pmc`
+4. 重试失败的下载（程序会自动重试）
+
+#### 缓存问题
+**问题**：使用了过期的缓存数据
+**解决方案**：
+```bash
+# 清理搜索缓存
+rm data/cache/search_*.json
+
+# 清理PDF缓存（如需要）
+rm data/pdfs/*.pdf
+```
+
+## 8. 许可证
 
 本项目采用 MIT License，允许自由使用和修改。
 
-## 7. 获取帮助
+## 9. 获取帮助
 
 - 🔗 **完整更新日志**: [CHANGELOG.md](CHANGELOG.md)
 - 📧 **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
 
-## 8. 相关链接
+## 10. 相关链接
 
 - **项目源码**: [GitHub Repository](https://github.com/gqy20/pdfget)
 - **问题反馈**: [GitHub Issues](https://github.com/gqy20/pdfget/issues)
