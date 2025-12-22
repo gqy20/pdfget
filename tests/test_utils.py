@@ -160,37 +160,37 @@ class TestIdentifierUtils:
 
     def test_validate_pmcid_valid(self):
         """测试有效PMCID验证"""
-        assert IdentifierUtils.validate_pmcid("PMC123456") == True
-        assert IdentifierUtils.validate_pmcid("123456") == True
-        assert IdentifierUtils.validate_pmcid("PMC789012") == True
+        assert IdentifierUtils.validate_pmcid("PMC123456")
+        assert IdentifierUtils.validate_pmcid("123456")
+        assert IdentifierUtils.validate_pmcid("PMC789012")
 
     def test_validate_pmcid_invalid(self):
         """测试无效PMCID验证"""
-        assert IdentifierUtils.validate_pmcid("invalid") == False
-        assert IdentifierUtils.validate_pmcid("PMC") == False  # 没有数字
-        assert IdentifierUtils.validate_pmcid("123456789012") == False  # 太长
+        assert not IdentifierUtils.validate_pmcid("invalid")
+        assert not IdentifierUtils.validate_pmcid("PMC")  # 没有数字
+        assert not IdentifierUtils.validate_pmcid("123456789012")  # 太长
 
     def test_validate_pmid_valid(self):
         """测试有效PMID验证"""
-        assert IdentifierUtils.validate_pmid("12345678") == True
-        assert IdentifierUtils.validate_pmid("1234567890") == True
+        assert IdentifierUtils.validate_pmid("12345678")
+        assert IdentifierUtils.validate_pmid("1234567890")
 
     def test_validate_pmid_invalid(self):
         """测试无效PMID验证"""
-        assert IdentifierUtils.validate_pmid("invalid") == False
-        assert IdentifierUtils.validate_pmid("12345") == False  # 太短
-        assert IdentifierUtils.validate_pmid("123456789012") == False  # 太长
+        assert not IdentifierUtils.validate_pmid("invalid")
+        assert not IdentifierUtils.validate_pmid("12345")  # 太短
+        assert not IdentifierUtils.validate_pmid("123456789012")  # 太长
 
     def test_validate_doi_valid(self):
         """测试有效DOI验证"""
-        assert IdentifierUtils.validate_doi("10.1038/nature12373") == True
-        assert IdentifierUtils.validate_doi("10.1000/xyz-abc") == True
+        assert IdentifierUtils.validate_doi("10.1038/nature12373")
+        assert IdentifierUtils.validate_doi("10.1000/xyz-abc")
 
     def test_validate_doi_invalid(self):
         """测试无效DOI验证"""
-        assert IdentifierUtils.validate_doi("invalid") == False
-        assert IdentifierUtils.validate_doi("10.1038") == False  # 缺少内容
-        assert IdentifierUtils.validate_doi("xyz.1038/nature12373") == False  # 错误前缀
+        assert not IdentifierUtils.validate_doi("invalid")
+        assert not IdentifierUtils.validate_doi("10.1038")  # 缺少内容
+        assert not IdentifierUtils.validate_doi("xyz.1038/nature12373")  # 错误前缀
 
     def test_clean_identifier_string(self):
         """测试标识符字符串清理"""
