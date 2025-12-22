@@ -218,28 +218,12 @@ class PaperFetcher:
             pmcid: 原始 PMCID
 
         Returns:
-            标准化的 PMCID（PMC前缀+数字）
+            标准化的 PMCID（PMC前缀+数字），空字符串表示无效
         """
-        if not pmcid:
-            return ""
+        from .utils.identifier_utils import IdentifierUtils
 
-        # 去除空格和制表符
-        pmcid = pmcid.strip()
-
-        # 如果已经是标准格式
-        if pmcid.startswith("PMC"):
-            # 验证后面是否都是数字
-            if pmcid[3:].isdigit():
-                return pmcid
-            else:
-                return ""
-
-        # 如果是纯数字，添加 PMC 前缀
-        if pmcid.isdigit():
-            return f"PMC{pmcid}"
-
-        # 无效格式
-        return ""
+        normalized = IdentifierUtils.normalize_pmcid(pmcid)
+        return f"PMC{normalized}" if normalized else ""
 
     def _detect_id_type(self, identifier: str) -> str:
         """
@@ -251,35 +235,9 @@ class PaperFetcher:
         Returns:
             标识符类型: 'pmcid', 'pmid', 'doi', 'unknown'
         """
-        if not identifier:
-            return "unknown"
+        from .utils.identifier_utils import IdentifierUtils
 
-        # 去除首尾空格
-        identifier = identifier.strip()
-
-        # 检测 PMCID (PMC开头 + 数字)
-        if identifier.startswith("PMC"):
-            if identifier[3:].isdigit() and len(identifier) > 3:
-                return "pmcid"
-            else:
-                return "unknown"
-
-        # 检测 DOI (10.开头)
-        if identifier.startswith("10."):
-            # 基本验证：10. 后面应该有内容
-            if len(identifier) > 3:
-                return "doi"
-            else:
-                return "unknown"
-
-        # 检测 PMID (纯数字，6-10位)
-        if identifier.isdigit():
-            if 6 <= len(identifier) <= 10:
-                return "pmid"
-            else:
-                return "unknown"
-
-        return "unknown"
+        return IdentifierUtils.detect_identifier_type(identifier)
 
     def _read_identifiers_from_csv(
         self, csv_path: str, id_column: str = "ID"

@@ -37,8 +37,7 @@ class PDFDownloader:
 
         self.pmc_oa_service = PMCOAService(str(self.output_dir), session)
 
-        # PDF 下载源（按成功率排序，PMC OA Service最可靠）
-        # NCBI直接下载链接由于JavaScript PoW保护已失效，故移除
+        # PDF 下载源（Europe PMC是最可靠的开放获取源）
         self.pdf_sources = [
             "https://europepmc.org/articles/{pmcid}?pdf=render",
         ]
