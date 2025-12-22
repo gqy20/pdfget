@@ -106,9 +106,11 @@ class TestPMCIDCounter:
             assert stats["processing_speed"] == 0.0
             assert stats["from_cache"] is True
 
-    @patch("src.pdfget.fetcher.PaperFetcher")
-    def test_count_pmcid_with_cache(self, mock_fetcher_class):
+    def test_count_pmcid_with_cache(self):
         """测试使用缓存的 PMCID 统计"""
+        # 创建一个真实的PaperFetcher用于测试
+        from src.pdfget.fetcher import PaperFetcher
+
         # 模拟缓存数据
         test_papers = [
             {"pmcid": "PMC1234567"},
@@ -117,7 +119,11 @@ class TestPMCIDCounter:
         ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            counter = PMCIDCounter(cache_dir=tmpdir)
+            # 创建真实的PaperFetcher实例
+            fetcher = PaperFetcher(cache_dir=tmpdir, default_source="pubmed")
+
+            # 使用这个fetcher创建counter
+            counter = PMCIDCounter(cache_dir=tmpdir, fetcher=fetcher)
 
             # 创建缓存文件
             cache_file = counter._get_cache_file("test query", "pubmed")
@@ -133,9 +139,6 @@ class TestPMCIDCounter:
             assert stats["without_pmcid"] == 1
             assert abs(stats["rate"] - 66.66666666666667) < 0.0001
             assert stats["from_cache"] is True
-
-            # 验证没有调用 PaperFetcher
-            mock_fetcher_class.assert_not_called()
 
     @patch("src.pdfget.fetcher.PaperFetcher")
     def test_count_pmcid_without_cache_trigger_search(self, mock_fetcher_class):

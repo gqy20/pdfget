@@ -113,9 +113,8 @@ class TestCSVIdentifierReading(CSVTestMixin):
 
     def test_read_pmcid_only_csv(self, temp_output_dir):
         """测试：读取仅包含 PMCID 的 CSV"""
-        csv_data = self.create_csv_data_with_identifiers(
-            ["PMC10851947", "PMC10851948", "PMC10851949"]
-        )
+        # 创建CSV数据
+        csv_data = [["ID"], ["PMC10851947"], ["PMC10851948"], ["PMC10851949"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmcid_only.csv")
 
         result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
@@ -127,9 +126,8 @@ class TestCSVIdentifierReading(CSVTestMixin):
 
     def test_read_pmid_only_csv(self, temp_output_dir):
         """测试：读取仅包含 PMID 的 CSV"""
-        csv_data = self.create_csv_data_with_identifiers(
-            ["38238491", "38238492", "38238493"]
-        )
+        # 创建CSV数据
+        csv_data = [["ID"], ["38238491"], ["38238492"], ["38238493"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmid_only.csv")
 
         result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
@@ -142,7 +140,8 @@ class TestCSVIdentifierReading(CSVTestMixin):
     def test_read_doi_only_csv(self, temp_output_dir):
         """测试：读取仅包含 DOI 的 CSV"""
         identifiers = ["10.1038/s41586-024-07146-0", "10.1000/test1", "10.1000/test2"]
-        csv_data = self.create_csv_data_with_identifiers(identifiers)
+        # 创建CSV数据
+        csv_data = [["ID"], [identifiers[0]], [identifiers[1]], [identifiers[2]]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "doi_only.csv")
 
         result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
@@ -376,9 +375,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
 
         # 创建包含多个 PMCID 的 CSV 文件
-        csv_data = self.create_csv_data_with_identifiers(
-            ["123456", "789012", "345678", "901234"]
-        )
+        csv_data = [["ID"], ["123456"], ["789012"], ["345678"], ["901234"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "many_pmcids.csv")
 
         try:

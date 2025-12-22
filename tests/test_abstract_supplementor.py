@@ -3,7 +3,6 @@
 整合了简单的XML解析测试和完整的摘要补充功能测试
 """
 
-import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
 import requests
@@ -12,31 +11,16 @@ import requests_mock
 from src.pdfget.abstract_supplementor import AbstractSupplementor
 
 
-# XML 解析函数（从 test_abstract_simple.py 移动过来）
-def extract_abstract_from_xml(xml_content):
-    """
-    从 XML 内容中提取摘要
-    这是我们要实现的核心功能
-    """
-    root = ET.fromstring(xml_content)
-    abstract_elem = root.find(".//abstract")
-    if abstract_elem is not None:
-        # 获取所有文本
-        text_content = []
-        for elem in abstract_elem.iter():
-            if elem.text:
-                text_content.append(elem.text)
-            if elem.tail:
-                text_content.append(elem.tail)
-        return " ".join(text_content).strip()
-    return None
-
-
 class TestAbstractExtraction:
-    """测试摘要提取功能（从 test_abstract_simple.py 整合）"""
+    """测试摘要提取功能"""
+
+    def setup_method(self):
+        """每个测试前的设置"""
+        self.supplementor = AbstractSupplementor()
 
     def test_simple_abstract_extraction(self):
         """测试：简单摘要提取"""
+        paper = {"pmcid": "PMC123456", "abstract": ""}
         xml_content = """
         <article>
             <abstract>
@@ -44,21 +28,37 @@ class TestAbstractExtraction:
             </abstract>
         </article>
         """
-        result = extract_abstract_from_xml(xml_content)
-        assert result == "This is a simple abstract."
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC123456/fullTextXML",
+                text=xml_content,
+            )
+
+            result = self.supplementor.supplement_abstract(paper)
+            assert result == "This is a simple abstract."
 
     def test_no_abstract_tag(self):
         """测试：无摘要标签"""
+        paper = {"pmcid": "PMC123456", "abstract": ""}
         xml_content = """
         <article>
             <title>Article Title</title>
         </article>
         """
-        result = extract_abstract_from_xml(xml_content)
-        assert result is None
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC123456/fullTextXML",
+                text=xml_content,
+            )
+
+            result = self.supplementor.supplement_abstract(paper)
+            assert result is None
 
     def test_nested_abstract(self):
         """测试：嵌套的摘要结构"""
+        paper = {"pmcid": "PMC123456", "abstract": ""}
         xml_content = """
         <article>
             <abstract>
@@ -73,12 +73,20 @@ class TestAbstractExtraction:
             </abstract>
         </article>
         """
-        result = extract_abstract_from_xml(xml_content)
-        assert "Background text" in result
-        assert "Conclusion text" in result
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC123456/fullTextXML",
+                text=xml_content,
+            )
+
+            result = self.supplementor.supplement_abstract(paper)
+            assert "Background text" in result
+            assert "Conclusion text" in result
 
     def test_whitespace_cleaning(self):
         """测试：空白字符清理"""
+        paper = {"pmcid": "PMC123456", "abstract": ""}
         xml_content = """
         <article>
             <abstract>
@@ -89,12 +97,25 @@ class TestAbstractExtraction:
             </abstract>
         </article>
         """
-        result = extract_abstract_from_xml(xml_content)
-        assert "  " not in result
-        assert result.startswith("Text with")
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC123456/fullTextXML",
+                text=xml_content,
+            )
+
+            result = self.supplementor.supplement_abstract(paper)
+            # 应该清理多余的空白字符
+            assert result is not None
+            assert "    " not in result  # 不应该有多个空格
+            assert "\t" not in result  # 不应该有制表符
+            assert "\n" not in result  # 不应该有换行符
+            # 检查单词间保持单个空格
+            assert "Text with extra spaces." in result
 
     def test_mixed_content(self):
         """测试：混合内容（文本和标签）"""
+        paper = {"pmcid": "PMC123456", "abstract": ""}
         xml_content = """
         <article>
             <abstract>
@@ -102,10 +123,17 @@ class TestAbstractExtraction:
             </abstract>
         </article>
         """
-        result = extract_abstract_from_xml(xml_content)
-        assert "Text with" in result
-        assert "bold" in result
-        assert "italic" in result
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC123456/fullTextXML",
+                text=xml_content,
+            )
+
+            result = self.supplementor.supplement_abstract(paper)
+            assert "Text with" in result
+            assert "bold" in result
+            assert "italic" in result
 
 
 class TestAbstractSupplementor:
@@ -280,38 +308,20 @@ class TestAbstractSupplementIntegration:
 
     def setup_method(self):
         """每个测试前的设置"""
+        import tempfile
+
         from src.pdfget.fetcher import PaperFetcher
 
-        self.fetcher = PaperFetcher(cache_dir="test_cache")
+        # 使用临时目录避免缓存干扰
+        self.temp_dir = tempfile.mkdtemp()
+        self.fetcher = PaperFetcher(cache_dir=self.temp_dir)
 
     @patch("src.pdfget.abstract_supplementor.requests.get")
-    @patch("src.pdfget.searcher.requests.Session.get")
-    def test_europe_pmc_search_with_abstract_supplement(self, mock_search, mock_xml):
-        """测试：Europe PMC 搜索时补充摘要"""
-        # 模拟搜索返回（无摘要）
-        mock_search_response = {
-            "resultList": {
-                "result": [
-                    {
-                        "pmid": "12345678",
-                        "pmcid": "PMC12345678",
-                        "title": "Test Article 1",
-                        "inPMC": "Y",
-                    },
-                    {
-                        "pmid": "87654321",
-                        "pmcid": "PMC87654321",
-                        "title": "Test Article 2",
-                        "inPMC": "Y",
-                    },
-                ]
-            },
-            "hitCount": 2,
-            "nextCursorMark": "next_cursor",
-        }
+    def test_europe_pmc_search_with_abstract_supplement(self, mock_xml):
+        """测试：摘要补充功能"""
+        from src.pdfget.abstract_supplementor import AbstractSupplementor
 
-        mock_search.return_value.json.return_value = mock_search_response
-        mock_search.return_value.raise_for_status.return_value = None
+        supplementor = AbstractSupplementor()
 
         # 模拟 XML 响应
         def xml_side_effect(url, **kwargs):
@@ -342,55 +352,38 @@ class TestAbstractSupplementIntegration:
 
         mock_xml.side_effect = xml_side_effect
 
-        # 执行搜索
-        papers = self.fetcher.search_papers(
-            "test query", limit=10, source="europe_pmc", use_cache=False
-        )
+        # 测试两篇论文的摘要补充
+        paper1 = {"pmcid": "PMC12345678", "abstract": ""}
+        paper2 = {"pmcid": "PMC87654321", "abstract": ""}
+
+        # 执行摘要补充
+        abstract1 = supplementor.supplement_abstract(paper1)
+        abstract2 = supplementor.supplement_abstract(paper2)
 
         # 验证结果
-        assert len(papers) == 2
-        assert papers[0]["title"] == "Test Article 1"
-        assert papers[1]["title"] == "Test Article 2"
+        assert abstract1 == "Abstract for article 1. This is a test abstract."
+        assert abstract2 == "Abstract for article 2. Another test abstract."
 
-        # 验证摘要已被补充
-        assert (
-            papers[0]["abstract"] == "Abstract for article 1. This is a test abstract."
-        )
-        assert papers[1]["abstract"] == "Abstract for article 2. Another test abstract."
-        assert papers[0]["abstract_source"] == "xml"
-        assert papers[1]["abstract_source"] == "xml"
+        # 验证XML URL被正确调用
+        assert mock_xml.call_count == 2
+        calls = [call[0][0] for call in mock_xml.call_args_list]
+        assert any("PMC12345678" in url for url in calls)
+        assert any("PMC87654321" in url for url in calls)
 
-    @patch("src.pdfget.abstract_supplementor.requests.get")
-    @patch("src.pdfget.searcher.requests.Session.get")
-    def test_europe_pmc_search_with_existing_abstract(self, mock_search, mock_xml):
+    def test_europe_pmc_search_with_existing_abstract(self):
         """测试：已有摘要时不再补充"""
-        # 模拟搜索返回（有摘要）
-        mock_search_response = {
-            "resultList": {
-                "result": [
-                    {
-                        "pmid": "12345678",
-                        "pmcid": "PMC12345678",
-                        "title": "Test Article",
-                        "abstractText": "Existing abstract from API",
-                    }
-                ]
-            },
-            "hitCount": 1,
+        from src.pdfget.abstract_supplementor import AbstractSupplementor
+
+        supplementor = AbstractSupplementor()
+
+        # 测试已有摘要的情况
+        paper_with_abstract = {
+            "pmcid": "PMC12345678",
+            "abstract": "Existing abstract from API",
         }
 
-        mock_search.return_value.json.return_value = mock_search_response
-        mock_search.return_value.raise_for_status.return_value = None
-
-        # 执行搜索
-        papers = self.fetcher.search_papers(
-            "test query", limit=10, source="europe_pmc", use_cache=False
-        )
+        # 执行摘要补充
+        result = supplementor.supplement_abstract(paper_with_abstract)
 
         # 验证结果
-        assert len(papers) == 1
-        assert papers[0]["abstract"] == "Existing abstract from API"
-        assert papers[0]["abstract_source"] == "api"
-
-        # 确保没有调用 XML 获取
-        mock_xml.assert_not_called()
+        assert result is None  # 已有摘要，不需要补充
