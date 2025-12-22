@@ -117,7 +117,7 @@ def main() -> None:
 
     # 初始化下载器
     fetcher = PaperFetcher(
-        cache_dir="data/cache", output_dir="data/pdfs", default_source=args.S
+        cache_dir="data/cache", output_dir=args.o, default_source=args.S
     )
 
     logger.info("🚀 PDF下载器启动")
