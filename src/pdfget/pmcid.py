@@ -13,7 +13,7 @@ import requests
 from .config import PMCID_USE_FALLBACK, RATE_LIMIT
 from .logger import get_logger
 from .retry import retry_with_backoff
-from .utils import IdentifierUtils, RateLimiter, TimeoutConfig
+from .utils import IdentifierUtils, NetworkConfig, RateLimiter, TimeoutConfig
 
 
 class PMCIDRetriever:
@@ -35,8 +35,8 @@ class PMCIDRetriever:
 
         # NCBI 配置
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.rate_limiter = RateLimiter(rate_limit=RATE_LIMIT)
-        self.timeout_config = TimeoutConfig()
+        self.config = NetworkConfig(timeouts=TimeoutConfig(), rate_limit=RATE_LIMIT)
+        self.rate_limiter = RateLimiter(rate_limit=self.config.rate_limit)
 
     def _rate_limit(self) -> None:
         """处理 NCBI API 请求频率限制"""
@@ -78,13 +78,13 @@ class PMCIDRetriever:
         Returns:
             响应对象
         """
-        # 为NCBI API创建专用的重试装饰器（使用默认的5次重试）
-        ncbi_retry = retry_with_backoff()
+        # 为NCBI API创建专用的重试装饰器（使用配置中的重试次数）
+        ncbi_retry = retry_with_backoff(use_config=True)
 
         @ncbi_retry
         def _fetch():
             return self.session.get(
-                url, params=params, timeout=self.timeout_config.request
+                url, params=params, timeout=self.config.timeouts.request
             )
 
         return _fetch()
@@ -100,13 +100,13 @@ class PMCIDRetriever:
         Returns:
             响应对象
         """
-        # 单个请求的重试使用默认机制
-        single_retry = retry_with_backoff()
+        # 单个请求的重试使用配置机制
+        single_retry = retry_with_backoff(use_config=True)
 
         @single_retry
         def _fetch():
             return self.session.get(
-                url, params=params, timeout=self.timeout_config.request
+                url, params=params, timeout=self.config.timeouts.request
             )
 
         return _fetch()

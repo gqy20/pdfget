@@ -11,7 +11,7 @@ import requests
 
 from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, RATE_LIMIT
 from .logger import get_logger
-from .utils import RateLimiter, TimeoutConfig
+from .utils import NetworkConfig, RateLimiter, TimeoutConfig
 
 
 class PaperSearcher:
@@ -38,8 +38,8 @@ class PaperSearcher:
 
         # NCBI 配置
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.rate_limiter = RateLimiter(rate_limit=RATE_LIMIT)
-        self.timeout_config = TimeoutConfig()
+        self.config = NetworkConfig(timeouts=TimeoutConfig(), rate_limit=RATE_LIMIT)
+        self.rate_limiter = RateLimiter(rate_limit=self.config.rate_limit)
 
         # Europe PMC 配置
         self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
@@ -179,7 +179,7 @@ class PaperSearcher:
             search_response = self.session.get(
                 search_url,
                 params=search_params,
-                timeout=self.timeout_config.request,  # type: ignore[arg-type]
+                timeout=self.config.timeouts.request,  # type: ignore[arg-type]
             )
             search_response.raise_for_status()
 
@@ -220,7 +220,7 @@ class PaperSearcher:
                 summary_response = self.session.get(
                     summary_url,
                     params=summary_params,
-                    timeout=self.timeout_config.request,  # type: ignore[arg-type]
+                    timeout=self.config.timeouts.request,  # type: ignore[arg-type]
                 )
                 summary_response.raise_for_status()
 
@@ -329,7 +329,7 @@ class PaperSearcher:
                     "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid,inPMC,source",  # 明确请求PMCID相关字段
                 }
 
-                response = self.session.get(search_url, params=params, timeout=self.timeout_config.request)  # type: ignore[arg-type]
+                response = self.session.get(search_url, params=params, timeout=self.config.timeouts.request)  # type: ignore[arg-type]
                 response.raise_for_status()
                 data = response.json()
 
