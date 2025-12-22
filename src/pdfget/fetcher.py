@@ -20,6 +20,7 @@ from .config import (
     NCBI_EMAIL,
     SOURCES,
 )
+from .doi_converter import DOIConverter
 from .downloader import PDFDownloader
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
@@ -74,6 +75,9 @@ class PaperFetcher(NCBIBaseModule):
             self.session, email=self.email, api_key=self.api_key
         )
         self.pmcid_retriever = PMCIDRetriever(
+            self.session, email=self.email, api_key=self.api_key
+        )
+        self.doi_converter = DOIConverter(
             self.session, email=self.email, api_key=self.api_key
         )
         self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
@@ -435,6 +439,40 @@ class PaperFetcher(NCBIBaseModule):
 
         return pmcids
 
+    def _convert_dois_to_pmcids(self, dois: list[str]) -> list[str]:
+        """
+        将 DOI 列表转换为 PMCID 列表
+
+        Args:
+            dois: DOI 列表
+
+        Returns:
+            PMCID 列表（只包含成功转换的）
+        """
+        if not dois:
+            return []
+
+        self.logger.info(f"开始转换 {len(dois)} 个 DOI 为 PMCID")
+
+        # 使用 DOIConverter 批量转换
+        doi_pmcid_mapping = self.doi_converter.batch_doi_to_pmcid(dois)
+
+        # 提取成功获得 PMCID 的记录
+        pmcids = []
+        for doi, pmcid in doi_pmcid_mapping.items():
+            if pmcid:
+                pmcids.append(pmcid)
+                self.logger.debug(f"DOI转换成功: {doi} -> {pmcid}")
+            else:
+                self.logger.debug(f"DOI转换失败: {doi}")
+
+        success_rate = (len(pmcids) / len(dois) * 100) if dois else 0
+        self.logger.info(
+            f"DOI 转换完成: {len(pmcids)}/{len(dois)} ({success_rate:.1f}%)"
+        )
+
+        return pmcids
+
     def download_from_identifiers(
         self,
         csv_path: str,
@@ -466,14 +504,16 @@ class PaperFetcher(NCBIBaseModule):
         # 3. 合并所有 PMCID
         all_pmcids = identifiers["pmcids"] + pmcids_from_pmids
 
-        # 4. 处理 DOI（目前暂不支持，记录日志）
+        # 4. 转换 DOI 为 PMCID
+        pmcids_from_dois = []
         if identifiers["dois"]:
-            self.logger.warning(
-                f"发现 {len(identifiers['dois'])} 个 DOI，"
-                f"当前版本暂不支持 DOI 直接下载，已跳过"
-            )
+            self.logger.info(f"发现 {len(identifiers['dois'])} 个 DOI，开始转换...")
+            pmcids_from_dois = self._convert_dois_to_pmcids(identifiers["dois"])
 
-        # 5. 构建论文列表
+        # 5. 合并所有 PMCID（包括DOI转换得到的）
+        all_pmcids = all_pmcids + pmcids_from_dois
+
+        # 6. 构建论文列表
         papers = [
             {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "mixed_identifiers"}
             for pmcid in all_pmcids
@@ -710,14 +750,14 @@ class PaperFetcher(NCBIBaseModule):
             if classified["pmids"]:
                 pmcids_from_pmids = self._convert_pmids_to_pmcids(classified["pmids"])
 
-            # 合并所有PMCID
-            all_pmcids = classified["pmcids"] + pmcids_from_pmids
-
-            # 处理DOI（暂不支持）
+            # 处理DOI转换
+            pmcids_from_dois = []
             if classified["dois"]:
-                self.logger.warning(
-                    f"当前版本暂不支持DOI直接下载，已跳过 {len(classified['dois'])} 个DOI"
-                )
+                self.logger.info(f"开始转换 {len(classified['dois'])} 个DOI到PMCID")
+                pmcids_from_dois = self._convert_dois_to_pmcids(classified["dois"])
+
+            # 合并所有PMCID
+            all_pmcids = classified["pmcids"] + pmcids_from_pmids + pmcids_from_dois
 
             if not all_pmcids:
                 self.logger.warning("没有找到可下载的PMCID")

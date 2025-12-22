@@ -190,7 +190,7 @@ def sample_dois():
         "10.1016/j.cell.2020.01.021",
         "10.1038/s41586-020-2661-9",
         "10.1000/test.doi",  # 测试用DOI
-        "10.1234/invalid",   # 可能不存在的DOI
+        "10.1234/invalid",  # 可能不存在的DOI
     ]
 
 
@@ -260,7 +260,7 @@ class CSVTestMixin:
 
     def assert_csv_content(self, csv_path, expected_content):
         """验证CSV文件内容"""
-        with open(csv_path, 'r', encoding='utf-8') as f:
+        with open(csv_path, encoding="utf-8") as f:
             content = f.read()
         assert content.strip() == expected_content.strip()
 
@@ -275,9 +275,9 @@ def create_temp_csv_file(temp_dir, filename="test.csv", content=""):
     """创建临时CSV文件的便利函数"""
     csv_path = temp_dir / filename
     if content:
-        csv_path.write_text(content, encoding='utf-8')
+        csv_path.write_text(content, encoding="utf-8")
     else:
-        csv_path.write_text("header1,header2\nvalue1,value2\n", encoding='utf-8')
+        csv_path.write_text("header1,header2\nvalue1,value2\n", encoding="utf-8")
     return csv_path
 
 

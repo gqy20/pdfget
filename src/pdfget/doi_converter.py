@@ -5,8 +5,6 @@ DOI转换器模块
 采用TDD方式实现，专注于核心功能。
 """
 
-import json
-import time
 from typing import Any
 
 import requests
@@ -20,7 +18,6 @@ from .config import (
     DOI_RATE_LIMIT,
     DOI_USE_FALLBACK,
 )
-from .logger import get_logger
 from .retry import retry_with_backoff
 from .utils import IdentifierUtils
 
@@ -54,6 +51,7 @@ class DOIConverter(NCBIBaseModule):
 
         # 创建专门的速率限制器用于DOI查询
         from .utils import RateLimiter
+
         self.doi_rate_limiter = RateLimiter(rate_limit=DOI_RATE_LIMIT)
 
         # 简单的内存缓存，避免重复查询
@@ -129,7 +127,7 @@ class DOIConverter(NCBIBaseModule):
 
         # 构建查询参数
         params = {
-            "query": f"doi:\"{doi}\"",
+            "query": f'doi:"{doi}"',
             "resulttype": "core",
             "format": "json",
         }
@@ -137,16 +135,16 @@ class DOIConverter(NCBIBaseModule):
         try:
             # 发送请求
             response = self._make_request_with_retry(
-                url=self.DOI_QUERY_URL,
-                params=params,
-                timeout=DOI_QUERY_TIMEOUT
+                url=self.DOI_QUERY_URL, params=params, timeout=DOI_QUERY_TIMEOUT
             )
 
             if response and response.status_code == 200:
                 data = response.json()
                 return self._parse_europepmc_response(data, doi)
             else:
-                self.logger.warning(f"Europe PMC API请求失败: {response.status_code if response else 'None'}")
+                self.logger.warning(
+                    f"Europe PMC API请求失败: {response.status_code if response else 'None'}"
+                )
                 return None
 
         except Exception as e:
@@ -215,7 +213,7 @@ class DOIConverter(NCBIBaseModule):
             response = self._make_request_with_retry(
                 url=f"{self.CROSSREF_API_URL}/{doi}",
                 headers=headers,
-                timeout=DOI_QUERY_TIMEOUT
+                timeout=DOI_QUERY_TIMEOUT,
             )
 
             if response and response.status_code == 200:
@@ -223,14 +221,18 @@ class DOIConverter(NCBIBaseModule):
                 # 从CrossRef获取信息后，尝试用其他方式查找PMCID
                 return self._extract_pmcid_from_crossref(data, doi)
             else:
-                self.logger.warning(f"CrossRef API请求失败: {response.status_code if response else 'None'}")
+                self.logger.warning(
+                    f"CrossRef API请求失败: {response.status_code if response else 'None'}"
+                )
                 return None
 
         except Exception as e:
             self.logger.error(f"CrossRef查询异常 ({doi}): {str(e)}")
             return None
 
-    def _extract_pmcid_from_crossref(self, data: dict[str, Any], doi: str) -> str | None:
+    def _extract_pmcid_from_crossref(
+        self, data: dict[str, Any], doi: str
+    ) -> str | None:
         """
         从CrossRef响应中提取信息并查找PMCID
 
@@ -244,7 +246,6 @@ class DOIConverter(NCBIBaseModule):
         try:
             # 提取论文标题，用于二次查询
             title = data.get("message", {}).get("title", [""])[0]
-            authors = data.get("message", {}).get("author", [])
 
             if title:
                 # 使用标题再次查询Europe PMC
@@ -271,16 +272,14 @@ class DOIConverter(NCBIBaseModule):
         self.doi_rate_limiter.wait_for_rate_limit()
 
         params = {
-            "query": f"title:\"{title}\"",
+            "query": f'title:"{title}"',
             "resulttype": "core",
             "format": "json",
         }
 
         try:
             response = self._make_request_with_retry(
-                url=self.DOI_QUERY_URL,
-                params=params,
-                timeout=DOI_QUERY_TIMEOUT
+                url=self.DOI_QUERY_URL, params=params, timeout=DOI_QUERY_TIMEOUT
             )
 
             if response and response.status_code == 200:
