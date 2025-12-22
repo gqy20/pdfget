@@ -53,30 +53,21 @@ class PDFDownloader:
         Returns:
             安全的文件名
         """
-        # 从 DOI 提取可用的字符
+        # 如果有DOI，使用PMCID+DOI命名；否则只使用PMCID
         if doi:
             # 移除 .pdf 后缀（如果有）
-            if doi.lower().endswith(".pdf"):
-                doi = doi[:-4]
+            clean_doi = doi
+            if clean_doi.lower().endswith(".pdf"):
+                clean_doi = doi[:-4]
 
-            # 将第一个空格替换为's'，其他空格直接删除
-            parts = doi.split(" ", 2)  # 最多分成3部分
-            if len(parts) >= 2:
-                safe_doi = parts[0] + "s" + "".join(parts[1:])
-            else:
-                safe_doi = parts[0] if parts else ""
-
-            # 移除所有特殊字符，只保留字母和数字
-            safe_doi = re.sub(r"[^a-zA-Z0-9]", "", safe_doi)
+            # 移除所有特殊字符，只保留字母、数字和点
+            safe_doi = re.sub(r"[^a-zA-Z0-9.]", "", clean_doi)
             safe_doi = safe_doi[:50]  # 限制长度
-            # 确保不完全是空字符串
-            if not safe_doi:
-                safe_doi = "unknown"
+            filename = f"{pmcid}_{safe_doi}.pdf"
         else:
-            safe_doi = "unknown"
+            # 没有DOI时，直接使用PMCID
+            filename = f"{pmcid}.pdf"
 
-        # 组合文件名
-        filename = f"{pmcid}_{safe_doi}.pdf"
         return filename
 
     def _save_pdf(
