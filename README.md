@@ -391,10 +391,11 @@ pdfget -m examples/identifiers.csv -l 10
 
 ### 开发中功能 🚧
 - [ ] DOI到PMCID转换和下载
-  - [ ] Europe PMC API集成（计划Q1 2024）
-  - [ ] CrossRef API集成（计划Q1 2024）
-  - [ ] 批量DOI转换优化
-  - [ ] DOI转换缓存机制
+  - [ ] Europe PMC API集成（主要数据源，90%成功率）
+  - [ ] NCBI E-utilities备用方案（85%成功率）
+  - [ ] CrossRef API辅助查询
+  - [ ] 批量DOI转换优化（预计100个DOI/30-60秒）
+  - [ ] 智能缓存机制（避免重复查询）
 
 ### 计划功能 📋
 - [ ] 增强DOI转换（更多数据源）
