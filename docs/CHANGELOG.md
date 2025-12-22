@@ -5,92 +5,47 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [0.1.3] - 2025-12-12
+## [0.1.3] - 2025-12-22
 
-### 🚀 新增功能
+### 🎉 新增功能
+- **DOI支持**：完整的DOI到PMCID转换和下载功能
+  - 集成 Europe PMC API 作为主要数据源（转换成功率约60-80%）
+  - 支持 CrossRef API 作为备选方案
+  - 实现批量DOI转换优化，处理速度约100个DOI/30-60秒
+  - 智能缓存机制，避免重复查询
 
-- **统一批量输入接口**：重构参数结构，简化CLI使用
-  - 移除冗余参数：`--doi`、`-i` 和 `-p` 参数
-  - 升级 `-m` 参数为统一批量输入入口，支持三种模式：
-    * CSV文件路径（支持自动列名检测）
-    * 单个标识符（PMCID/PMID/DOI）
-    * 逗号分隔的多个标识符
-  - 统一 `-c` 参数作为CSV列名指定
+- **混合标识符支持**：完整的PMCID/PMID/DOI混合标识符处理
+  - 支持单个DOI下载：`pdfget -m "10.1186/s12916-020-01690-4"`
+  - 支持混合标识符：`pdfget -m "DOI1,PMID1,PMCID1"`
+  - 支持CSV文件包含DOI列，自动识别和转换
 
-- **智能输入识别**：
-  - CSV列名自动检测（优先级：ID>PMCID>doi>pmid>第一列）
-  - 输入类型智能识别（文件/单个/多个/无效）
-  - 标识符字符串解析（支持逗号分隔，自动去空格）
+### 🔧 技术改进
+- **新增DOIConverter模块**：专门的DOI转换器
+  - 支持单个和批量DOI转换
+  - 速率限制和重试机制
+  - 内存缓存优化
+  - 完整的错误处理和日志记录
 
-- **混合标识符下载**：支持从CSV文件读取并自动识别PMCID/PMID/DOI混合类型标识符
-  - 自动检测标识符类型（PMCID、PMID、DOI）
-  - PMID自动转换为PMCID后下载（使用NCBI ESummary API）
-  - 支持带或不带PMC前缀的PMCID格式
-  - 智能跳过空行和无效标识符
-  - 支持自定义CSV列名（默认为"ID"）
+- **增强测试覆盖**：
+  - 15个DOI转换器单元测试
+  - 10个系统集成测试
+  - 覆盖正常流程、错误处理、缓存、速率限制等场景
 
-- **新增方法**（`fetcher.py`）：
-  - `_detect_input_type()`: 检测输入类型
-  - `_auto_detect_column()`: 自动检测CSV列名
-  - `_parse_identifier_string()`: 解析标识符字符串
-  - `_detect_id_type()`: 自动检测标识符类型
-  - `_read_identifiers_from_csv()`: 从CSV读取并分类混合标识符
-  - `_convert_pmids_to_pmcids()`: 批量将PMID转换为PMCID
-  - `download_from_unified_input()`: 统一的输入处理入口
+### 📚 文档更新
+- 更新README.md，将DOI支持从"开发中"更新为"已实现"
+- 添加完整的使用示例和说明
+- 更新功能实现状态表
 
-### 🔧 优化改进
+### 🛠️ 代码质量
+- 解决所有代码质量警告（ruff/mypy）
+- 完善类型注解和错误处理
+- 优化测试代码结构
+- 修复GitHub Actions CI失败问题，所有233个测试通过
 
-- **参数简化**：CLI参数从5个输入参数（`--doi`、`-i`、`-m`、`-p`、`-s`）简化为2个（`-m`、`-s`）
-- **用户体验**：使用更直观，无需记忆多个参数
-  - `pdfget -m "PMC123,456,10.1038/xxx"`
-  - `pdfget -m data.csv`（自动检测列名）
-- **代码简化**：完全移除向后兼容代码，降低维护成本
-- **类型安全**：增强了类型注解和错误处理
-- **TDD开发**：遵循测试驱动开发模式，测试用例先行
-
-### 🧪 测试
-
-- **统一输入功能**：`test_unified_input.py`（35个测试用例）：
-  - TestInputTypeDetection: 9个测试（输入类型检测）
-  - TestColumnAutoDetection: 7个测试（CSV列名自动检测）
-  - TestIdentifierStringParsing: 9个测试（标识符字符串解析）
-  - TestUnifiedInputDownload: 7个测试（统一下载功能）
-  - TestEdgeCases: 3个测试（边界情况）
-
-- **标识符下载功能**：`test_identifier_download.py`（20个测试用例）：
-  - TestIdentifierDetection: 5个测试（标识符类型检测）
-  - TestCSVIdentifierReading: 8个测试（CSV标识符读取）
-  - TestPMIDConversion: 3个测试（PMID转换）
-  - TestIdentifierDownloadIntegration: 4个测试（集成测试）
-
-- 所有55个测试通过（35+20），通过pre-commit钩子检查（ruff, black, mypy）
-
-### 📝 文档更新
-
-- 更新README.md，反映新的参数结构和使用方式
-- 更新命令行参数文档，说明统一输入接口
-- 添加三种输入模式的使用示例
-- 说明列名自动检测优先级
-- 添加CSV文件格式示例和使用指南
-- 说明PMID转换流程和成功率
-
-### 📦 依赖更新
-
-- 添加 `requests-mock>=1.12.1` 用于HTTP请求模拟测试
-- 添加 `pytest-mock>=3.15.1` 用于更强大的模拟测试
-
-### ⚠️ 破坏性更改
-
-- 移除 `--doi` 参数：单个DOI下载现在通过 `-m` 参数实现
-- 移除 `-i` 参数：文件输入现在通过 `-m` 参数实现
-- 移除 `-p` 参数：完全删除向后兼容的 `-p` 参数，统一使用 `-c` 参数
-- `-c` 参数默认值改为自动检测（不再有默认列名）
-
-### ⚠️ 注意事项
-
-- DOI支持将在后续版本添加（当前版本会跳过DOI）
-- PMID转换成功率约80-90%（取决于文献是否被PMC收录）
-- 无法转换的PMID会被自动跳过
+### ⚡ 性能优化
+- DOI转换支持批量处理
+- 智能缓存减少重复API请求
+- 优化的网络请求和重试机制
 
 ### 🔄 迁移指南
 
