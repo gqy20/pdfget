@@ -89,6 +89,7 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "network: marks tests that require network access"
     )
+    config.addinivalue_line("markers", "doi: marks tests related to DOI functionality")
 
 
 # 钩子函数
@@ -177,7 +178,106 @@ PMC123456,Test Paper 1,Author A
 PMC789012,Test Paper 2,Author B
 """
     csv_path = temp_output_dir / "papers.csv"
+    return csv_path
+
+
+# DOI 相关 fixtures
+@pytest.fixture
+def sample_dois():
+    """示例DOI列表"""
+    return [
+        "10.1186/s12916-020-01690-4",
+        "10.1016/j.cell.2020.01.021",
+        "10.1038/s41586-020-2661-9",
+        "10.1000/test.doi",  # 测试用DOI
+        "10.1234/invalid",   # 可能不存在的DOI
+    ]
+
+
+@pytest.fixture
+def doi_pmcid_mapping():
+    """DOI到PMCID的映射（用于测试）"""
+    return {
+        "10.1186/s12916-020-01690-4": "PMC7439635",
+        "10.1016/j.cell.2020.01.021": "PMC7180979",
+        "10.1038/s41586-020-2661-9": "PMC7439636",
+        "10.1000/test.doi": "PMC123456789",
+        "10.1234/invalid": None,  # 不存在
+    }
+
+
+@pytest.fixture
+def mock_doi_converter_response():
+    """模拟DOI转换器响应"""
+    return {
+        "resultList": {
+            "result": [
+                {
+                    "pmcid": "PMC123456789",
+                    "doi": "10.1000/test.doi",
+                    "title": "Test Paper Title",
+                    "authorString": "Test Author",
+                    "journalTitle": "Test Journal",
+                    "pubYear": "2023",
+                    "abstractText": "Test abstract",
+                }
+            ]
+        }
+    }
+
+
+@pytest.fixture
+def csv_file_with_dois(temp_output_dir):
+    """创建包含DOI的CSV文件"""
+    csv_content = """DOI,Title,Journal
+10.1186/s12916-020-01690-4,Paper 1,Journal 1
+10.1016/j.cell.2020.01.021,Paper 2,Journal 2
+10.1038/s41586-020-2661-9,Paper 3,Journal 3
+"""
+    csv_path = temp_output_dir / "dois.csv"
     csv_path.write_text(csv_content)
+    return csv_path
+
+
+@pytest.fixture
+def csv_file_with_mixed_identifiers(temp_output_dir):
+    """创建包含混合标识符的CSV文件"""
+    csv_content = """ID,Title,Type
+PMC123456,Paper 1,PMCID
+38238491,Paper 2,PMID
+10.1186/s12916-020-01690-4,Paper 3,DOI
+PMC789012,Paper 4,PMCID
+10.1016/j.cell.2020.01.021,Paper 5,DOI
+"""
+    csv_path = temp_output_dir / "mixed_identifiers.csv"
+    csv_path.write_text(csv_content)
+    return csv_path
+
+
+# 辅助函数和类
+class CSVTestMixin:
+    """CSV测试混入类，提供通用的CSV测试方法"""
+
+    def assert_csv_content(self, csv_path, expected_content):
+        """验证CSV文件内容"""
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        assert content.strip() == expected_content.strip()
+
+    def create_temp_csv(self, temp_dir, filename, content):
+        """创建临时CSV文件"""
+        csv_path = temp_dir / filename
+        csv_path.write_text(content)
+        return csv_path
+
+
+def create_temp_csv_file(temp_dir, filename="test.csv", content=""):
+    """创建临时CSV文件的便利函数"""
+    csv_path = temp_dir / filename
+    if content:
+        csv_path.write_text(content, encoding='utf-8')
+    else:
+        csv_path.write_text("header1,header2\nvalue1,value2\n", encoding='utf-8')
     return csv_path
 
 

@@ -58,3 +58,11 @@ PMCID_USE_FALLBACK = (
 # 数据源设置
 DEFAULT_SOURCE = "pubmed"  # 默认数据源: europe_pmc, pubmed
 SOURCES = ["pubmed", "europe_pmc"]  # 支持的数据源列表，优先使用PubMed
+
+# DOI转换设置
+DOI_QUERY_TIMEOUT = 10  # DOI查询超时时间（秒）
+DOI_RATE_LIMIT = 1  # DOI查询速率限制（请求/秒）
+DOI_BATCH_SIZE = 10  # 批量DOI查询的批次大小
+DOI_USE_FALLBACK = True  # 是否使用CrossRef作为备选方案
+DOI_CROSSREF_EMAIL = ""  # CrossRef API邮箱（可选）
+DOI_CROSSREF_USER_AGENT = "PDFGet/1.0"  # CrossRef API User-Agent
