@@ -5,7 +5,6 @@
 """
 
 import re
-from typing import Literal
 
 
 class IdentifierUtils:
@@ -42,7 +41,7 @@ class IdentifierUtils:
 
         # DOI检测
         if identifier.startswith("10.") and "/" in identifier and len(identifier) > 8:
-                return IdentifierUtils.TYPE_DOI
+            return IdentifierUtils.TYPE_DOI
 
         # PMID检测
         if identifier.isdigit() and 6 <= len(identifier) <= 10:
@@ -193,7 +192,12 @@ class IdentifierUtils:
         Returns:
             分类后的标识符字典
         """
-        classified: dict[str, list[str]] = {"pmcid": [], "pmid": [], "doi": [], "unknown": []}
+        classified: dict[str, list[str]] = {
+            "pmcid": [],
+            "pmid": [],
+            "doi": [],
+            "unknown": [],
+        }
 
         for identifier in identifiers:
             id_type = IdentifierUtils.detect_identifier_type(identifier)
