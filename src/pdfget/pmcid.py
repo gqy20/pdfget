@@ -13,6 +13,7 @@ import requests
 from .config import PMCID_USE_FALLBACK, RATE_LIMIT
 from .logger import get_logger
 from .retry import retry_with_backoff
+from .utils import IdentifierUtils, RateLimiter, TimeoutConfig
 
 
 class PMCIDRetriever:
@@ -34,18 +35,12 @@ class PMCIDRetriever:
 
         # NCBI 配置
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.rate_limit = RATE_LIMIT
-        self.last_request_time = 0.0
+        self.rate_limiter = RateLimiter(rate_limit=RATE_LIMIT)
+        self.timeout_config = TimeoutConfig()
 
     def _rate_limit(self) -> None:
         """处理 NCBI API 请求频率限制"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-
-        if time_since_last < (1.0 / self.rate_limit):
-            time.sleep((1.0 / self.rate_limit) - time_since_last)
-
-        self.last_request_time = time.time()
+        self.rate_limiter.wait_for_rate_limit()
 
     def _collect_pmids(self, papers: list[dict[str, Any]]) -> list[str]:
         """
@@ -88,7 +83,9 @@ class PMCIDRetriever:
 
         @ncbi_retry
         def _fetch():
-            return self.session.get(url, params=params, timeout=30)
+            return self.session.get(
+                url, params=params, timeout=self.timeout_config.request
+            )
 
         return _fetch()
 
@@ -108,7 +105,9 @@ class PMCIDRetriever:
 
         @single_retry
         def _fetch():
-            return self.session.get(url, params=params, timeout=30)
+            return self.session.get(
+                url, params=params, timeout=self.timeout_config.request
+            )
 
         return _fetch()
 
@@ -122,14 +121,7 @@ class PMCIDRetriever:
         Returns:
             标准化后的 PMCID（总是包含 PMC 前缀）
         """
-        if not pmcid:
-            return ""
-
-        pmcid = pmcid.strip()
-        if not pmcid.startswith("PMC"):
-            pmcid = f"PMC{pmcid}"
-
-        return pmcid
+        return IdentifierUtils.format_pmcid(pmcid, with_prefix=True)
 
     def _fetch_pmcid_batch(
         self, pmids: list[str], batch_size: int = 50

@@ -11,6 +11,7 @@ import requests
 
 from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, RATE_LIMIT
 from .logger import get_logger
+from .utils import RateLimiter, TimeoutConfig
 
 
 class PaperSearcher:
@@ -37,8 +38,8 @@ class PaperSearcher:
 
         # NCBI 配置
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.rate_limit = RATE_LIMIT
-        self.last_request_time = 0.0
+        self.rate_limiter = RateLimiter(rate_limit=RATE_LIMIT)
+        self.timeout_config = TimeoutConfig()
 
         # Europe PMC 配置
         self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
@@ -48,15 +49,7 @@ class PaperSearcher:
 
     def _rate_limit(self) -> None:
         """处理 NCBI API 请求频率限制"""
-        import time
-
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-
-        if time_since_last < (1.0 / self.rate_limit):
-            time.sleep((1.0 / self.rate_limit) - time_since_last)
-
-        self.last_request_time = time.time()
+        self.rate_limiter.wait_for_rate_limit()
 
     def _parse_query_pubmed(self, query: str) -> str:
         """
@@ -186,7 +179,7 @@ class PaperSearcher:
             search_response = self.session.get(
                 search_url,
                 params=search_params,
-                timeout=30,  # type: ignore[arg-type]
+                timeout=self.timeout_config.request,  # type: ignore[arg-type]
             )
             search_response.raise_for_status()
 
@@ -227,7 +220,7 @@ class PaperSearcher:
                 summary_response = self.session.get(
                     summary_url,
                     params=summary_params,
-                    timeout=30,  # type: ignore[arg-type]
+                    timeout=self.timeout_config.request,  # type: ignore[arg-type]
                 )
                 summary_response.raise_for_status()
 
@@ -336,7 +329,7 @@ class PaperSearcher:
                     "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid,inPMC,source",  # 明确请求PMCID相关字段
                 }
 
-                response = self.session.get(search_url, params=params, timeout=30)  # type: ignore[arg-type]
+                response = self.session.get(search_url, params=params, timeout=self.timeout_config.request)  # type: ignore[arg-type]
                 response.raise_for_status()
                 data = response.json()
 
@@ -460,7 +453,7 @@ class PaperSearcher:
             self.logger.debug(f"解析后的查询: {parsed_query}")
 
         # 执行搜索
-        papers = self._search_europepmc_api(parsed_query, limit)
+        papers = self._search_pubmed_api(parsed_query, limit)
 
         if papers:
             self.logger.info(f"  ✓ 找到 {len(papers)} 篇文献")
