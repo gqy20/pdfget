@@ -174,9 +174,9 @@ class DOIConverter(NCBIBaseModule):
                 result_doi = result.get("doi", "")
                 if result_doi.lower() == doi.lower():
                     pmcid = result.get("pmcid", "")
-                    if pmcid:
+                    if pmcid and isinstance(pmcid, str):
                         self.logger.debug(f"Europe PMC找到PMCID: {doi} -> {pmcid}")
-                        return pmcid
+                        return str(pmcid)
 
             self.logger.debug(f"Europe PMC结果中未找到匹配的DOI: {doi}")
             return None
@@ -290,9 +290,9 @@ class DOIConverter(NCBIBaseModule):
                     # 返回第一个有PMCID的结果
                     for result in results:
                         pmcid = result.get("pmcid", "")
-                        if pmcid:
+                        if pmcid and isinstance(pmcid, str):
                             self.logger.debug(f"通过标题找到PMCID: {title} -> {pmcid}")
-                            return pmcid
+                            return str(pmcid)
 
             return None
 
@@ -344,11 +344,12 @@ class DOIConverter(NCBIBaseModule):
         retry_decorator = retry_with_backoff(max_retries=3)
 
         @retry_decorator
-        def _request():
+        def _request() -> requests.Response:
             return self.session.get(**kwargs)
 
         try:
-            return _request()
+            response: requests.Response = _request()
+            return response
         except Exception as e:
             self.logger.error(f"请求失败（重试3次后仍失败）: {str(e)}")
             return None

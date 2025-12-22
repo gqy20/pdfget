@@ -173,11 +173,14 @@ PMC789012
 @pytest.fixture
 def csv_file_with_header(temp_output_dir):
     """创建带标题的CSV文件"""
-    csv_content = """PMCID,Title,Author
+    csv_path = temp_output_dir / "papers.csv"
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        f.write(
+            """PMCID,Title,Author
 PMC123456,Test Paper 1,Author A
 PMC789012,Test Paper 2,Author B
 """
-    csv_path = temp_output_dir / "papers.csv"
+        )
     return csv_path
 
 
@@ -271,16 +274,6 @@ class CSVTestMixin:
         return csv_path
 
 
-def create_temp_csv_file(temp_dir, filename="test.csv", content=""):
-    """创建临时CSV文件的便利函数"""
-    csv_path = temp_dir / filename
-    if content:
-        csv_path.write_text(content, encoding="utf-8")
-    else:
-        csv_path.write_text("header1,header2\nvalue1,value2\n", encoding="utf-8")
-    return csv_path
-
-
 # XML 测试数据 fixtures
 @pytest.fixture
 def simple_abstract_xml():
@@ -335,20 +328,3 @@ def create_temp_csv_file(data, temp_dir, filename="test.csv"):
         writer = csv.writer(f)
         writer.writerows(data)
     return csv_path
-
-
-class CSVTestMixin:
-    """CSV测试混入类，提供通用的CSV测试方法"""
-
-    def assert_csv_content(self, csv_path, expected_content):
-        """验证CSV文件内容"""
-        import csv
-
-        with open(csv_path, encoding="utf-8") as f:
-            reader = csv.reader(f)
-            actual_content = list(reader)
-        assert actual_content == expected_content
-
-    def create_csv_data_with_identifiers(self, identifiers, column_name="ID"):
-        """创建包含标识符的CSV数据"""
-        return [[column_name]] + [[identifier] for identifier in identifiers]

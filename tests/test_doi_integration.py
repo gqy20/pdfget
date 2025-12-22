@@ -146,7 +146,6 @@ PMC12345,Paper 4 PMCID"""
         """
         测试: UnifiedDownloadManager与DOI处理的集成
         """
-        from src.pdfget.manager import UnifiedDownloadManager
 
         # 模拟DOI转换结果
         mock_batch_convert.return_value = {"10.1000/test.doi": "PMC123456"}
@@ -156,9 +155,9 @@ PMC12345,Paper 4 PMCID"""
             {"pmcid": "PMC123456", "success": True, "path": "test.pdf"}
         ]
 
-        # 创建下载管理器和fetcher
+        # 创建fetcher
         fetcher = PaperFetcher()
-        manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=1)
+        # 注意：UnifiedDownloadManager通过fetcher内部使用
 
         # 执行下载（通过fetcher的统一接口）
         result = fetcher.download_from_unified_input("10.1000/test.doi")
@@ -203,12 +202,16 @@ PMC12345,Paper 4 PMCID"""
     # 集成测试8: 性能测试（大量DOI）
     @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
     @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
-    def test_large_doi_batch_performance(self, mock_download, mock_batch_convert, fetcher):
+    def test_large_doi_batch_performance(
+        self, mock_download, mock_batch_convert, fetcher
+    ):
         """
         测试: 大量DOI批量处理的性能
         """
         # 生成大量DOI
-        doi_list = [f"10.1000/test.{i}.doi" for i in range(10)]  # 减少数量以提高测试速度
+        doi_list = [
+            f"10.1000/test.{i}.doi" for i in range(10)
+        ]  # 减少数量以提高测试速度
 
         # 模拟批量转换结果
         mock_results = {f"10.1000/test.{i}.doi": f"PMC{i:06d}" for i in range(10)}
