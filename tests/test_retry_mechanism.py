@@ -43,9 +43,9 @@ class TestFixedGradientBackoff:
         for i, (actual, expected) in enumerate(
             zip(actual_times, expected_times, strict=True)
         ):
-            assert (
-                expected * 0.9 <= actual <= expected * 1.1
-            ), f"第{i + 1}次重试等待时间错误: {actual} vs {expected}"
+            assert expected * 0.9 <= actual <= expected * 1.1, (
+                f"第{i + 1}次重试等待时间错误: {actual} vs {expected}"
+            )
 
     def test_max_retries_exceeded(self):
         """测试：超过最大重试次数后抛出异常"""
@@ -109,9 +109,9 @@ class TestFixedGradientBackoff:
         min_allowed = expected * 0.9
         max_allowed = expected * 1.1
 
-        assert all(
-            min_allowed <= wt <= max_allowed for wt in wait_times
-        ), f"等待时间抖动超出±10%范围: min={min(wait_times)}, max={max(wait_times)}"
+        assert all(min_allowed <= wt <= max_allowed for wt in wait_times), (
+            f"等待时间抖动超出±10%范围: min={min(wait_times)}, max={max(wait_times)}"
+        )
 
     def test_different_exception_types(self):
         """测试：不同类型的异常处理"""

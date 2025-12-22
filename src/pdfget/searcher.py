@@ -321,7 +321,9 @@ class PaperSearcher(NCBIBaseModule):
                     "fields": "pmid,doi,title,authorString,journalTitle,pubYear,abstractText,pmcid,inPMC,source",  # 明确请求PMCID相关字段
                 }
 
-                response = self.session.get(search_url, params=params, timeout=self.config.timeouts.request)  # type: ignore[arg-type]
+                response = self.session.get(
+                    search_url, params=params, timeout=self.config.timeouts.request
+                )  # type: ignore[arg-type]
                 response.raise_for_status()
                 data = response.json()
 
