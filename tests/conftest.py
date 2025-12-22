@@ -139,3 +139,116 @@ def mock_europe_pmc_response():
         "hitCount": 1,
         "nextCursorMark": "*",
     }
+
+
+# CSV 和标识符相关 fixtures
+@pytest.fixture
+def csv_file_with_pmcids(temp_output_dir):
+    """创建包含PMCID的CSV文件"""
+    csv_content = """PMCID
+PMC123456
+PMC789012
+PMC345678
+"""
+    csv_path = temp_output_dir / "pmcids.csv"
+    csv_path.write_text(csv_content)
+    return csv_path
+
+
+@pytest.fixture
+def csv_file_with_mixed_ids(temp_output_dir):
+    """创建包含混合标识符的CSV文件"""
+    csv_content = """ID
+PMC123456
+38238491
+10.1038/s41586-024-07146-0
+PMC789012
+"""
+    csv_path = temp_output_dir / "mixed_ids.csv"
+    csv_path.write_text(csv_content)
+    return csv_path
+
+
+@pytest.fixture
+def csv_file_with_header(temp_output_dir):
+    """创建带标题的CSV文件"""
+    csv_content = """PMCID,Title,Author
+PMC123456,Test Paper 1,Author A
+PMC789012,Test Paper 2,Author B
+"""
+    csv_path = temp_output_dir / "papers.csv"
+    csv_path.write_text(csv_content)
+    return csv_path
+
+
+# XML 测试数据 fixtures
+@pytest.fixture
+def simple_abstract_xml():
+    """简单的摘要XML"""
+    return """<article>
+        <abstract>
+            <p>This is a test abstract.</p>
+        </abstract>
+    </article>"""
+
+
+@pytest.fixture
+def complex_abstract_xml():
+    """复杂的摘要XML（嵌套结构）"""
+    return """<article>
+        <front>
+            <article-meta>
+                <abstract>
+                    <sec>
+                        <title>Background</title>
+                        <p>Background paragraph.</p>
+                    </sec>
+                    <sec>
+                        <title>Methods</title>
+                        <p>Methods paragraph with <bold>bold text</bold>.</p>
+                    </sec>
+                </abstract>
+            </article-meta>
+        </front>
+    </article>"""
+
+
+@pytest.fixture
+def xml_without_abstract():
+    """无摘要的XML"""
+    return """<article>
+        <front>
+            <article-meta>
+                <title>Test Title</title>
+            </article-meta>
+        </front>
+    </article>"""
+
+
+# 通用工具函数
+def create_temp_csv_file(data, temp_dir, filename="test.csv"):
+    """创建临时CSV文件的工具函数"""
+    import csv
+
+    csv_path = temp_dir / filename
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerows(data)
+    return csv_path
+
+
+class CSVTestMixin:
+    """CSV测试混入类，提供通用的CSV测试方法"""
+
+    def assert_csv_content(self, csv_path, expected_content):
+        """验证CSV文件内容"""
+        import csv
+
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.reader(f)
+            actual_content = list(reader)
+        assert actual_content == expected_content
+
+    def create_csv_data_with_identifiers(self, identifiers, column_name="ID"):
+        """创建包含标识符的CSV数据"""
+        return [[column_name]] + [[identifier] for identifier in identifiers]
