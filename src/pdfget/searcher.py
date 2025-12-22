@@ -9,19 +9,18 @@ from typing import Any
 
 import requests
 
-from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL, RATE_LIMIT
-from .logger import get_logger
-from .utils import NetworkConfig, RateLimiter, TimeoutConfig
+from .base.ncbi_base import NCBIBaseModule
+from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL
 
 
-class PaperSearcher:
+class PaperSearcher(NCBIBaseModule):
     """文献搜索器"""
 
     def __init__(
         self,
         session: requests.Session,
-        email: str | None = None,
-        api_key: str | None = None,
+        email: str = "",
+        api_key: str = "",
     ):
         """
         初始化文献搜索器
@@ -31,25 +30,18 @@ class PaperSearcher:
             email: 可选的邮箱（提高请求限制）
             api_key: 可选的 API 密钥
         """
-        self.logger = get_logger(__name__)
-        self.session = session
-        self.email = email or NCBI_EMAIL
-        self.api_key = api_key or NCBI_API_KEY
+        # 使用配置中的默认值或传入的参数
+        email = email or NCBI_EMAIL
+        api_key = api_key or NCBI_API_KEY
 
-        # NCBI 配置
-        self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.config = NetworkConfig(timeouts=TimeoutConfig(), rate_limit=RATE_LIMIT)
-        self.rate_limiter = RateLimiter(rate_limit=self.config.rate_limit)
+        # 初始化NCBI基类
+        super().__init__(session=session, email=email, api_key=api_key)
 
         # Europe PMC 配置
         self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 
         # 默认搜索源
         self.default_source = DEFAULT_SOURCE
-
-    def _rate_limit(self) -> None:
-        """处理 NCBI API 请求频率限制"""
-        self.rate_limiter.wait_for_rate_limit()
 
     def _parse_query_pubmed(self, query: str) -> str:
         """

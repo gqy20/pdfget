@@ -5,15 +5,15 @@
 遵循KISS原则：Keep It Simple, Stupid
 """
 
-import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import requests
 
 from .abstract_supplementor import AbstractSupplementor
+from .base.ncbi_base import NCBIBaseModule
 from .config import (
     DEFAULT_SOURCE,
     NCBI_API_KEY,
@@ -21,12 +21,13 @@ from .config import (
     SOURCES,
 )
 from .downloader import PDFDownloader
-from .logger import get_logger
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
+from .utils.cache_manager import CacheManager
+from .utils.error_handling import handle_ncbi_errors
 
 
-class PaperFetcher:
+class PaperFetcher(NCBIBaseModule):
     """简单文献获取器"""
 
     def __init__(
@@ -35,6 +36,8 @@ class PaperFetcher:
         output_dir: str = "data/pdfs",
         default_source: str | None = None,
         sources: "list[str] | None" = None,
+        email: str = "",
+        api_key: str = "",
     ):
         """
         初始化获取器
@@ -44,58 +47,43 @@ class PaperFetcher:
             output_dir: PDF输出目录
             default_source: 默认数据源 (pubmed, europe_pmc)
             sources: 支持的数据源列表
+            email: NCBI邮箱
+            api_key: NCBI API密钥
         """
-        self.logger = get_logger(__name__)
+        # 使用配置中的默认值或传入的参数
+        email = email or NCBI_EMAIL
+        api_key = api_key or NCBI_API_KEY
+
+        # 初始化NCBI基类
+        super().__init__(session=requests.Session(), email=email, api_key=api_key)
+
+        # 设置获取器特有属性
         self.cache_dir = Path(cache_dir)
         self.output_dir = Path(output_dir)
         self.default_source = default_source or DEFAULT_SOURCE
         self.sources = sources or SOURCES
 
-        # 确保目录存在
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # 初始化缓存管理器
+        self.cache_manager = CacheManager(cache_dir=self.cache_dir)
+
+        # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # 创建 requests session
-        self.session = requests.Session()
-
         # 初始化子模块
-        self.searcher = PaperSearcher(self.session)
-        self.pmcid_retriever = PMCIDRetriever(self.session)
+        self.searcher = PaperSearcher(
+            self.session, email=self.email, api_key=self.api_key
+        )
+        self.pmcid_retriever = PMCIDRetriever(
+            self.session, email=self.email, api_key=self.api_key
+        )
         self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
         self.abstract_supplementor = AbstractSupplementor(timeout=5, delay=0.2)
 
-        # NCBI 配置（用于缓存）
-        self.email = NCBI_EMAIL
-        self.api_key = NCBI_API_KEY
+    def _get_cache_key(self, query: str, source: str) -> str:
+        """获取缓存键"""
+        return f"search:{source}:{query}"
 
-    def _get_cache_file(self, query: str, source: str) -> Path:
-        """获取缓存文件路径"""
-        content = f"{query}:{source}".encode()
-        hash_key = hashlib.md5(content).hexdigest()
-        return self.cache_dir / f"search_{hash_key}.json"
-
-    def _load_cache(self, cache_file: Path) -> list[dict[str, Any]] | None:
-        """加载搜索缓存"""
-        try:
-            if cache_file.exists():
-                with open(cache_file, encoding="utf-8") as f:
-                    data = json.load(f)
-                    # 确保 data 是正确的类型
-                    if isinstance(data, list):
-                        return data
-                    return []
-        except Exception as e:
-            self.logger.error(f"读取缓存失败 {cache_file}: {str(e)}")
-        return None
-
-    def _save_cache(self, cache_file: Path, papers: list[dict]) -> None:
-        """保存搜索缓存"""
-        try:
-            with open(cache_file, "w", encoding="utf-8") as f:
-                json.dump(papers, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            self.logger.error(f"保存缓存失败 {cache_file}: {str(e)}")
-
+    @handle_ncbi_errors(default_return=[])
     def search_papers(
         self,
         query: str,
@@ -103,7 +91,7 @@ class PaperFetcher:
         source: "str | None" = None,
         use_cache: bool = True,
         fetch_pmcid: bool = False,
-    ) -> list[dict]:
+    ) -> list[dict[Any, Any]]:
         """
         搜索文献
 
@@ -117,18 +105,22 @@ class PaperFetcher:
         Returns:
             文献列表
         """
+        source = source or self.default_source
+        cache_key = self._get_cache_key(query, source)
+
         # 检查缓存
         if use_cache:
-            cache_file = self._get_cache_file(query, source or self.default_source)
-            cached_papers = self._load_cache(cache_file)
+            cached_papers = self.cache_manager.get(cache_key, default=[])
             if cached_papers:
                 self.logger.info(f"从缓存加载 {len(cached_papers)} 条结果")
                 # 如果需要PMCID且缓存中没有，检查并添加
                 if fetch_pmcid and not any(p.get("pmcid") for p in cached_papers):
                     cached_papers = self.add_pmcids(cached_papers)
                     # 更新缓存
-                    self._save_cache(cache_file, cached_papers)
-                return cached_papers
+                    self.cache_manager.set(
+                        cache_key, cached_papers, ttl=3600
+                    )  # 1小时TTL
+                return cached_papers  # type: ignore[no-any-return]
 
         # 执行搜索
         papers = self.searcher.search_papers(query, limit, source)
@@ -157,10 +149,9 @@ class PaperFetcher:
 
         # 保存到缓存（包含PMCID和摘要信息）
         if use_cache and papers:
-            cache_file = self._get_cache_file(query, source or self.default_source)
-            self._save_cache(cache_file, papers)
+            self.cache_manager.set(cache_key, papers, ttl=3600)  # 1小时TTL
 
-        return papers
+        return cast(list[dict[Any, Any]], papers)
 
     def add_pmcids(
         self, papers: list[dict], use_fallback: bool | None = None
@@ -762,7 +753,9 @@ class PaperFetcher:
 
 
 # 便捷函数
-def quick_search(query: str, limit: int = 20, source: str | None = None) -> list[dict]:
+def quick_search(
+    query: str, limit: int = 20, source: str | None = None
+) -> list[dict[Any, Any]]:
     """
     快速搜索文献
 
@@ -775,4 +768,7 @@ def quick_search(query: str, limit: int = 20, source: str | None = None) -> list
         文献列表
     """
     with PaperFetcher() as fetcher:
-        return fetcher.search_papers(query, limit, source or DEFAULT_SOURCE)
+        return cast(
+            list[dict[Any, Any]],
+            fetcher.search_papers(query, limit, source or DEFAULT_SOURCE),
+        )

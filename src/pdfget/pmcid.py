@@ -10,13 +10,13 @@ from typing import Any
 
 import requests
 
-from .config import PMCID_USE_FALLBACK, RATE_LIMIT
-from .logger import get_logger
+from .base.ncbi_base import NCBIBaseModule
+from .config import PMCID_USE_FALLBACK
 from .retry import retry_with_backoff
-from .utils import IdentifierUtils, NetworkConfig, RateLimiter, TimeoutConfig
+from .utils import IdentifierUtils
 
 
-class PMCIDRetriever:
+class PMCIDRetriever(NCBIBaseModule):
     """PMCID 获取器 - 使用 ESummary 批量处理"""
 
     def __init__(self, session: requests.Session, email: str = "", api_key: str = ""):
@@ -28,19 +28,8 @@ class PMCIDRetriever:
             email: 可选的邮箱（提高请求限制）
             api_key: 可选的 API 密钥
         """
-        self.logger = get_logger(__name__)
-        self.session = session
-        self.email = email
-        self.api_key = api_key
-
-        # NCBI 配置
-        self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        self.config = NetworkConfig(timeouts=TimeoutConfig(), rate_limit=RATE_LIMIT)
-        self.rate_limiter = RateLimiter(rate_limit=self.config.rate_limit)
-
-    def _rate_limit(self) -> None:
-        """处理 NCBI API 请求频率限制"""
-        self.rate_limiter.wait_for_rate_limit()
+        # 初始化NCBI基类
+        super().__init__(session=session, email=email, api_key=api_key)
 
     def _collect_pmids(self, papers: list[dict[str, Any]]) -> list[str]:
         """
