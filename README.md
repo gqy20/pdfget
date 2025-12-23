@@ -1,6 +1,6 @@
 # PDFGet - 智能文献搜索与批量下载工具
 
-![PyPI](https://img.shields.io/pypi/v/pdfget) ![Python](https://img.shields.io/pypi/pyversions/pdfget) ![License](https://img.shields.io/pypi/l/pdfget)
+![PyPI](https://img.shields.io/pypi/v/pdfget) ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/pypi/l/pdfget)
 
 智能文献搜索与批量下载工具，支持高级检索和并发下载。
 
