@@ -8,8 +8,8 @@ from typing import Any
 
 import requests
 
+from .config import MAX_RETRIES
 from .logger import get_logger
-from .utils import DEFAULT_CONFIG
 
 
 def retry_with_backoff(
@@ -42,7 +42,7 @@ def retry_with_backoff(
 
             # 确定实际的重试次数
             if max_retries is None and use_config:
-                actual_max_retries = DEFAULT_CONFIG.max_retries
+                actual_max_retries = MAX_RETRIES
             else:
                 actual_max_retries = max_retries if max_retries is not None else 4
 

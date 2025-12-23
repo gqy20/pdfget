@@ -73,7 +73,7 @@ class PMCIDRetriever(NCBIBaseModule):
         @ncbi_retry
         def _fetch():
             return self.session.get(
-                url, params=params, timeout=self.config.timeouts.request
+                url, params=params, timeout=self.config["timeouts"]["request"]
             )
 
         return _fetch()
@@ -95,7 +95,7 @@ class PMCIDRetriever(NCBIBaseModule):
         @single_retry
         def _fetch():
             return self.session.get(
-                url, params=params, timeout=self.config.timeouts.request
+                url, params=params, timeout=self.config["timeouts"]["request"]
             )
 
         return _fetch()

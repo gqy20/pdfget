@@ -8,9 +8,12 @@ from typing import Any
 
 import requests
 
-from ..config import RATE_LIMIT
+from ..config import RATE_LIMIT, TIMEOUT
 from ..logger import get_logger
-from ..utils import NetworkConfig, RateLimiter, TimeoutConfig
+from ..utils import RateLimiter
+
+# 配置字典类型
+ConfigDict = dict[str, Any | dict[str, int]]
 
 
 class NCBIBaseModule:
@@ -21,6 +24,7 @@ class NCBIBaseModule:
 
     # NCBI API基础URL
     BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    config: ConfigDict  # 类型注解
 
     def __init__(
         self,
@@ -42,9 +46,17 @@ class NCBIBaseModule:
         self.api_key = api_key
         self.base_url = self.BASE_URL
 
-        # 初始化网络配置
-        self.config = NetworkConfig(timeouts=TimeoutConfig(), rate_limit=RATE_LIMIT)
-        self.rate_limiter = RateLimiter(rate_limit=self.config.rate_limit)
+        # 使用简单的字典配置
+        self.config = {
+            "timeouts": {
+                "download": TIMEOUT,
+                "request": TIMEOUT,
+                "xml": 5,
+                "fetch": TIMEOUT,
+            },
+            "rate_limit": RATE_LIMIT,
+        }
+        self.rate_limiter = RateLimiter(rate_limit=self.config["rate_limit"])
 
     def _rate_limit(self) -> None:
         """处理NCBI API请求频率限制"""

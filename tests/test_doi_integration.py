@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from pdfget.utils.identifier_utils import IdentifierUtils
 from src.pdfget.fetcher import PaperFetcher
 
 
@@ -111,7 +112,7 @@ PMC12345,Paper 4 PMCID"""
         classified = {"pmcids": [], "pmids": [], "dois": []}
 
         for identifier in identifiers:
-            id_type = fetcher._detect_id_type(identifier)
+            id_type = IdentifierUtils.detect_identifier_type(identifier)
             if id_type == "pmcid":
                 classified["pmcids"].append(identifier)
             elif id_type == "pmid":

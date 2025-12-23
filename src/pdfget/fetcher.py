@@ -27,6 +27,7 @@ from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
 from .utils.error_handling import handle_ncbi_errors
+from .utils.identifier_utils import IdentifierUtils
 
 
 class PaperFetcher(NCBIBaseModule):
@@ -206,35 +207,6 @@ class PaperFetcher(NCBIBaseModule):
             deleted_count = self.pdf_downloader.cleanup_old_pdfs(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
 
-    def _normalize_pmcid(self, pmcid: str) -> str:
-        """
-        标准化 PMCID 格式
-
-        Args:
-            pmcid: 原始 PMCID
-
-        Returns:
-            标准化的 PMCID（PMC前缀+数字），空字符串表示无效
-        """
-        from .utils.identifier_utils import IdentifierUtils
-
-        normalized = IdentifierUtils.normalize_pmcid(pmcid)
-        return f"PMC{normalized}" if normalized else ""
-
-    def _detect_id_type(self, identifier: str) -> str:
-        """
-        自动检测标识符类型
-
-        Args:
-            identifier: 标识符字符串
-
-        Returns:
-            标识符类型: 'pmcid', 'pmid', 'doi', 'unknown'
-        """
-        from .utils.identifier_utils import IdentifierUtils
-
-        return IdentifierUtils.detect_identifier_type(identifier)
-
     def _read_identifiers_from_csv(
         self, csv_path: str, id_column: str = "ID"
     ) -> dict[str, list[str]]:
@@ -289,11 +261,11 @@ class PaperFetcher(NCBIBaseModule):
                         continue
 
                     # 检测标识符类型并分类
-                    id_type = self._detect_id_type(identifier)
+                    id_type = IdentifierUtils.detect_identifier_type(identifier)
 
                     if id_type == "pmcid":
                         # 标准化 PMCID 格式
-                        normalized = self._normalize_pmcid(identifier)
+                        normalized = IdentifierUtils.format_pmcid(identifier)
                         if normalized:
                             identifiers["pmcids"].append(normalized)
                     elif id_type == "pmid":
@@ -356,7 +328,7 @@ class PaperFetcher(NCBIBaseModule):
 
                 if pmcid_col_index < len(row):
                     # 尝试标准化 PMCID
-                    pmcid = self._normalize_pmcid(row[pmcid_col_index])
+                    pmcid = IdentifierUtils.format_pmcid(row[pmcid_col_index])
                     if pmcid:
                         pmcid_list.append(pmcid)
 
@@ -744,10 +716,10 @@ class PaperFetcher(NCBIBaseModule):
             classified: dict[str, list[str]] = {"pmcids": [], "pmids": [], "dois": []}
 
             for identifier in identifiers:
-                id_type = self._detect_id_type(identifier)
+                id_type = IdentifierUtils.detect_identifier_type(identifier)
 
                 if id_type == "pmcid":
-                    normalized = self._normalize_pmcid(identifier)
+                    normalized = IdentifierUtils.format_pmcid(identifier)
                     if normalized:
                         classified["pmcids"].append(normalized)
                 elif id_type == "pmid":

@@ -171,7 +171,7 @@ class PaperSearcher(NCBIBaseModule):
             search_response = self.session.get(
                 search_url,
                 params=search_params,
-                timeout=self.config.timeouts.request,  # type: ignore[arg-type]
+                timeout=self.config["timeouts"]["request"],  # type: ignore[arg-type]
             )
             search_response.raise_for_status()
 
@@ -212,7 +212,7 @@ class PaperSearcher(NCBIBaseModule):
                 summary_response = self.session.get(
                     summary_url,
                     params=summary_params,
-                    timeout=self.config.timeouts.request,  # type: ignore[arg-type]
+                    timeout=self.config["timeouts"]["request"],  # type: ignore[arg-type]
                 )
                 summary_response.raise_for_status()
 
@@ -322,7 +322,9 @@ class PaperSearcher(NCBIBaseModule):
                 }
 
                 response = self.session.get(
-                    search_url, params=params, timeout=self.config.timeouts.request
+                    search_url,
+                    params=params,
+                    timeout=self.config["timeouts"]["request"],
                 )  # type: ignore[arg-type]
                 response.raise_for_status()
                 data = response.json()

@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from pdfget.utils.identifier_utils import IdentifierUtils
 from pdfget.utils.rate_limiter import RateLimiter
-from pdfget.utils.timeout_config import TimeoutConfig
 
 
 class TestRateLimiter:
@@ -78,42 +77,6 @@ class TestRateLimiter:
 
         # 应该等待0.2秒（0.5 - 0.3）
         mock_sleep.assert_called_once_with(0.2)
-
-
-class TestTimeoutConfig:
-    """测试超时配置"""
-
-    def test_default_values(self):
-        """测试默认值"""
-        config = TimeoutConfig()
-        assert config.download == 30
-        assert config.request == 30
-        assert config.xml == 5
-        assert config.fetch == 30
-
-    def test_custom_values(self):
-        """测试自定义值"""
-        config = TimeoutConfig(download=60, xml=10)
-        assert config.download == 60
-        assert config.request == 30  # 保持默认值
-        assert config.xml == 10
-        assert config.fetch == 30  # 保持默认值
-
-    def test_from_dict(self):
-        """测试从字典创建"""
-        config = TimeoutConfig.from_dict({"download": 45, "xml": 8})
-        assert config.download == 45
-        assert config.request == 30
-        assert config.xml == 8
-        assert config.fetch == 30
-
-    def test_get_timeout_for_type(self):
-        """测试获取指定类型的超时"""
-        config = TimeoutConfig()
-        assert config.get_timeout("download") == 30
-        assert config.get_timeout("xml") == 5
-        assert config.get_timeout("unknown", 60) == 60
-        assert config.get_timeout("unknown") == 30  # 默认值
 
 
 class TestIdentifierUtils:

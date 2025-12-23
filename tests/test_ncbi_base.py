@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from pdfget.base.ncbi_base import NCBIBaseModule
-from pdfget.utils import NetworkConfig, RateLimiter, TimeoutConfig
+from pdfget.utils import RateLimiter
 
 
 class TestNCBIBaseModule:
@@ -34,8 +34,11 @@ class TestNCBIBaseModule:
         assert module.email == "test@example.com"
         assert module.api_key == "test_key"
         assert module.base_url == "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        assert isinstance(module.config, NetworkConfig)
         assert isinstance(module.rate_limiter, RateLimiter)
+        # config 现在是一个简单的字典
+        assert isinstance(module.config, dict)
+        assert "timeouts" in module.config
+        assert "rate_limit" in module.config
 
     def test_init_without_email_and_api_key(self, mock_session):
         """测试不使用邮箱和API密钥初始化"""
@@ -59,9 +62,13 @@ class TestNCBIBaseModule:
 
     def test_network_config_setup(self, ncbi_module):
         """测试网络配置设置"""
-        assert isinstance(ncbi_module.config, NetworkConfig)
-        assert isinstance(ncbi_module.config.timeouts, TimeoutConfig)
-        assert hasattr(ncbi_module.config, "rate_limit")
+        # config 现在是一个简单的字典
+        assert isinstance(ncbi_module.config, dict)
+        assert "timeouts" in ncbi_module.config
+        assert "rate_limit" in ncbi_module.config
+        # 验证超时配置的值
+        assert "download" in ncbi_module.config["timeouts"]
+        assert "request" in ncbi_module.config["timeouts"]
 
     def test_session_passed_correctly(self, mock_session):
         """测试session正确传递"""
@@ -75,4 +82,5 @@ class TestNCBIBaseModule:
 
     def test_rate_limiter_config(self, ncbi_module):
         """测试限流器配置"""
-        assert ncbi_module.rate_limiter.rate_limit == ncbi_module.config.rate_limit
+        # config 现在是字典，使用字典访问
+        assert ncbi_module.rate_limiter.rate_limit == ncbi_module.config["rate_limit"]
