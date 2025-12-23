@@ -71,6 +71,10 @@ pdfget -m "PMC123456"
 pdfget -m "PMC123456,38238491"  # PMCID和PMID混合
 pdfget -m "10.1186/s12916-020-01690-4"  # DOI下载
 pdfget -m "10.1186/s12916-020-01690-4,38238491,PMC123456"  # PMCID/PMID/DOI混合
+
+# 调整下载速度
+pdfget -m examples/pmcids.csv -d --delay 0.5  # 加快下载速度
+pdfget -m examples/pmcids.csv -d --delay 2.0  # 减慢下载速度（网络不稳定时）
 ```
 
 如果您使用 uv 作为包管理器，也可以：
@@ -206,6 +210,7 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 - `-l NUM` : 搜索结果数量（默认200）
 - `-S SOURCE` : 数据源选择（pubmed/europe_pmc/both，默认pubmed）
 - `-t NUM` : 并发线程数（默认3）
+- `--delay SECONDS` : 下载延迟时间（秒，默认1.0）
 - `--format FORMAT` : 统计输出格式（console/json/markdown，默认console）
 - `-v` : 详细输出
 
@@ -371,6 +376,12 @@ pdfget -m examples/identifiers.csv -t 5
 
 # 限制只下载前10个
 pdfget -m examples/identifiers.csv -l 10
+
+# 调整延迟加快下载（适合有API密钥的情况）
+pdfget -m examples/identifiers.csv -t 5 --delay 0.3
+
+# 增加延迟提高稳定性（适合网络不稳定）
+pdfget -m examples/identifiers.csv --delay 2.0
 ```
 
 **注意事项**：
@@ -423,8 +434,14 @@ pdfget -m examples/identifiers.csv -l 10
 **问题**：批量下载耗时较长
 **优化建议**：
 1. 调整并发线程数：`-t 10`（默认3）
-2. 分批处理大量文献：`-l 100` 限制单次数量
-3. 使用PMC过滤确保100%可下载：`pubmed pmc[sb]`
+2. 调整下载延迟：`--delay 0.5` 减少延迟加快下载（默认1.0秒）
+3. 分批处理大量文献：`-l 100` 限制单次数量
+4. 使用PMC过滤确保100%可下载：`pubmed pmc[sb]`
+
+**延迟参数说明**：
+- 默认延迟1.0秒，适合遵守API速率限制
+- 有NCBI API密钥可降低延迟：`--delay 0.3`（3请求/秒→10请求/秒）
+- 网络不稳定时可增加延迟：`--delay 2.0`
 
 #### 网络连接问题
 **问题**：API请求超时或失败
