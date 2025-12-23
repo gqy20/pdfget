@@ -16,6 +16,7 @@ from .abstract_supplementor import AbstractSupplementor
 from .base.ncbi_base import NCBIBaseModule
 from .config import (
     DEFAULT_SOURCE,
+    DOWNLOAD_BASE_DELAY,
     NCBI_API_KEY,
     NCBI_EMAIL,
     SOURCES,
@@ -479,6 +480,7 @@ class PaperFetcher(NCBIBaseModule):
         id_column: str = "ID",
         limit: int | None = None,
         max_workers: int = 1,
+        base_delay: float | None = None,
     ) -> list[dict]:
         """
         从 CSV 文件读取混合类型标识符（PMCID/PMID/DOI）并下载 PDF
@@ -488,6 +490,7 @@ class PaperFetcher(NCBIBaseModule):
             id_column: 标识符列名（默认 "ID"）
             limit: 限制下载数量
             max_workers: 最大并发数
+            base_delay: 基础延迟时间（秒，None时使用默认值）
 
         Returns:
             下载结果列表
@@ -532,7 +535,11 @@ class PaperFetcher(NCBIBaseModule):
         # 7. 使用统一下载管理器下载
         from .manager import UnifiedDownloadManager
 
-        download_manager = UnifiedDownloadManager(fetcher=self, max_workers=max_workers)
+        download_manager = UnifiedDownloadManager(
+            fetcher=self,
+            max_workers=max_workers,
+            base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
+        )
 
         return download_manager.download_batch(papers)
 
@@ -679,6 +686,7 @@ class PaperFetcher(NCBIBaseModule):
         column: str | None = None,
         limit: int | None = None,
         max_workers: int = 1,
+        base_delay: float | None = None,
     ) -> list[dict]:
         """
         统一的输入处理入口
@@ -690,6 +698,7 @@ class PaperFetcher(NCBIBaseModule):
             column: CSV列名（可选，None时自动检测）
             limit: 下载数量限制
             max_workers: 并发线程数
+            base_delay: 基础延迟时间（秒，None时使用默认值）
 
         Returns:
             下载结果列表
@@ -719,6 +728,7 @@ class PaperFetcher(NCBIBaseModule):
                 id_column=column,
                 limit=limit,
                 max_workers=max_workers,
+                base_delay=base_delay,
             )
 
         elif input_type in ["single", "multiple"]:

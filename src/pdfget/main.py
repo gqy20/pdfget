@@ -13,6 +13,7 @@ from pathlib import Path
 from .config import (
     DEFAULT_SEARCH_LIMIT,
     DEFAULT_SOURCE,
+    DOWNLOAD_BASE_DELAY,
     NCBI_API_KEY,
     NCBI_EMAIL,
     TIMEOUT,
@@ -107,6 +108,7 @@ def main() -> None:
     )
     parser.add_argument("-e", help="NCBI API邮箱（提高请求限制）")
     parser.add_argument("-k", help="NCBI API密钥（可选）")
+    parser.add_argument("--delay", type=float, help="下载延迟时间（秒，默认1.0）")
 
     args = parser.parse_args()
 
@@ -245,6 +247,9 @@ def main() -> None:
                 download_manager = UnifiedDownloadManager(
                     fetcher=fetcher,
                     max_workers=args.t,
+                    base_delay=args.delay
+                    if args.delay is not None
+                    else DOWNLOAD_BASE_DELAY,
                 )
                 results = download_manager.download_batch(oa_papers, timeout=TIMEOUT)
 
@@ -275,7 +280,11 @@ def main() -> None:
 
             # 使用统一输入下载方法
             results = fetcher.download_from_unified_input(
-                input_value=args.m, column=args.c, limit=args.l, max_workers=args.t
+                input_value=args.m,
+                column=args.c,
+                limit=args.l,
+                max_workers=args.t,
+                base_delay=args.delay,
             )
 
             # 统计结果
