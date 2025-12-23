@@ -60,8 +60,8 @@ class PDFDownloader:
             if clean_doi.lower().endswith(".pdf"):
                 clean_doi = doi[:-4]
 
-            # 移除所有特殊字符，只保留字母、数字和点
-            safe_doi = re.sub(r"[^a-zA-Z0-9.]", "", clean_doi)
+            # 移除所有特殊字符，只保留字母和数字
+            safe_doi = re.sub(r"[^a-zA-Z0-9]", "", clean_doi)
             safe_doi = safe_doi[:50]  # 限制长度
             filename = f"{pmcid}_{safe_doi}.pdf"
         else:
@@ -205,6 +205,7 @@ class PDFDownloader:
             result = self._try_download_from_url(url, pmcid, doi)
             if result["success"]:
                 self.logger.info(f"PDF 下载成功（源 {i + 1}）")
+                result["source"] = f"Source {i + 1}"
                 return result
             else:
                 self.logger.debug(f"源 {i + 1} 失败: {result.get('error', '未知错误')}")

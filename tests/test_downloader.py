@@ -40,9 +40,9 @@ class TestPDFDownloader:
                 "10.1000/test.doi?param=value",
                 "PMC123456_101000testdoiparamvalue.pdf",
             ),
-            ("PMC123456", "doi with spaces", "PMC123456_doiswithspaces.pdf"),
-            ("PMC123456", "", "PMC123456_unknown.pdf"),
-            ("PMC123456", None, "PMC123456_unknown.pdf"),
+            ("PMC123456", "doi with spaces", "PMC123456_doiwithspaces.pdf"),
+            ("PMC123456", "", "PMC123456.pdf"),
+            ("PMC123456", None, "PMC123456.pdf"),
             (
                 "PMC123456",
                 "10.1000/very-long-doi-with-many-parts-should-be-truncated.pdf",
