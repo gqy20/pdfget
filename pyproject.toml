@@ -11,7 +11,6 @@ authors = [
 ]
 dependencies = [
     "requests>=2.31.0",
-    "pandas>=2.0.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -81,7 +80,6 @@ show_error_context = true
 # 模块
 [[tool.mypy.overrides]]
 module = [
-    "pandas.*",
     "requests.*",
 ]
 ignore_missing_imports = true
@@ -172,8 +170,6 @@ dev = [
     "mypy>=1.9.0",
     "twine>=5.0.0",
     "types-requests>=2.32.4.20250913",
-    "pandas-stubs>=2.3.3.251201",
     "pre-commit>=3.8.0",
-    "pytest-mock>=3.15.1",
     "requests-mock>=1.12.1",
 ]
