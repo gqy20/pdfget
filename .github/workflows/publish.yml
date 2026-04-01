@@ -3,10 +3,10 @@ name: Release & Publish
 on:
   push:
     tags:
-      - 'v*'  # 触发条件：推送以 v 开头的标签
+      - "v*"
 
 permissions:
-  contents: write  # 允许创建release
+  contents: write
 
 jobs:
   release-and-publish:
@@ -49,43 +49,38 @@ jobs:
     - name: Generate release notes
       id: release_notes
       run: |
-        # 从CHANGELOG.md提取最新版本信息
         python << 'EOF'
+        import os
         import re
+        from pathlib import Path
 
-        with open('docs/CHANGELOG.md', 'r', encoding='utf-8') as f:
-            content = f.read()
+        content = Path("docs/CHANGELOG.md").read_text(encoding="utf-8")
+        version_match = re.search(
+            r"^## \[([0-9.]+)\] - ([0-9-]+)\n", content, re.MULTILINE
+        )
+        if not version_match:
+            raise SystemExit("Latest changelog entry not found")
 
-        # 查找最新的版本信息
-        version_match = re.search(r'^## \[([0-9.]+)\] - ([0-9-]+)', content, re.MULTILINE)
-        if version_match:
-            version = version_match.group(1)
-            date = version_match.group(2)
-
-            # 提取该版本的主要内容
-            version_start = version_match.start()
-            next_version_match = re.search(r'\n## \[', content[version_start + 1:])
-            if next_version_match:
-                version_content = content[version_start:version_start + next_version_match.start()]
-            else:
-                version_content = content[version_start:]
-
-            # 提取主要功能点
-            features = []
-            lines = version_content.split('\n')
-            for line in lines:
-                if '新增功能' in line:
-                    continue
-                if line.startswith('- **') and ('：' in line or ':' in line):
-                    features.append(line.strip())
-
-            # 设置输出
-            print(f"::set-output name=version::{version}")
-            print(f"::set-output name=date::{date}")
-            print(f"::set-output name=features::{'\\n'.join(features[:8])}")  # 限制显示数量
+        version = version_match.group(1)
+        date = version_match.group(2)
+        section_start = version_match.start()
+        next_version_match = re.search(
+            r"^## \[[0-9.]+\] - [0-9-]+\n",
+            content[version_match.end():],
+            re.MULTILINE,
+        )
+        if next_version_match:
+            section_end = version_match.end() + next_version_match.start()
+            notes = content[section_start:section_end].rstrip()
         else:
-            print("::set-output name=version::unknown")
-            print("::set-output name=features::No release notes found")
+            notes = content[section_start:].rstrip()
+
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+            output.write(f"version={version}\n")
+            output.write(f"date={date}\n")
+            output.write("notes<<EOF\n")
+            output.write(notes)
+            output.write("\nEOF\n")
         EOF
 
     - name: Create GitHub Release
@@ -94,36 +89,7 @@ jobs:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ steps.release_notes.outputs.version }}
         body: |
-          🎉 PDFGet ${{ steps.release_notes.outputs.version }} 发布！
-
-          ## 📦 安装方法
-          ```bash
-          pip install pdfget==${{ steps.release_notes.outputs.version }}
-          # 或使用uv
-          uv add pdfget==${{ steps.release_notes.outputs.version }}
-          ```
-
-          ## 🚀 主要特性
-          ${{ steps.release_notes.outputs.features }}
-
-          ## 📖 使用示例
-          ```bash
-          # 搜索并下载文献
-          pdfget -s "machine learning" -l 20 -d -t 5
-
-          # 高级检索
-          pdfget -s "cancer AND immunotherapy NOT review" -l 30
-
-          # 批量下载
-          pdfget -i dois.csv -d -t 3
-          ```
-
-          ## 📋 完整更新日志
-          请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/docs/CHANGELOG.md)
-
-          ---
-
-          🤖 自动发布于 ${{ steps.release_notes.outputs.date }}
+          ${{ steps.release_notes.outputs.notes }}
         draft: false
         prerelease: false
 
@@ -136,6 +102,6 @@ jobs:
     - name: Release Confirmation
       if: success()
       run: |
-        echo "✅ Release ${{ steps.release_notes.outputs.version }} published successfully!"
-        echo "📦 PyPI: https://pypi.org/project/pdfget/${{ steps.release_notes.outputs.version }}/"
-        echo "🔗 GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+        echo "Release ${{ steps.release_notes.outputs.version }} published successfully!"
+        echo "PyPI: https://pypi.org/project/pdfget/${{ steps.release_notes.outputs.version }}/"
+        echo "GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
