@@ -151,7 +151,8 @@ uv run pdfget -s "machine learning" -l 20
 - `-S pubmed` - PubMed（默认）
 - `-S europe_pmc` - Europe PMC
 - `-S arxiv` - arXiv
-- `-S both` - 同时使用两个数据源
+- `-S both` - 同时使用 PubMed + Europe PMC
+- `-S all` - 同时使用 PubMed + Europe PMC + arXiv
 
 ### API 配置（可选）
 - `-e EMAIL` - NCBI API 邮箱
@@ -172,6 +173,9 @@ pdfget -s "cancer immunotherapy AND pubmed pmc[sb]" -l 20 -d
 
 # 搜索并下载 arXiv PDF
 pdfget -s "vision transformer" -S arxiv -l 20 -d
+
+# 跨三个数据源联合搜索
+pdfget -s "large language model" -S all -l 30
 
 # 指定输出目录
 pdfget -s "machine learning" -l 50 -d -o ~/papers

@@ -354,10 +354,14 @@ class PaperSearcher(NCBIBaseModule):
         self.logger.info(f"Searching papers (arXiv): {query}")
         return self._search_arxiv_api(query, limit)
 
-    def search_all_sources(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
+    def search_all_sources(
+        self, query: str, limit: int = 50, include_arxiv: bool = False
+    ) -> list[dict[str, Any]]:
         all_papers = []
         all_papers.extend(self.search_pubmed(query, limit))
         all_papers.extend(self.search_europepmc(query, limit))
+        if include_arxiv:
+            all_papers.extend(self.search_arxiv(query, limit))
 
         seen_pmids: set[str] = set()
         unique_papers: list[dict[str, Any]] = []
@@ -384,6 +388,8 @@ class PaperSearcher(NCBIBaseModule):
             return self.search_arxiv(query, limit)
         if source == "both":
             return self.search_all_sources(query, limit)
+        if source == "all":
+            return self.search_all_sources(query, limit, include_arxiv=True)
 
         self.logger.warning(f"Unknown data source: {source}, falling back to default")
         return self.search_pubmed(query, limit)

@@ -53,6 +53,7 @@ pdfget -m "PMC123456,10.1038/xxxx,2301.12345" -d
 - `-S arxiv` 是搜索模式，不走 PMCID 统计逻辑
 - arXiv 结果通常会直接带 `pdf_url`，因此可以立即下载
 - 当前 `-S both` 仍表示 PubMed + Europe PMC，不包含 arXiv
+- 如果需要同时搜索 PubMed、Europe PMC 和 arXiv，请使用 `-S all`
 
 ### 免费全文过滤
 

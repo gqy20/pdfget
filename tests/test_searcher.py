@@ -188,6 +188,14 @@ class TestPaperSearcher:
             mock_pubmed.assert_called_once_with("test query", 50)
             mock_europe.assert_called_once_with("test query", 50)
 
+    def test_search_papers_all_sources(self, searcher):
+        """
+        测试: 搜索所有源
+        """
+        with patch.object(searcher, "search_all_sources", return_value=[]) as mock_search:
+            searcher.search_papers("test query", source="all")
+            mock_search.assert_called_once_with("test query", 50, include_arxiv=True)
+
     def test_search_papers_default_source(self, searcher):
         """
         测试: 使用默认源搜索
@@ -265,6 +273,31 @@ class TestPaperSearcher:
         assert len(result) == 2
         assert result[0]["pmid"] == "1"
         assert result[1]["pmid"] == "2"
+
+    @patch("src.pdfget.searcher.PaperSearcher.search_pubmed")
+    @patch("src.pdfget.searcher.PaperSearcher.search_europepmc")
+    @patch("src.pdfget.searcher.PaperSearcher.search_arxiv")
+    def test_search_all_sources_include_arxiv(
+        self, mock_arxiv, mock_europe, mock_pubmed, searcher
+    ):
+        """
+        测试: all 源会包含 arXiv 结果
+        """
+        mock_pubmed.return_value = [
+            {"pmid": "1", "title": "Paper 1", "source": "pubmed"}
+        ]
+        mock_europe.return_value = [
+            {"pmid": "2", "title": "Paper 2", "source": "europe_pmc"}
+        ]
+        mock_arxiv.return_value = [
+            {"arxiv_id": "2301.12345", "title": "Paper 3", "source": "arxiv"}
+        ]
+
+        result = searcher.search_all_sources("test query", limit=10, include_arxiv=True)
+
+        assert len(result) == 3
+        assert result[2]["arxiv_id"] == "2301.12345"
+        mock_arxiv.assert_called_once_with("test query", 10)
 
 
 if __name__ == "__main__":

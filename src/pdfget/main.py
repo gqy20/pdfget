@@ -76,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-v", action="store_true", help="详细输出")
     parser.add_argument(
         "-S",
-        choices=["pubmed", "europe_pmc", "arxiv", "both"],
+        choices=["pubmed", "europe_pmc", "arxiv", "both", "all"],
         default=DEFAULT_SOURCE,
         help=f"数据源（默认: {DEFAULT_SOURCE}）",
     )
