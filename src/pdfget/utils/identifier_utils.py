@@ -14,6 +14,7 @@ class IdentifierUtils:
     TYPE_PMID = "pmid"
     TYPE_PMCID = "pmcid"
     TYPE_DOI = "doi"
+    TYPE_ARXIV = "arxiv"
     TYPE_UNKNOWN = "unknown"
 
     @staticmethod
@@ -288,3 +289,55 @@ class IdentifierUtils:
         if pmcid and not IdentifierUtils.is_pmcid_with_prefix(pmcid):
             return f"PMC{pmcid}"
         return pmcid
+
+
+def _validate_arxiv_id(identifier: str) -> bool:
+    normalized = identifier.strip() if identifier else ""
+    if not normalized:
+        return False
+    if normalized.lower().startswith("arxiv:"):
+        normalized = normalized[6:].strip()
+
+    new_style_pattern = r"^\d{4}\.\d{4,5}(v\d+)?$"
+    old_style_pattern = r"^[a-z\-]+(\.[A-Z]{2})?/\d{7}(v\d+)?$"
+    return bool(
+        re.match(new_style_pattern, normalized)
+        or re.match(old_style_pattern, normalized)
+    )
+
+
+def _normalize_arxiv_id(identifier: str) -> str | None:
+    normalized = identifier.strip() if identifier else ""
+    if not normalized:
+        return None
+    if normalized.lower().startswith("arxiv:"):
+        normalized = normalized[6:].strip()
+    return normalized if _validate_arxiv_id(normalized) else None
+
+
+def _detect_identifier_type(identifier: str) -> str:
+    if not identifier:
+        return IdentifierUtils.TYPE_UNKNOWN
+
+    identifier = identifier.strip()
+
+    if identifier.lower().startswith("pmc"):
+        pmcid_part = identifier[3:]
+        if pmcid_part.isdigit() and 1 <= len(pmcid_part) <= 8:
+            return IdentifierUtils.TYPE_PMCID
+
+    if identifier.startswith("10.") and "/" in identifier and len(identifier) > 8:
+        return IdentifierUtils.TYPE_DOI
+
+    if _validate_arxiv_id(identifier):
+        return IdentifierUtils.TYPE_ARXIV
+
+    if identifier.isdigit() and 6 <= len(identifier) <= 10:
+        return IdentifierUtils.TYPE_PMID
+
+    return IdentifierUtils.TYPE_UNKNOWN
+
+
+IdentifierUtils.validate_arxiv_id = staticmethod(_validate_arxiv_id)
+IdentifierUtils.normalize_arxiv_id = staticmethod(_normalize_arxiv_id)
+IdentifierUtils.detect_identifier_type = staticmethod(_detect_identifier_type)

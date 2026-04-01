@@ -2,10 +2,20 @@
 pytest配置和共享fixtures
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+
+for path in [ROOT_DIR, SRC_DIR]:
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 
 @pytest.fixture(scope="session")

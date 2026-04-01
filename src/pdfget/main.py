@@ -97,7 +97,7 @@ def main() -> None:
     parser.add_argument("-v", action="store_true", help="详细输出")
     parser.add_argument(
         "-S",
-        choices=["pubmed", "europe_pmc", "both"],
+        choices=["pubmed", "europe_pmc", "arxiv", "both"],
         default=DEFAULT_SOURCE,
         help=f"数据源（默认: {DEFAULT_SOURCE}）",
     )
@@ -239,7 +239,11 @@ def main() -> None:
             logger.info("\n📥 开始下载PDF...")
 
             # 只下载有PMCID的开放获取文献
-            oa_papers = [p for p in papers if p.get("pmcid")]
+            oa_papers = [
+                p
+                for p in papers
+                if p.get("pmcid") or p.get("arxiv_id") or p.get("pdf_url")
+            ]
             logger.info(f"   找到 {len(oa_papers)} 篇开放获取文献")
 
             if oa_papers:

@@ -276,3 +276,101 @@ class UnifiedDownloadManager:
 
         # 总是使用并发下载（max_workers=1 时相当于单线程）
         return self._download_concurrent(papers, timeout)
+
+
+def _paper_identity(paper: dict[str, Any]) -> str:
+    return paper.get("doi") or paper.get("pmcid") or paper.get("arxiv_id") or ""
+
+
+def _download_single_task_v2(
+    self: UnifiedDownloadManager,
+    paper: dict[str, Any],
+    fetcher: PaperFetcher,
+    timeout: int = 30,
+) -> dict[str, Any]:
+    try:
+        time.sleep(self._get_delay())
+        result = fetcher.pdf_downloader.download_paper(paper)
+        result["doi"] = paper.get("doi", "")
+        result["pmcid"] = paper.get("pmcid", "") or ""
+        result["arxiv_id"] = paper.get("arxiv_id", "") or ""
+        success = result.get("success", False)
+        pdf_downloaded = bool(result.get("path"))
+        self._update_progress(success, pdf_downloaded)
+        return result
+    except Exception as e:
+        identifier = _paper_identity(paper) or "unknown"
+        self.logger.debug(f"下载失败 ({identifier}): {str(e)}")
+        self._update_progress(False)
+        return {
+            "doi": paper.get("doi", ""),
+            "pmcid": paper.get("pmcid", ""),
+            "arxiv_id": paper.get("arxiv_id", ""),
+            "success": False,
+            "error": str(e),
+        }
+
+
+def _download_concurrent_v2(
+    self: UnifiedDownloadManager, papers: list[dict], timeout: int = 30
+) -> list[dict]:
+    self._total = len(papers)
+    self._completed = 0
+    self._successful = 0
+    self._failed = 0
+    self._pdf_count = 0
+
+    results = []
+    with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        future_to_paper = {}
+        for paper in papers:
+            thread_fetcher = self._create_thread_fetcher()
+            future = executor.submit(
+                self._download_single_task, paper, thread_fetcher, timeout
+            )
+            future_to_paper[future] = paper
+
+        for future in as_completed(future_to_paper):
+            paper = future_to_paper[future]
+            try:
+                results.append(future.result())
+            except Exception as e:
+                results.append(
+                    {
+                        "doi": paper.get("doi", ""),
+                        "pmcid": paper.get("pmcid", ""),
+                        "arxiv_id": paper.get("arxiv_id", ""),
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
+
+    identifier_to_result = {}
+    for result in results:
+        identifier = (
+            result.get("doi") or result.get("pmcid") or result.get("arxiv_id") or ""
+        )
+        if identifier:
+            identifier_to_result[identifier] = result
+
+    ordered_results = []
+    for paper in papers:
+        identifier = _paper_identity(paper)
+        if identifier and identifier in identifier_to_result:
+            ordered_results.append(identifier_to_result[identifier])
+        else:
+            ordered_results.append(
+                {
+                    "doi": paper.get("doi", ""),
+                    "pmcid": paper.get("pmcid", ""),
+                    "arxiv_id": paper.get("arxiv_id", ""),
+                    "success": False,
+                    "error": "Not found",
+                }
+            )
+
+    return ordered_results
+
+
+UnifiedDownloadManager._download_single_task = _download_single_task_v2
+UnifiedDownloadManager._download_concurrent = _download_concurrent_v2
