@@ -222,7 +222,8 @@ class PaperFetcher(NCBIBaseModule):
             {
                 'pmcids': [PMCID列表],
                 'pmids': [PMID列表],
-                'dois': [DOI列表]
+                'dois': [DOI列表],
+                'arxiv_ids': [arXiv ID 列表]
             }
         """
         import csv
@@ -231,7 +232,12 @@ class PaperFetcher(NCBIBaseModule):
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
 
-        identifiers: dict[str, list[str]] = {"pmcids": [], "pmids": [], "dois": []}
+        identifiers: dict[str, list[str]] = {
+            "pmcids": [],
+            "pmids": [],
+            "dois": [],
+            "arxiv_ids": [],
+        }
 
         with open(csv_path, encoding="utf-8") as f:
             csv_reader = csv.reader(f)
@@ -272,11 +278,16 @@ class PaperFetcher(NCBIBaseModule):
                         identifiers["pmids"].append(identifier)
                     elif id_type == "doi":
                         identifiers["dois"].append(identifier)
+                    elif id_type == "arxiv":
+                        normalized = IdentifierUtils.normalize_arxiv_id(identifier)
+                        if normalized:
+                            identifiers["arxiv_ids"].append(normalized)
                     # 忽略 'unknown' 类型
 
         self.logger.info(
             f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
-            f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}"
+            f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}, "
+            f"arXiv={len(identifiers['arxiv_ids'])}"
         )
 
         return identifiers
@@ -493,16 +504,24 @@ class PaperFetcher(NCBIBaseModule):
             {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "mixed_identifiers"}
             for pmcid in all_pmcids
         ]
+        papers.extend(
+            {
+                "arxiv_id": arxiv_id,
+                "title": f"arXiv: {arxiv_id}",
+                "source": "direct_arxiv",
+            }
+            for arxiv_id in identifiers.get("arxiv_ids", [])
+        )
 
         # 6. 应用 limit 限制
         if limit is not None and limit > 0:
             papers = papers[:limit]
 
         if not papers:
-            self.logger.warning("没有有效的 PMCID 可以下载")
+            self.logger.warning("没有有效的标识符可以下载")
             return []
 
-        self.logger.info(f"准备下载 {len(papers)} 篇文献（PMCID）")
+        self.logger.info(f"准备下载 {len(papers)} 篇文献")
 
         # 7. 使用统一下载管理器下载
         from .manager import UnifiedDownloadManager
@@ -713,7 +732,12 @@ class PaperFetcher(NCBIBaseModule):
             self.logger.info(f"检测到 {len(identifiers)} 个标识符")
 
             # 分类标识符
-            classified: dict[str, list[str]] = {"pmcids": [], "pmids": [], "dois": []}
+            classified: dict[str, list[str]] = {
+                "pmcids": [],
+                "pmids": [],
+                "dois": [],
+                "arxiv_ids": [],
+            }
 
             for identifier in identifiers:
                 id_type = IdentifierUtils.detect_identifier_type(identifier)
@@ -726,6 +750,10 @@ class PaperFetcher(NCBIBaseModule):
                     classified["pmids"].append(identifier)
                 elif id_type == "doi":
                     classified["dois"].append(identifier)
+                elif id_type == "arxiv":
+                    normalized = IdentifierUtils.normalize_arxiv_id(identifier)
+                    if normalized:
+                        classified["arxiv_ids"].append(normalized)
 
             # 转换PMID为PMCID
             pmcids_from_pmids = []
@@ -741,14 +769,22 @@ class PaperFetcher(NCBIBaseModule):
             # 合并所有PMCID
             all_pmcids = classified["pmcids"] + pmcids_from_pmids + pmcids_from_dois
 
-            if not all_pmcids:
-                self.logger.warning("没有找到可下载的PMCID")
-                return []
-
-            # 构建论文列表
             papers = [
-                {"pmcid": pmcid, "title": f"PMCID: {pmcid}"} for pmcid in all_pmcids
+                {"pmcid": pmcid, "title": f"PMCID: {pmcid}"}
+                for pmcid in all_pmcids
             ]
+            papers.extend(
+                {
+                    "arxiv_id": arxiv_id,
+                    "title": f"arXiv: {arxiv_id}",
+                    "source": "direct_arxiv",
+                }
+                for arxiv_id in classified["arxiv_ids"]
+            )
+
+            if not papers:
+                self.logger.warning("没有找到可下载的标识符")
+                return []
 
             # 应用限制
             if limit:
@@ -794,153 +830,3 @@ def quick_search(
             list[dict[Any, Any]],
             fetcher.search_papers(query, limit, source or DEFAULT_SOURCE),
         )
-
-
-def _read_identifiers_from_csv_with_arxiv(
-    self: PaperFetcher, csv_path: str, id_column: str = "ID"
-) -> dict[str, list[str]]:
-    import csv
-    import os
-
-    if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
-
-    identifiers: dict[str, list[str]] = {
-        "pmcids": [],
-        "pmids": [],
-        "dois": [],
-        "arxiv_ids": [],
-    }
-
-    with open(csv_path, encoding="utf-8") as f:
-        csv_reader = csv.reader(f)
-        header = next(csv_reader, None)
-        if header is None:
-            return identifiers
-
-        id_col_index = 0
-        for i, col in enumerate(header):
-            if col.strip().lower() == id_column.lower():
-                id_col_index = i
-                break
-
-        for row in csv_reader:
-            if not row or id_col_index >= len(row):
-                continue
-
-            identifier = row[id_col_index].strip()
-            if not identifier:
-                continue
-
-            id_type = IdentifierUtils.detect_identifier_type(identifier)
-            if id_type == "pmcid":
-                normalized = IdentifierUtils.format_pmcid(identifier)
-                if normalized:
-                    identifiers["pmcids"].append(normalized)
-            elif id_type == "pmid":
-                identifiers["pmids"].append(identifier)
-            elif id_type == "doi":
-                identifiers["dois"].append(identifier)
-            elif id_type == "arxiv":
-                normalized = IdentifierUtils.normalize_arxiv_id(identifier)
-                if normalized:
-                    identifiers["arxiv_ids"].append(normalized)
-
-    self.logger.info(
-        f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
-        f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}, "
-        f"arXiv={len(identifiers['arxiv_ids'])}"
-    )
-    return identifiers
-
-
-def _download_from_unified_input_with_arxiv(
-    self: PaperFetcher,
-    input_value: str,
-    column: str | None = None,
-    limit: int | None = None,
-    max_workers: int = 1,
-    base_delay: float | None = None,
-) -> list[dict]:
-    input_type = self._detect_input_type(input_value)
-
-    if input_type == "invalid":
-        raise ValueError(f"无效的输入: {input_value}")
-
-    if input_type == "csv_file":
-        if column is None:
-            detected_column = self._auto_detect_column(input_value)
-            if detected_column:
-                column = detected_column
-            else:
-                raise ValueError(f"无法自动检测CSV列名: {input_value}")
-        return self.download_from_identifiers(
-            csv_path=input_value,
-            id_column=column,
-            limit=limit,
-            max_workers=max_workers,
-            base_delay=base_delay,
-        )
-
-    identifiers = self._parse_identifier_string(input_value)
-    if not identifiers:
-        raise ValueError(f"未找到有效的标识符: {input_value}")
-
-    self.logger.info(f"检测到 {len(identifiers)} 个标识符")
-
-    classified: dict[str, list[str]] = {
-        "pmcids": [],
-        "pmids": [],
-        "dois": [],
-        "arxiv_ids": [],
-    }
-    for identifier in identifiers:
-        id_type = IdentifierUtils.detect_identifier_type(identifier)
-        if id_type == "pmcid":
-            normalized = IdentifierUtils.format_pmcid(identifier)
-            if normalized:
-                classified["pmcids"].append(normalized)
-        elif id_type == "pmid":
-            classified["pmids"].append(identifier)
-        elif id_type == "doi":
-            classified["dois"].append(identifier)
-        elif id_type == "arxiv":
-            normalized = IdentifierUtils.normalize_arxiv_id(identifier)
-            if normalized:
-                classified["arxiv_ids"].append(normalized)
-
-    pmcids_from_pmids = []
-    if classified["pmids"]:
-        pmcids_from_pmids = self._convert_pmids_to_pmcids(classified["pmids"])
-
-    pmcids_from_dois = []
-    if classified["dois"]:
-        self.logger.info(f"开始转换 {len(classified['dois'])} 个DOI到PMCID")
-        pmcids_from_dois = self._convert_dois_to_pmcids(classified["dois"])
-
-    all_pmcids = classified["pmcids"] + pmcids_from_pmids + pmcids_from_dois
-    papers = [{"pmcid": pmcid, "title": f"PMCID: {pmcid}"} for pmcid in all_pmcids]
-    papers.extend(
-        {
-            "arxiv_id": arxiv_id,
-            "title": f"arXiv: {arxiv_id}",
-            "source": "direct_arxiv",
-        }
-        for arxiv_id in classified["arxiv_ids"]
-    )
-
-    if not papers:
-        self.logger.warning("没有找到可下载的标识符")
-        return []
-
-    if limit:
-        papers = papers[:limit]
-
-    from .manager import UnifiedDownloadManager
-
-    download_manager = UnifiedDownloadManager(fetcher=self, max_workers=max_workers)
-    return download_manager.download_batch(papers)
-
-
-PaperFetcher._read_identifiers_from_csv = _read_identifiers_from_csv_with_arxiv
-PaperFetcher.download_from_unified_input = _download_from_unified_input_with_arxiv

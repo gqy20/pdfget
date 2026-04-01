@@ -26,7 +26,7 @@ class IdentifierUtils:
             identifier: 标识符字符串
 
         Returns:
-            标识符类型：'pmid', 'pmcid', 'doi', 'unknown'
+            标识符类型：'pmid', 'pmcid', 'doi', 'arxiv', 'unknown'
         """
         if not identifier:
             return IdentifierUtils.TYPE_UNKNOWN
@@ -43,6 +43,10 @@ class IdentifierUtils:
         # DOI检测
         if identifier.startswith("10.") and "/" in identifier and len(identifier) > 8:
             return IdentifierUtils.TYPE_DOI
+
+        # arXiv 检测
+        if IdentifierUtils.validate_arxiv_id(identifier):
+            return IdentifierUtils.TYPE_ARXIV
 
         # PMID检测
         if identifier.isdigit() and 6 <= len(identifier) <= 10:
@@ -197,6 +201,7 @@ class IdentifierUtils:
             "pmcid": [],
             "pmid": [],
             "doi": [],
+            "arxiv": [],
             "unknown": [],
         }
 
@@ -290,54 +295,31 @@ class IdentifierUtils:
             return f"PMC{pmcid}"
         return pmcid
 
+    @staticmethod
+    def validate_arxiv_id(identifier: str) -> bool:
+        """验证 arXiv ID 格式。"""
+        normalized = identifier.strip() if identifier else ""
+        if not normalized:
+            return False
 
-def _validate_arxiv_id(identifier: str) -> bool:
-    normalized = identifier.strip() if identifier else ""
-    if not normalized:
-        return False
-    if normalized.lower().startswith("arxiv:"):
-        normalized = normalized[6:].strip()
+        if normalized.lower().startswith("arxiv:"):
+            normalized = normalized[6:].strip()
 
-    new_style_pattern = r"^\d{4}\.\d{4,5}(v\d+)?$"
-    old_style_pattern = r"^[a-z\-]+(\.[A-Z]{2})?/\d{7}(v\d+)?$"
-    return bool(
-        re.match(new_style_pattern, normalized)
-        or re.match(old_style_pattern, normalized)
-    )
+        new_style_pattern = r"^\d{4}\.\d{4,5}(v\d+)?$"
+        old_style_pattern = r"^[a-z\-]+(\.[A-Z]{2})?/\d{7}(v\d+)?$"
+        return bool(
+            re.match(new_style_pattern, normalized)
+            or re.match(old_style_pattern, normalized)
+        )
 
+    @staticmethod
+    def normalize_arxiv_id(identifier: str) -> str | None:
+        """标准化 arXiv ID。"""
+        normalized = identifier.strip() if identifier else ""
+        if not normalized:
+            return None
 
-def _normalize_arxiv_id(identifier: str) -> str | None:
-    normalized = identifier.strip() if identifier else ""
-    if not normalized:
-        return None
-    if normalized.lower().startswith("arxiv:"):
-        normalized = normalized[6:].strip()
-    return normalized if _validate_arxiv_id(normalized) else None
+        if normalized.lower().startswith("arxiv:"):
+            normalized = normalized[6:].strip()
 
-
-def _detect_identifier_type(identifier: str) -> str:
-    if not identifier:
-        return IdentifierUtils.TYPE_UNKNOWN
-
-    identifier = identifier.strip()
-
-    if identifier.lower().startswith("pmc"):
-        pmcid_part = identifier[3:]
-        if pmcid_part.isdigit() and 1 <= len(pmcid_part) <= 8:
-            return IdentifierUtils.TYPE_PMCID
-
-    if identifier.startswith("10.") and "/" in identifier and len(identifier) > 8:
-        return IdentifierUtils.TYPE_DOI
-
-    if _validate_arxiv_id(identifier):
-        return IdentifierUtils.TYPE_ARXIV
-
-    if identifier.isdigit() and 6 <= len(identifier) <= 10:
-        return IdentifierUtils.TYPE_PMID
-
-    return IdentifierUtils.TYPE_UNKNOWN
-
-
-IdentifierUtils.validate_arxiv_id = staticmethod(_validate_arxiv_id)
-IdentifierUtils.normalize_arxiv_id = staticmethod(_normalize_arxiv_id)
-IdentifierUtils.detect_identifier_type = staticmethod(_detect_identifier_type)
+        return normalized if IdentifierUtils.validate_arxiv_id(normalized) else None

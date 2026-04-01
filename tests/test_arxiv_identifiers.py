@@ -63,3 +63,22 @@ class TestArxivCSVAndInput(CSVTestMixin):
         assert results[0]["success"] is True
         papers = mock_manager.download_batch.call_args[0][0]
         assert papers[0]["arxiv_id"] == "2301.12345"
+
+    @patch("pdfget.manager.UnifiedDownloadManager")
+    def test_download_from_identifiers_routes_arxiv_csv(self, mock_manager_class, temp_output_dir):
+        csv_data = [["ID"], ["arXiv:2301.12345"], ["2301.12346v2"]]
+        csv_file = create_temp_csv_file(csv_data, temp_output_dir, "arxiv_download.csv")
+
+        mock_manager = Mock()
+        mock_manager_class.return_value = mock_manager
+        mock_manager.download_batch.return_value = [
+            {"arxiv_id": "2301.12345", "success": True, "path": "/tmp/2301.12345.pdf"},
+            {"arxiv_id": "2301.12346v2", "success": True, "path": "/tmp/2301.12346v2.pdf"},
+        ]
+
+        results = self.fetcher.download_from_identifiers(str(csv_file), id_column="ID")
+
+        assert len(results) == 2
+        papers = mock_manager.download_batch.call_args[0][0]
+        assert papers[0]["arxiv_id"] == "2301.12345"
+        assert papers[1]["arxiv_id"] == "2301.12346v2"
