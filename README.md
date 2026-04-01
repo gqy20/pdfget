@@ -6,14 +6,15 @@
 
 ## 项目概述
 
-PDFGet 是一个专为科研工作者设计的智能文献获取工具，集成 PubMed、Europe PMC 等权威学术数据库。
+PDFGet 是一个专为科研工作者设计的智能文献获取工具，集成 PubMed、Europe PMC、arXiv 等常用学术数据源。
 
 ### 核心特性
 
 - 🔍 **智能搜索** - 支持高级检索语法，精确查找文献
 - 📥 **批量下载** - 自动下载开放获取 PDF，支持并发
-- 📋 **混合输入** - 支持 CSV 文件（PMCID/PMID/DOI）批量下载
+- 📋 **混合输入** - 支持 CSV 文件与命令行中的 PMCID/PMID/DOI/arXiv ID 混合下载
 - 🎯 **PMC 过滤** - 使用 `pubmed pmc[sb]` 确保 100% 可下载
+- 🧠 **arXiv 支持** - 支持按 `-S arxiv` 搜索并直接下载 arXiv PDF
 - 💾 **智能缓存** - 避免重复下载，提升效率
 
 ## 快速开始
@@ -40,7 +41,10 @@ pdfget -m pmcids.csv -c pmcid -d
 # 3. 下载单个文献
 pdfget -m "PMC5764346" -d
 
-# 4. 查看统计信息（不下载）
+# 4. 搜索并下载 arXiv 论文
+pdfget -s "vision transformer" -S arxiv -l 20 -d
+
+# 5. 查看统计信息（不下载）
 pdfget -s "machine learning" -l 100
 ```
 
@@ -81,12 +85,27 @@ pdfget -s "cancer immunotherapy" -l 1000
 
 ### 场景4：混合标识符下载
 
-支持 PMCID、PMID、DOI 混合输入：
+支持 PMCID、PMID、DOI、arXiv ID 混合输入：
 
 ```bash
 # 单个或多个标识符
 pdfget -m "PMC123456"
-pdfget -m "PMC123456,38238491,10.1186/s12916-020-01690-4" -d
+pdfget -m "PMC123456,38238491,10.1186/s12916-020-01690-4,2301.12345" -d
+```
+
+### 场景5：arXiv 搜索与下载
+
+适合机器学习、计算机视觉、LLM 等论文的快速获取：
+
+```bash
+# 搜索 arXiv
+pdfget -s "large language model reasoning" -S arxiv -l 20
+
+# 直接下载 arXiv PDF
+pdfget -s "diffusion model" -S arxiv -l 10 -d
+
+# 也可以直接用 arXiv ID 下载
+pdfget -m "2301.12345" -d
 ```
 
 ## 安装
@@ -118,6 +137,7 @@ uv run pdfget -s "machine learning" -l 20
 ### 必需参数（二选一）
 - `-s QUERY` - 搜索文献
 - `-m INPUT` - 批量输入（CSV文件/标识符）
+- `-S SOURCE` - 选择搜索数据源
 
 ### 常用参数
 - `-d` - 下载 PDF（默认为统计模式）
@@ -130,6 +150,7 @@ uv run pdfget -s "machine learning" -l 20
 ### 数据源选择
 - `-S pubmed` - PubMed（默认）
 - `-S europe_pmc` - Europe PMC
+- `-S arxiv` - arXiv
 - `-S both` - 同时使用两个数据源
 
 ### API 配置（可选）
@@ -149,6 +170,9 @@ pdfget -s "cancer immunotherapy" -l 100
 # 搜索并下载 PDF
 pdfget -s "cancer immunotherapy AND pubmed pmc[sb]" -l 20 -d
 
+# 搜索并下载 arXiv PDF
+pdfget -s "vision transformer" -S arxiv -l 20 -d
+
 # 指定输出目录
 pdfget -s "machine learning" -l 50 -d -o ~/papers
 ```
@@ -161,6 +185,9 @@ pdfget -m identifiers.csv -d
 
 # 指定列名
 pdfget -m data.csv -c pmcid -d -t 5
+
+# 直接下载 arXiv ID
+pdfget -m "2401.01234,2301.12345" -d
 
 # 调整下载速度
 pdfget -m pmcids.csv -d --delay 0.5

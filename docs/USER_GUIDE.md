@@ -5,12 +5,54 @@
 ## 目录
 
 - [高级检索语法](#高级检索语法)
+- [arXiv 搜索与下载](#arxiv-搜索与下载)
 - [完整参数说明](#完整参数说明)
 - [输出格式详解](#输出格式详解)
 - [混合标识符输入](#混合标识符输入)
 - [故障排除](#故障排除)
 
 ## 高级检索语法
+
+## arXiv 搜索与下载
+
+PDFGet 现在支持 `-S arxiv`，可以直接从 arXiv 搜索并下载 PDF。
+
+### 基本用法
+
+```bash
+# 搜索 arXiv 论文
+pdfget -s "vision transformer" -S arxiv -l 20
+
+# 搜索并下载 arXiv PDF
+pdfget -s "large language model" -S arxiv -l 10 -d
+```
+
+### arXiv ID 直接下载
+
+除了搜索，也可以直接传入 arXiv ID：
+
+```bash
+# 单个 arXiv ID
+pdfget -m "2301.12345" -d
+
+# 多个 arXiv ID
+pdfget -m "2301.12345,2401.01234" -d
+
+# 与其他标识符混合
+pdfget -m "PMC123456,10.1038/xxxx,2301.12345" -d
+```
+
+### 适用场景
+
+- 机器学习、计算机视觉、NLP 等领域的预印本获取
+- 已知 arXiv ID 时的快速直链下载
+- 与 PMCID / DOI / PMID 一起做混合批量下载
+
+### 注意事项
+
+- `-S arxiv` 是搜索模式，不走 PMCID 统计逻辑
+- arXiv 结果通常会直接带 `pdf_url`，因此可以立即下载
+- 当前 `-S both` 仍表示 PubMed + Europe PMC，不包含 arXiv
 
 ### 免费全文过滤
 
