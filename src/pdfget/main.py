@@ -130,6 +130,24 @@ def build_search_payload(query: str, papers: list[dict]) -> dict:
     }
 
 
+def build_download_payload(
+    results: list[dict], *, source: str, input_value: str | None = None
+) -> dict:
+    """Build a schema-first payload for download output."""
+    success_count = sum(1 for result in results if result.get("success"))
+    payload = {
+        "schema": "download_result.v1",
+        "timestamp": time.time(),
+        "source": source,
+        "total": len(results),
+        "success": success_count,
+        "results": results,
+    }
+    if input_value is not None:
+        payload["input_value"] = input_value
+    return payload
+
+
 def is_downloadable(paper: dict) -> bool:
     """Whether the paper has a direct download route."""
     return bool(paper.get("pmcid") or paper.get("arxiv_id") or paper.get("pdf_url"))
@@ -215,6 +233,26 @@ def emit_search_results(
     return search_results_file
 
 
+def emit_download_results(
+    logger,
+    results: list[dict],
+    output_dir: str,
+    output_format: str | None,
+    *,
+    source: str,
+    input_value: str | None = None,
+) -> Path:
+    """Render download results for machines and save a schema-first payload."""
+    payload = build_download_payload(results, source=source, input_value=input_value)
+    if output_format == "json":
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+    download_results_file = Path(output_dir) / "download_results.json"
+    save_json(download_results_file, payload)
+    logger.info(f"\n下载结果已保存到: {download_results_file}")
+    return download_results_file
+
+
 def print_pmcid_stats(stats: dict) -> None:
     """Print PMCID statistics in console mode."""
     print("\nPMCID统计结果:")
@@ -288,17 +326,13 @@ def main() -> None:
                     stats = log_download_stats(logger, results)
 
                     if stats["success_count"] > 0:
-                        download_results_file = Path(args.o) / "download_results.json"
-                        save_json(
-                            download_results_file,
-                            {
-                                "timestamp": time.time(),
-                                "total": stats["total"],
-                                "success": stats["success_count"],
-                                "results": results,
-                            },
+                        emit_download_results(
+                            logger,
+                            results,
+                            args.o,
+                            args.format,
+                            source="search",
                         )
-                        logger.info(f"\n下载结果已保存到: {download_results_file}")
             else:
                 if args.S == "arxiv":
                     papers = fetcher.search_papers(args.s, limit=args.l, source=args.S)
@@ -337,19 +371,14 @@ def main() -> None:
             stats = log_download_stats(logger, results)
 
             if stats["success_count"] > 0:
-                download_results_file = Path(args.o) / "download_results.json"
-                save_json(
-                    download_results_file,
-                    {
-                        "timestamp": time.time(),
-                        "source": "unified_input",
-                        "input_value": args.m,
-                        "total": stats["total"],
-                        "success": stats["success_count"],
-                        "results": results,
-                    },
+                emit_download_results(
+                    logger,
+                    results,
+                    args.o,
+                    args.format,
+                    source="unified_input",
+                    input_value=args.m,
                 )
-                logger.info(f"\n下载结果已保存到: {download_results_file}")
         else:
             logger.error("请指定 -s 或 -m 参数")
             raise SystemExit(1)

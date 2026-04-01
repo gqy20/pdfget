@@ -128,6 +128,60 @@ def test_main_search_arxiv_json_format_outputs_schema(monkeypatch, tmp_path, cap
     assert '"arxiv_id": "2401.00001"' in output
 
 
+def test_main_download_arxiv_json_format_outputs_download_schema(
+    monkeypatch, tmp_path, capsys
+):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Downloadable arXiv Paper",
+            "authors": ["Author One"],
+            "journal": "arXiv",
+            "year": "2024",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+        }
+    ]
+
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {
+            "success": True,
+            "path": str(tmp_path / "2401.00001.pdf"),
+            "arxiv_id": "2401.00001",
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-d",
+            "--format",
+            "json",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    output = capsys.readouterr().out
+    assert '"schema": "download_result.v1"' in output
+    assert '"arxiv_id": "2401.00001"' in output
+
+
 def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
     fetcher = Mock()
     fetcher.search_papers.return_value = [
@@ -220,3 +274,37 @@ def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
         max_workers=2,
         base_delay=None,
     )
+
+
+def test_main_unified_input_json_format_outputs_download_schema(
+    monkeypatch, tmp_path, capsys
+):
+    fetcher = Mock()
+    fetcher.download_from_unified_input.return_value = [
+        {
+            "arxiv_id": "2301.12345",
+            "success": True,
+            "path": str(tmp_path / "2301.12345.pdf"),
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-m",
+            "2301.12345",
+            "--format",
+            "json",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    output = capsys.readouterr().out
+    assert '"schema": "download_result.v1"' in output
+    assert '"arxiv_id": "2301.12345"' in output
