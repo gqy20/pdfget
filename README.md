@@ -214,6 +214,9 @@ pdfget -s "machine learning AND pubmed pmc[sb] 2020:2023[pd]" -l 30 -d
 
 完整使用指南请查看：[📚 用户详细文档](docs/USER_GUIDE.md)
 
+如果你希望将 PDFGet 作为智能体或脚本的底层工具来使用，可查看结构化输出协议文档：
+[🧩 Schema Guide](docs/SCHEMA.md)
+
 详细文档包含：
 - 高级检索语法
 - 完整参数说明

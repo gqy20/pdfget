@@ -9,6 +9,7 @@
 - [完整参数说明](#完整参数说明)
 - [输出格式详解](#输出格式详解)
 - [混合标识符输入](#混合标识符输入)
+- [结构化输出](#结构化输出)
 - [故障排除](#故障排除)
 
 ## 高级检索语法
@@ -54,6 +55,16 @@ pdfget -m "PMC123456,10.1038/xxxx,2301.12345" -d
 - arXiv 结果通常会直接带 `pdf_url`，因此可以立即下载
 - 当前 `-S both` 仍表示 PubMed + Europe PMC，不包含 arXiv
 - 如果需要同时搜索 PubMed、Europe PMC 和 arXiv，请使用 `-S all`
+
+## 结构化输出
+
+如果你希望把 PDFGet 作为脚本或智能体的底层工具使用，推荐优先使用 `--format json`。
+
+- 搜索模式会输出 `paper_record.v1`
+- 下载模式会输出 `download_result.v1`
+
+完整字段定义请查看：
+[Schema Guide](SCHEMA.md)
 
 ### 免费全文过滤
 
