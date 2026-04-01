@@ -15,7 +15,7 @@ import requests
 
 from .base.ncbi_base import NCBIBaseModule
 from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL
-from .paper_schema import normalize_paper_record
+from .paper_schema import PaperRecord, normalize_paper_record
 
 
 class PaperSearcher(NCBIBaseModule):
@@ -64,7 +64,7 @@ class PaperSearcher(NCBIBaseModule):
 
     def _normalize_paper_data(
         self, paper: dict[str, Any], source: str
-    ) -> dict[str, Any]:
+    ) -> PaperRecord:
         return normalize_paper_record(paper, source)
 
     def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, Any]]:

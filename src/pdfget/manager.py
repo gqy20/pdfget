@@ -119,22 +119,23 @@ class UnifiedDownloadManager:
         self._failed = 0
         self._pdf_count = 0
 
-        results = []
+        ordered_results: list[dict[str, Any] | None] = [None] * len(papers)
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_paper = {}
-            for paper in papers:
+            future_to_index: dict[Any, int] = {}
+            for index, paper in enumerate(papers):
                 thread_fetcher = self._create_thread_fetcher()
                 future = executor.submit(
                     self._download_single_task, paper, thread_fetcher, timeout
                 )
-                future_to_paper[future] = paper
+                future_to_index[future] = index
 
-            for future in as_completed(future_to_paper):
-                paper = future_to_paper[future]
+            for future in as_completed(future_to_index):
+                index = future_to_index[future]
+                paper = papers[index]
                 try:
-                    results.append(future.result())
+                    ordered_results[index] = future.result()
                 except Exception as exc:
-                    results.append(
+                    ordered_results[index] = (
                         {
                             "doi": paper.get("doi", ""),
                             "pmcid": paper.get("pmcid", ""),
@@ -144,29 +145,18 @@ class UnifiedDownloadManager:
                         }
                     )
 
-        identifier_to_result = {}
-        for result in results:
-            identifier = self._paper_identity(result)
-            if identifier:
-                identifier_to_result[identifier] = result
-
-        ordered_results = []
-        for paper in papers:
-            identifier = self._paper_identity(paper)
-            if identifier and identifier in identifier_to_result:
-                ordered_results.append(identifier_to_result[identifier])
-            else:
-                ordered_results.append(
-                    {
-                        "doi": paper.get("doi", ""),
-                        "pmcid": paper.get("pmcid", ""),
-                        "arxiv_id": paper.get("arxiv_id", ""),
-                        "success": False,
-                        "error": "Not found",
-                    }
-                )
-
-        return ordered_results
+        return [
+            result
+            if result is not None
+            else {
+                "doi": paper.get("doi", ""),
+                "pmcid": paper.get("pmcid", ""),
+                "arxiv_id": paper.get("arxiv_id", ""),
+                "success": False,
+                "error": "Not found",
+            }
+            for paper, result in zip(papers, ordered_results, strict=True)
+        ]
 
     def download_batch(
         self,

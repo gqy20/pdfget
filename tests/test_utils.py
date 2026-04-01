@@ -185,13 +185,14 @@ class TestIdentifierUtils:
 
     def test_classify_identifiers(self):
         """测试标识符分类"""
-        identifiers = ["PMC123", "456789", "10.1038/xyz", "invalid"]
+        identifiers = ["PMC123", "456789", "10.1038/xyz", "2401.12345", "invalid"]
         result = IdentifierUtils.classify_identifiers(identifiers)
 
         expected = {
             "pmcid": ["PMC123"],
             "pmid": ["456789"],
             "doi": ["10.1038/xyz"],
+            "arxiv": ["2401.12345"],
             "unknown": ["invalid"],
         }
         assert result == expected

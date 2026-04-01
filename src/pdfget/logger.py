@@ -84,7 +84,7 @@ def setup_logger(
         formatter = logging.Formatter(fmt)
 
     # 控制台处理器
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)

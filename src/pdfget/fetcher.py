@@ -272,17 +272,19 @@ class PaperFetcher(NCBIBaseModule):
 
                     if id_type == "pmcid":
                         # 标准化 PMCID 格式
-                        normalized = IdentifierUtils.format_pmcid(identifier)
-                        if normalized:
-                            identifiers["pmcids"].append(normalized)
+                        normalized_pmcid = IdentifierUtils.format_pmcid(identifier)
+                        if normalized_pmcid:
+                            identifiers["pmcids"].append(normalized_pmcid)
                     elif id_type == "pmid":
                         identifiers["pmids"].append(identifier)
                     elif id_type == "doi":
                         identifiers["dois"].append(identifier)
                     elif id_type == "arxiv":
-                        normalized = IdentifierUtils.normalize_arxiv_id(identifier)
-                        if normalized:
-                            identifiers["arxiv_ids"].append(normalized)
+                        normalized_arxiv_id: str | None = (
+                            IdentifierUtils.normalize_arxiv_id(identifier)
+                        )
+                        if normalized_arxiv_id:
+                            identifiers["arxiv_ids"].append(normalized_arxiv_id)
                     # 忽略 'unknown' 类型
 
         self.logger.info(
@@ -756,17 +758,19 @@ class PaperFetcher(NCBIBaseModule):
                 id_type = IdentifierUtils.detect_identifier_type(identifier)
 
                 if id_type == "pmcid":
-                    normalized = IdentifierUtils.format_pmcid(identifier)
-                    if normalized:
-                        classified["pmcids"].append(normalized)
+                    normalized_pmcid = IdentifierUtils.format_pmcid(identifier)
+                    if normalized_pmcid:
+                        classified["pmcids"].append(normalized_pmcid)
                 elif id_type == "pmid":
                     classified["pmids"].append(identifier)
                 elif id_type == "doi":
                     classified["dois"].append(identifier)
                 elif id_type == "arxiv":
-                    normalized = IdentifierUtils.normalize_arxiv_id(identifier)
-                    if normalized:
-                        classified["arxiv_ids"].append(normalized)
+                    normalized_arxiv_id: str | None = (
+                        IdentifierUtils.normalize_arxiv_id(identifier)
+                    )
+                    if normalized_arxiv_id:
+                        classified["arxiv_ids"].append(normalized_arxiv_id)
 
             # 转换PMID为PMCID
             pmcids_from_pmids = []

@@ -5,6 +5,24 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] - 2026-04-01
+
+### Added
+- 新增 arXiv 搜索、直接下载和统一输入支持，CLI 现在可通过 `-S arxiv` 与 `-m "<arxiv_id>"` 处理 arXiv 论文。
+- 新增 `-S all` 联合搜索模式，可同时覆盖 PubMed、Europe PMC 和 arXiv。
+- 新增标准化论文记录 schema，以及 schema-first 的搜索/下载 JSON 输出。
+- 新增 arXiv CLI、schema 输出与重复标识符顺序保持的回归测试。
+
+### Changed
+- 搜索与下载流程拆分为人类可读视图和结构化 payload，CLI 在 `--format json` 下更适合自动化消费。
+- 文档补充 schema 输出说明、arXiv 用法与统一输出示例。
+
+### Fixed
+- 修复并发下载中重复 `PMCID` / `DOI` / `arXiv ID` 输入时结果回填串位的问题。
+- 修复 `--format json` 在下载流程中输出多个 JSON 片段的问题；现在 `stdout` 只输出最终 payload。
+- 修复日志污染 JSON 输出的问题，控制台日志默认写入 `stderr`。
+- 修复 arXiv 相关测试、标识符分类断言和类型检查不一致的问题。
+
 ## [0.1.4] - 2025-12-24
 
 ### 🎉 新增功能

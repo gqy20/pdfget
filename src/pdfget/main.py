@@ -220,10 +220,16 @@ def save_search_results(output_dir: str, query: str, papers: list[dict]) -> Path
 
 
 def emit_search_results(
-    logger, query: str, papers: list[dict], output_dir: str, output_format: str | None
+    logger,
+    query: str,
+    papers: list[dict],
+    output_dir: str,
+    output_format: str | None,
+    *,
+    stream_output: bool = True,
 ) -> Path:
     """Render search results for humans and save a schema-first payload."""
-    if output_format == "json":
+    if output_format == "json" and stream_output:
         print(json.dumps(build_search_payload(query, papers), ensure_ascii=False, indent=2))
     else:
         display_search_results(logger, papers)
@@ -307,7 +313,14 @@ def main() -> None:
                     logger.error("未找到匹配的文献")
                     raise SystemExit(1)
 
-                emit_search_results(logger, args.s, papers, args.o, args.format)
+                emit_search_results(
+                    logger,
+                    args.s,
+                    papers,
+                    args.o,
+                    args.format,
+                    stream_output=args.format != "json",
+                )
 
                 downloadable_papers = [paper for paper in papers if is_downloadable(paper)]
                 logger.info(f"\n开始下载 PDF，找到 {len(downloadable_papers)} 篇可下载文献")

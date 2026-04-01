@@ -1,8 +1,6 @@
-from unittest.mock import Mock
 import json
 from pathlib import Path
-
-import pytest
+from unittest.mock import Mock
 
 from pdfget import main as main_module
 
@@ -328,3 +326,99 @@ def test_main_unified_input_json_format_outputs_download_schema(
     )
     assert payload["schema"] == "download_result.v1"
     assert payload["input_value"] == "2301.12345"
+
+
+def test_main_search_json_format_keeps_stdout_machine_readable(
+    monkeypatch, tmp_path, capsys
+):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Test arXiv Paper",
+            "authors": ["Author One"],
+            "year": "2024",
+            "source": "arxiv",
+            "identifier": "2401.00001",
+            "identifier_type": "arxiv",
+            "arxiv_id": "2401.00001",
+            "is_downloadable": True,
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "--format",
+            "json",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["schema"] == "paper_record.v1"
+    assert payload["results"][0]["arxiv_id"] == "2401.00001"
+
+
+def test_main_download_json_format_keeps_stdout_machine_readable(
+    monkeypatch, tmp_path, capsys
+):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Downloadable arXiv Paper",
+            "authors": ["Author One"],
+            "journal": "arXiv",
+            "year": "2024",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+        }
+    ]
+
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {
+            "success": True,
+            "path": str(tmp_path / "2401.00001.pdf"),
+            "arxiv_id": "2401.00001",
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-d",
+            "--format",
+            "json",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["schema"] == "download_result.v1"
+    assert payload["results"][0]["arxiv_id"] == "2401.00001"
+    assert "PDF 下载器启动" in captured.err

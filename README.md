@@ -4,6 +4,37 @@
 
 智能文献搜索与批量下载工具，支持高级检索和并发下载。
 
+## 0.1.5 更新
+
+- 新增完整的 arXiv 搜索与下载链路，支持 `-S arxiv` 搜索、直接下载 arXiv PDF，以及通过 `-m "2301.12345"` 这类输入直接触发下载。
+- 新增 `-S all` 联合搜索模式，可同时检索 PubMed、Europe PMC 和 arXiv。
+- 新增标准化论文记录 schema，以及 schema-first 的 JSON 搜索/下载输出，便于脚本、Agent 和自动化系统稳定消费。
+- `--format json` 模式下的日志统一输出到 `stderr`，`stdout` 保持为单一 JSON payload。
+- 并发下载结果现在按输入顺序稳定返回，即使存在重复 `PMCID`、`DOI` 或 `arXiv ID` 也不会串位。
+- 补齐 arXiv、JSON 输出和统一输入链路的回归测试，并同步清理类型检查与测试基线。
+
+### JSON 输出示例
+
+```bash
+# 机器可读搜索输出
+pdfget -s "vision transformer" -S arxiv --format json > search.json
+
+# 机器可读下载输出
+pdfget -s "vision transformer" -S arxiv -d --format json > download.json
+```
+
+在 `0.1.5` 中，以上命令生成的 `search.json` / `download.json` 只包含合法 JSON，日志信息会写入 `stderr`。
+
+### 新能力速览
+
+```bash
+# 同时搜索 PubMed + Europe PMC + arXiv
+pdfget -s "large language model" -S all -l 30
+
+# 直接下载 arXiv ID
+pdfget -m "2301.12345" -d
+```
+
 ## 项目概述
 
 PDFGet 是一个专为科研工作者设计的智能文献获取工具，集成 PubMed、Europe PMC、arXiv 等常用学术数据源。

@@ -158,6 +158,7 @@ Thumbs.db
 # Project specific
 temp/
 tmp/
+PROFILE
 
 # Test temporary directories
 MagicMock/
