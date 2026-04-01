@@ -16,6 +16,30 @@ class _Logger:
         return None
 
 
+def test_primary_identifier_display_for_arxiv():
+    label, value = main_module.get_primary_identifier_display(
+        {
+            "identifier": "2401.01234",
+            "identifier_type": "arxiv",
+            "arxiv_id": "2401.01234",
+        }
+    )
+
+    assert label == "arXiv"
+    assert value == "2401.01234"
+
+
+def test_primary_identifier_display_falls_back_to_doi():
+    label, value = main_module.get_primary_identifier_display(
+        {
+            "doi": "10.1000/test",
+        }
+    )
+
+    assert label == "DOI"
+    assert value == "10.1000/test"
+
+
 def test_main_search_arxiv_skips_pmcid_counter(monkeypatch, tmp_path):
     fetcher = Mock()
     fetcher.search_papers.return_value = [

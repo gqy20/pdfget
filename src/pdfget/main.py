@@ -124,6 +124,32 @@ def is_downloadable(paper: dict) -> bool:
     return bool(paper.get("pmcid") or paper.get("arxiv_id") or paper.get("pdf_url"))
 
 
+def get_primary_identifier_display(paper: dict) -> tuple[str, str]:
+    """Return the most user-friendly identifier label/value pair."""
+    identifier = str(paper.get("identifier") or "")
+    identifier_type = str(paper.get("identifier_type") or "")
+
+    if identifier and identifier_type == "pmcid":
+        return "PMCID", identifier
+    if identifier and identifier_type == "arxiv":
+        return "arXiv", identifier
+    if identifier and identifier_type == "doi":
+        return "DOI", identifier
+    if identifier and identifier_type == "pmid":
+        return "PMID", identifier
+
+    if paper.get("pmcid"):
+        return "PMCID", str(paper["pmcid"])
+    if paper.get("arxiv_id"):
+        return "arXiv", str(paper["arxiv_id"])
+    if paper.get("doi"):
+        return "DOI", str(paper["doi"])
+    if paper.get("pmid"):
+        return "PMID", str(paper["pmid"])
+
+    return "", ""
+
+
 def display_search_results(logger, papers: list[dict]) -> None:
     """Render a compact search result list to the logger."""
     logger.info(f"\n搜索结果 ({len(papers)} 篇):")
@@ -145,11 +171,14 @@ def display_search_results(logger, papers: list[dict]) -> None:
         if author_text:
             logger.info(f"   作者: {author_text}")
         logger.info(f"   来源: {venue} ({year})")
-        if paper.get("doi"):
+        identifier_label, identifier_value = get_primary_identifier_display(paper)
+        if identifier_label and identifier_value:
+            logger.info(f"   {identifier_label}: {identifier_value}")
+        if paper.get("doi") and identifier_label != "DOI":
             logger.info(f"   DOI: {paper['doi']}")
-        if paper.get("pmcid"):
+        if paper.get("pmcid") and identifier_label != "PMCID":
             logger.info(f"   PMCID: {paper['pmcid']}")
-        if paper.get("arxiv_id"):
+        if paper.get("arxiv_id") and identifier_label != "arXiv":
             logger.info(f"   arXiv: {paper['arxiv_id']}")
         logger.info(f"   可下载: {'是' if is_downloadable(paper) else '否'}")
 
@@ -160,6 +189,7 @@ def save_search_results(output_dir: str, query: str, papers: list[dict]) -> Path
     save_json(
         path,
         {
+            "schema": "paper_record.v1",
             "query": query,
             "timestamp": time.time(),
             "total": len(papers),
