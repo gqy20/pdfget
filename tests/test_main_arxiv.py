@@ -121,3 +121,39 @@ def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
     papers = download_manager.download_batch.call_args.args[0]
     assert len(papers) == 1
     assert papers[0]["arxiv_id"] == "2401.00001"
+
+
+def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.download_from_unified_input.return_value = [
+        {
+            "arxiv_id": "2301.12345",
+            "success": True,
+            "path": str(tmp_path / "2301.12345.pdf"),
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-m",
+            "2301.12345",
+            "-o",
+            str(tmp_path),
+            "-t",
+            "2",
+        ],
+    )
+
+    main_module.main()
+
+    fetcher.download_from_unified_input.assert_called_once_with(
+        input_value="2301.12345",
+        column=None,
+        limit=main_module.DEFAULT_SEARCH_LIMIT,
+        max_workers=2,
+        base_delay=None,
+    )
