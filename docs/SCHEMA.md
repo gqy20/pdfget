@@ -67,6 +67,11 @@
 }
 ```
 
+说明：
+
+- stdout 输出与 `search_results_*.json` 落盘内容使用同一 payload 结构
+- `schema` 字段用于让上层智能体或脚本显式识别协议版本
+
 ## download_result.v1
 
 下载结果 payload 使用 `download_result.v1`。
@@ -82,6 +87,11 @@
 | `total` | number | 结果总数 |
 | `success` | number | 成功数 |
 | `results` | object[] | 单条下载结果列表 |
+
+当下载模式使用 `--format json` 时：
+
+- stdout 会输出 `download_result.v1`
+- `download_results.json` 会保存同一 payload 结构
 
 单条下载结果常见字段：
 

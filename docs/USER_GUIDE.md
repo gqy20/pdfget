@@ -62,6 +62,7 @@ pdfget -m "PMC123456,10.1038/xxxx,2301.12345" -d
 
 - 搜索模式会输出 `paper_record.v1`
 - 下载模式会输出 `download_result.v1`
+- stdout 与落盘的 JSON 文件使用同一结构，便于直接接入自动化流程
 
 完整字段定义请查看：
 [Schema Guide](SCHEMA.md)
