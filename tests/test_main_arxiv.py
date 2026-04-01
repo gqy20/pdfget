@@ -1,0 +1,123 @@
+from unittest.mock import Mock
+
+import pytest
+
+from pdfget import main as main_module
+
+
+class _Logger:
+    def info(self, *args, **kwargs):
+        return None
+
+    def error(self, *args, **kwargs):
+        return None
+
+    def setLevel(self, *args, **kwargs):
+        return None
+
+
+def test_main_search_arxiv_skips_pmcid_counter(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Test arXiv Paper",
+            "authors": ["Author One", "Author Two"],
+            "journal": "arXiv",
+            "year": "2024",
+            "doi": "10.48550/arXiv.2401.00001",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+            "repository": "arXiv",
+            "download_type": "pdf",
+        }
+    ]
+
+    pmcid_counter = Mock()
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "PMCIDCounter", Mock(return_value=pmcid_counter))
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        main_module,
+        "StatsFormatter",
+        Mock(format=Mock(), save_report=Mock()),
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-l",
+            "5",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    fetcher.search_papers.assert_called_once_with(
+        "transformer", limit=5, source="arxiv"
+    )
+    main_module.PMCIDCounter.assert_not_called()
+
+
+def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Downloadable arXiv Paper",
+            "authors": ["Author One"],
+            "journal": "arXiv",
+            "year": "2024",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+        },
+        {
+            "title": "No PDF",
+            "authors": ["Author Two"],
+            "journal": "arXiv",
+            "year": "2024",
+        },
+    ]
+
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {"success": True, "path": str(tmp_path / "2401.00001.pdf")}
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-l",
+            "5",
+            "-d",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    fetcher.search_papers.assert_called_once_with(
+        "transformer", limit=5, source="arxiv", fetch_pmcid=False
+    )
+    download_manager.download_batch.assert_called_once()
+    papers = download_manager.download_batch.call_args.args[0]
+    assert len(papers) == 1
+    assert papers[0]["arxiv_id"] == "2401.00001"
