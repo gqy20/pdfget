@@ -11,6 +11,7 @@ from typing import Any
 import requests
 
 from .logger import get_logger
+from .paper_schema import normalize_paper_record
 from .retry import retry_with_backoff
 
 
@@ -388,30 +389,27 @@ class PDFDownloader:
 
         return _fetch()
 
+    def download_arxiv_pdf(self, arxiv_id: str) -> dict[str, Any]:
+        """Download a PDF directly from arXiv."""
+        normalized_arxiv_id = arxiv_id.strip()
+        if normalized_arxiv_id.lower().startswith("arxiv:"):
+            normalized_arxiv_id = normalized_arxiv_id[6:].strip()
 
-def _download_arxiv_pdf(self: PDFDownloader, arxiv_id: str) -> dict[str, Any]:
-    normalized_arxiv_id = arxiv_id.strip()
-    if normalized_arxiv_id.lower().startswith("arxiv:"):
-        normalized_arxiv_id = normalized_arxiv_id[6:].strip()
+        url = f"https://arxiv.org/pdf/{normalized_arxiv_id}.pdf"
+        return self._try_download_from_url(url, normalized_arxiv_id, "")
 
-    url = f"https://arxiv.org/pdf/{normalized_arxiv_id}.pdf"
-    return self._try_download_from_url(url, normalized_arxiv_id, "")
+    def download_paper(self, paper: dict[str, Any]) -> dict[str, Any]:
+        """Download a paper using the normalized schema."""
+        record = normalize_paper_record(paper, str(paper.get("source") or ""))
+        pmcid = record.get("pmcid", "")
+        doi = record.get("doi", "")
+        arxiv_id = record.get("arxiv_id", "")
+        pdf_url = record.get("pdf_url", "")
 
-
-def _download_paper(self: PDFDownloader, paper: dict[str, Any]) -> dict[str, Any]:
-    pmcid = paper.get("pmcid", "")
-    doi = paper.get("doi", "")
-    arxiv_id = paper.get("arxiv_id", "")
-    pdf_url = paper.get("pdf_url", "")
-
-    if pmcid:
-        return self.download_pdf(pmcid, doi)
-    if arxiv_id:
-        return self.download_arxiv_pdf(arxiv_id)
-    if pdf_url:
-        return self._try_download_from_url(pdf_url, paper.get("title", "paper"), doi)
-    return {"success": False, "error": "No downloadable identifier found"}
-
-
-PDFDownloader.download_arxiv_pdf = _download_arxiv_pdf
-PDFDownloader.download_paper = _download_paper
+        if pmcid:
+            return self.download_pdf(pmcid, doi)
+        if arxiv_id:
+            return self.download_arxiv_pdf(arxiv_id)
+        if pdf_url:
+            return self._try_download_from_url(pdf_url, record.get("identifier") or record.get("title", "paper"), doi)
+        return {"success": False, "error": "No downloadable identifier found"}

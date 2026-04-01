@@ -23,6 +23,7 @@ from .config import (
 )
 from .doi_converter import DOIConverter
 from .downloader import PDFDownloader
+from .paper_schema import normalize_paper_record
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
@@ -369,7 +370,11 @@ class PaperFetcher(NCBIBaseModule):
 
         # 2. 转换为标准论文格式
         papers = [
-            {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "direct_pmcid"}
+            normalize_paper_record(
+                {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "direct_pmcid"},
+                "direct_pmcid",
+                matched_by="pmcid",
+            )
             for pmcid in pmcid_list
         ]
 
@@ -501,15 +506,23 @@ class PaperFetcher(NCBIBaseModule):
 
         # 6. 构建论文列表
         papers = [
-            {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "mixed_identifiers"}
+            normalize_paper_record(
+                {"pmcid": pmcid, "title": f"PMCID: {pmcid}", "source": "mixed_identifiers"},
+                "mixed_identifiers",
+                matched_by="pmcid",
+            )
             for pmcid in all_pmcids
         ]
         papers.extend(
-            {
-                "arxiv_id": arxiv_id,
-                "title": f"arXiv: {arxiv_id}",
-                "source": "direct_arxiv",
-            }
+            normalize_paper_record(
+                {
+                    "arxiv_id": arxiv_id,
+                    "title": f"arXiv: {arxiv_id}",
+                    "source": "direct_arxiv",
+                },
+                "direct_arxiv",
+                matched_by="arxiv_id",
+            )
             for arxiv_id in identifiers.get("arxiv_ids", [])
         )
 
@@ -770,15 +783,23 @@ class PaperFetcher(NCBIBaseModule):
             all_pmcids = classified["pmcids"] + pmcids_from_pmids + pmcids_from_dois
 
             papers = [
-                {"pmcid": pmcid, "title": f"PMCID: {pmcid}"}
+                normalize_paper_record(
+                    {"pmcid": pmcid, "title": f"PMCID: {pmcid}"},
+                    "direct_pmcid",
+                    matched_by="pmcid",
+                )
                 for pmcid in all_pmcids
             ]
             papers.extend(
-                {
-                    "arxiv_id": arxiv_id,
-                    "title": f"arXiv: {arxiv_id}",
-                    "source": "direct_arxiv",
-                }
+                normalize_paper_record(
+                    {
+                        "arxiv_id": arxiv_id,
+                        "title": f"arXiv: {arxiv_id}",
+                        "source": "direct_arxiv",
+                    },
+                    "direct_arxiv",
+                    matched_by="arxiv_id",
+                )
                 for arxiv_id in classified["arxiv_ids"]
             )
 

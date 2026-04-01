@@ -15,6 +15,7 @@ import requests
 
 from .base.ncbi_base import NCBIBaseModule
 from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL
+from .paper_schema import normalize_paper_record
 
 
 class PaperSearcher(NCBIBaseModule):
@@ -64,31 +65,7 @@ class PaperSearcher(NCBIBaseModule):
     def _normalize_paper_data(
         self, paper: dict[str, Any], source: str
     ) -> dict[str, Any]:
-        normalized = {
-            "pmid": paper.get("pmid", ""),
-            "doi": paper.get("doi", ""),
-            "title": paper.get("title", ""),
-            "authors": paper.get("authors", []),
-            "journal": paper.get("journal", ""),
-            "year": paper.get("year", ""),
-            "abstract": paper.get("abstract", ""),
-            "source": source,
-            "pmcid": paper.get("pmcid", ""),
-            "inPMC": paper.get("inPMC", ""),
-            "arxiv_id": paper.get("arxiv_id", ""),
-            "pdf_url": paper.get("pdf_url", ""),
-            "repository": paper.get("repository", ""),
-            "download_type": paper.get("download_type", ""),
-        }
-
-        if isinstance(normalized["authors"], str):
-            normalized["authors"] = [normalized["authors"]]
-
-        if normalized["year"]:
-            year_match = re.search(r"\d{4}", str(normalized["year"]))
-            normalized["year"] = year_match.group() if year_match else ""
-
-        return normalized
+        return normalize_paper_record(paper, source)
 
     def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         try:
@@ -316,6 +293,7 @@ class PaperSearcher(NCBIBaseModule):
                             "authors": authors,
                             "journal": "",
                             "year": published[:4] if published else "",
+                            "published_at": published,
                             "abstract": abstract,
                             "pmcid": "",
                             "inPMC": "",
