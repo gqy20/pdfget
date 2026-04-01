@@ -1,4 +1,6 @@
 from unittest.mock import Mock
+import json
+from pathlib import Path
 
 import pytest
 
@@ -127,6 +129,12 @@ def test_main_search_arxiv_json_format_outputs_schema(monkeypatch, tmp_path, cap
     assert '"schema": "paper_record.v1"' in output
     assert '"arxiv_id": "2401.00001"' in output
 
+    saved_files = list(Path(tmp_path).glob("search_results_*.json"))
+    assert len(saved_files) == 1
+    payload = json.loads(saved_files[0].read_text(encoding="utf-8"))
+    assert payload["schema"] == "paper_record.v1"
+    assert payload["results"][0]["arxiv_id"] == "2401.00001"
+
 
 def test_main_download_arxiv_json_format_outputs_download_schema(
     monkeypatch, tmp_path, capsys
@@ -180,6 +188,12 @@ def test_main_download_arxiv_json_format_outputs_download_schema(
     output = capsys.readouterr().out
     assert '"schema": "download_result.v1"' in output
     assert '"arxiv_id": "2401.00001"' in output
+
+    payload = json.loads(
+        (Path(tmp_path) / "download_results.json").read_text(encoding="utf-8")
+    )
+    assert payload["schema"] == "download_result.v1"
+    assert payload["results"][0]["arxiv_id"] == "2401.00001"
 
 
 def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
@@ -308,3 +322,9 @@ def test_main_unified_input_json_format_outputs_download_schema(
     output = capsys.readouterr().out
     assert '"schema": "download_result.v1"' in output
     assert '"arxiv_id": "2301.12345"' in output
+
+    payload = json.loads(
+        (Path(tmp_path) / "download_results.json").read_text(encoding="utf-8")
+    )
+    assert payload["schema"] == "download_result.v1"
+    assert payload["input_value"] == "2301.12345"
