@@ -89,6 +89,45 @@ def test_main_search_arxiv_skips_pmcid_counter(monkeypatch, tmp_path):
     main_module.PMCIDCounter.assert_not_called()
 
 
+def test_main_search_arxiv_json_format_outputs_schema(monkeypatch, tmp_path, capsys):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Test arXiv Paper",
+            "authors": ["Author One"],
+            "year": "2024",
+            "source": "arxiv",
+            "identifier": "2401.00001",
+            "identifier_type": "arxiv",
+            "arxiv_id": "2401.00001",
+            "is_downloadable": True,
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "--format",
+            "json",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    output = capsys.readouterr().out
+    assert '"schema": "paper_record.v1"' in output
+    assert '"arxiv_id": "2401.00001"' in output
+
+
 def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
     fetcher = Mock()
     fetcher.search_papers.return_value = [
