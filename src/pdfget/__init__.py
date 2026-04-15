@@ -7,6 +7,7 @@ __author__ = "gqy"
 __email__ = "qingyu_ge@foxmail.com"
 __description__ = "智能文献搜索与批量下载工具，支持高级检索和并发下载"
 
+from .api import PDFGetAPI
 from .counter import PMCIDCounter
 from .downloader import PDFDownloader
 from .fetcher import PaperFetcher
@@ -15,6 +16,7 @@ from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 
 __all__ = [
+    "PDFGetAPI",
     "PaperFetcher",
     "PMCIDRetriever",
     "PDFDownloader",
