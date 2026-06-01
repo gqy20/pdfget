@@ -10,6 +10,7 @@ from typing import Any
 
 import requests
 
+from .filename import make_pdf_filename
 from .logger import get_logger
 from .paper_schema import normalize_paper_record
 from .retry import retry_with_backoff
@@ -44,32 +45,8 @@ class PDFDownloader:
         ]
 
     def _get_safe_filename(self, pmcid: str, doi: str) -> str:
-        """
-        生成安全的文件名
-
-        Args:
-            pmcid: PMCID
-            doi: DOI
-
-        Returns:
-            安全的文件名
-        """
-        # 如果有DOI，使用PMCID+DOI命名；否则只使用PMCID
-        if doi:
-            # 移除 .pdf 后缀（如果有）
-            clean_doi = doi
-            if clean_doi.lower().endswith(".pdf"):
-                clean_doi = doi[:-4]
-
-            # 移除所有特殊字符，只保留字母和数字
-            safe_doi = re.sub(r"[^a-zA-Z0-9]", "", clean_doi)
-            safe_doi = safe_doi[:50]  # 限制长度
-            filename = f"{pmcid}_{safe_doi}.pdf"
-        else:
-            # 没有DOI时，直接使用PMCID
-            filename = f"{pmcid}.pdf"
-
-        return filename
+        """生成安全的文件名（委托给共享函数）"""
+        return make_pdf_filename(pmcid, doi)
 
     def _save_pdf(
         self, content: bytes, pmcid: str, doi: str

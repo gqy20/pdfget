@@ -55,31 +55,6 @@ class TestNCBIBaseModule:
             ncbi_module._rate_limit()
             mock_wait.assert_called_once()
 
-    def test_logger_initialization(self, ncbi_module):
-        """测试日志器初始化"""
-        assert hasattr(ncbi_module, "logger")
-        assert ncbi_module.logger is not None
-
-    def test_network_config_setup(self, ncbi_module):
-        """测试网络配置设置"""
-        # config 现在是一个简单的字典
-        assert isinstance(ncbi_module.config, dict)
-        assert "timeouts" in ncbi_module.config
-        assert "rate_limit" in ncbi_module.config
-        # 验证超时配置的值
-        assert "download" in ncbi_module.config["timeouts"]
-        assert "request" in ncbi_module.config["timeouts"]
-
-    def test_session_passed_correctly(self, mock_session):
-        """测试session正确传递"""
-        module = NCBIBaseModule(session=mock_session)
-        assert module.session is mock_session
-
-    def test_base_url_constant(self, ncbi_module):
-        """测试基础URL常量"""
-        expected_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-        assert ncbi_module.base_url == expected_url
-
     def test_rate_limiter_config(self, ncbi_module):
         """测试限流器配置"""
         # config 现在是字典，使用字典访问

@@ -105,3 +105,106 @@ class TestConfigNoSideEffectsOnImport:
 
         assert not hasattr(pdfget.config, "DATA_DIR")
         assert not hasattr(pdfget.config, "OUTPUT_DIR")
+
+
+class TestSafeFilename:
+    """统一文件名生成函数测试 — 验证所有路径行为一致"""
+
+    def setup_method(self):
+        from pdfget.filename import make_pdf_filename
+
+        self.fn = make_pdf_filename
+
+    def test_with_standard_doi(self):
+        """标准 DOI → PMCID_doi.pdf"""
+        result = self.fn("PMC123456", "10.1186/s12916-020-01690-4")
+        assert result == "PMC123456_101186s12916020016904.pdf"
+
+    def test_with_empty_doi_returns_pmcid_only(self):
+        """空 DOI → PMC123.pdf（不是 unknown）"""
+        result = self.fn("PMC123", "")
+        assert result == "PMC123.pdf"
+        assert "unknown" not in result
+
+    def test_with_none_doi_returns_pmcid_only(self):
+        """None DOI → PMC123.pdf"""
+        result = self.fn("PMC123", None)
+        assert result == "PMC123.pdf"
+        assert "unknown" not in result
+
+    def test_strips_pdf_suffix(self):
+        """DOI 带 .pdf 后缀时自动去除"""
+        result = self.fn("PMC123", "10.1000/test.pdf")
+        assert result == "PMC123_101000test.pdf"
+        assert ".pdf.pdf" not in result
+
+    def test_strips_special_chars(self):
+        """DOI 中的特殊字符全部移除"""
+        result = self.fn("PMC123", "10.1038/s41586-024-07146-0?param=value&x=1")
+        assert "/" not in result
+        assert "-" not in result
+        assert "?" not in result
+        assert "&" not in result
+        assert "=" not in result
+
+    def test_truncates_long_doi(self):
+        """超长 DOI 截断到 50 字符"""
+        long_doi = "10." + "x" * 60
+        result = self.fn("PMC123", long_doi)
+        # PMCID_(50 chars).pdf
+        base = result.replace(".pdf", "")
+        _, doi_part = base.split("_", 1)
+        assert len(doi_part) <= 50
+
+    def test_unicode_stripped_cleanly(self):
+        """含 Unicode 的 DOI 不崩溃"""
+        result = self.fn("PMC123", "10.1000/测试测试")
+        assert "PMC123" in result
+        assert result.endswith(".pdf")
+
+    def test_spaces_removed(self):
+        """DOI 中空格被移除"""
+        result = self.fn("PMC123", "10.1000/test name here")
+        assert " " not in result
+        assert "testnamehere" in result
+
+    def test_doi_only_dots_and_special_chars_keeps_digits(self):
+        """DOI 只有数字和点时保留数字部分"""
+        result = self.fn("PMC123", "10.!!!/???")
+        assert result == "PMC123_10.pdf"  # '10' 是有效字符
+
+    def test_nature_doi_format(self):
+        """Nature 格式 DOI"""
+        result = self.fn("PMC123", "10.1038/s41586-020-2661-9")
+        assert result == "PMC123_101038s4158602026619.pdf"
+
+    def test_cell_doi_format(self):
+        """Cell 格式 DOI"""
+        result = self.fn("PMC123", "10.1016/j.cell.2020.01.021")
+        assert result == "PMC123_101016jcell202001021.pdf"
+
+    def test_consistency_with_downloader_behavior(self):
+        """与 downloader.py 原有逻辑行为一致"""
+        import re
+
+        def old_downloader_logic(pmcid, doi):
+            if doi:
+                clean = doi
+                if clean.lower().endswith(".pdf"):
+                    clean = doi[:-4]
+                safe = re.sub(r"[^a-zA-Z0-9]", "", clean)[:50]
+                return f"{pmcid}_{safe}.pdf"
+            return f"{pmcid}.pdf"
+
+        cases = [
+            ("PMC123", "10.1186/s12916-020-01690-4"),
+            ("PMC123", ""),
+            ("PMC123", None),
+            ("PMC123", "10.1000/test.pdf"),
+            ("PMC123", "10.!!!/???"),  # → PMC123_10.pdf (digits kept)
+            ("PMC123", "10." + "x" * 60),
+        ]
+        for pmcid, doi in cases:
+            expected = old_downloader_logic(pmcid, doi)
+            actual = self.fn(pmcid, doi)
+            assert actual == expected, f"不一致: doi={doi!r}, expected={expected}, actual={actual}"

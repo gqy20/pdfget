@@ -5,10 +5,13 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from pdfget.config import get_cache_dir
 from pdfget.counter import PMCIDCounter
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestPMCIDCounter:
     """测试 PMCIDCounter 类"""
 
@@ -140,9 +143,9 @@ class TestPMCIDCounter:
             assert abs(stats["rate"] - 66.66666666666667) < 0.0001
             assert stats["from_cache"] is True
 
-    @patch("src.pdfget.fetcher.PaperFetcher")
+    @patch("pdfget.fetcher.PaperFetcher")
     def test_count_pmcid_without_cache_trigger_search(self, mock_fetcher_class):
-        """测试没有缓存时触发搜索"""
+        """测试没有缓存时触发搜索（使用 200 条限制加速）"""
         # 模拟 PaperFetcher
         mock_fetcher = MagicMock()
         mock_fetcher.search_papers.return_value = [
@@ -154,14 +157,14 @@ class TestPMCIDCounter:
         with tempfile.TemporaryDirectory() as tmpdir:
             counter = PMCIDCounter(cache_dir=tmpdir)
 
-            # 执行统计（无缓存，触发搜索）
+            # 执行统计（无缓存，触发搜索，限制 200 条）
             stats = counter.count_pmcid(
-                "test query", use_cache=True, trigger_search=True
+                "test query", use_cache=True, trigger_search=True, limit=200
             )
 
             # 验证调用了搜索
             mock_fetcher.search_papers.assert_called_once_with(
-                "test query", limit=5000, fetch_pmcid=True
+                "test query", limit=200, fetch_pmcid=True
             )
 
             # 验证结果

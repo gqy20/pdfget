@@ -1,6 +1,10 @@
+import pytest
 from unittest.mock import Mock
 
 from pdfget.manager import UnifiedDownloadManager
+
+
+@pytest.mark.usefixtures("fast_sleep")
 
 
 class _ThreadFetcher:

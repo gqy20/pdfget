@@ -5,12 +5,14 @@
 
 from unittest.mock import patch
 
+import pytest
 import requests
 import requests_mock
 
 from src.pdfget.abstract_supplementor import AbstractSupplementor
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestAbstractSupplementor:
     """测试摘要补充器"""
 

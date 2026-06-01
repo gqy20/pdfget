@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pdfget.fetcher import PaperFetcher
@@ -26,6 +28,7 @@ ARXIV_ATOM_RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestArxivSearcher:
     def setup_method(self):
         self.session = Mock()

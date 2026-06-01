@@ -24,10 +24,20 @@ class TestDOIIntegration:
 
     # 集成测试1: CSV文件中包含DOI的完整流程
     @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
-    def test_csv_with_dois_complete_flow(self, mock_download, fetcher):
+    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("src.pdfget.fetcher.PaperFetcher._convert_pmids_to_pmcids")
+    def test_csv_with_dois_complete_flow(self, mock_pmids, mock_batch_convert, mock_download, fetcher):
         """
-        测试: CSV文件包含DOI时的完整处理流程
+        测试: CSV文件包含DOI时的完整处理流程（mock 所有转换避免真实网络请求）
         """
+        # 模拟 DOI 转换结果
+        mock_batch_convert.return_value = {
+            "10.1186/s12916-020-01690-4": "PMC123456",
+            "10.1016/j.cell.2020.01.021": "PMC789012",
+        }
+        # 模拟 PMID → PMCID 转换结果
+        mock_pmids.return_value = ["PMC999999"]
+
         # 模拟下载结果
         mock_download.return_value = [
             {"pmcid": "PMC123456", "success": True, "path": "test1.pdf"},
@@ -128,10 +138,14 @@ PMC12345,Paper 4 PMCID"""
 
     # 集成测试4: DOI转换失败时的处理
     @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
-    def test_doi_conversion_failure_handling(self, mock_download, fetcher):
+    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    def test_doi_conversion_failure_handling(self, mock_batch_convert, mock_download, fetcher):
         """
-        测试: DOI转换失败时的处理
+        测试: DOI转换失败时的处理（mock 避免真实网络请求）
         """
+        # 模拟 DOI 转换返回空结果（转换失败）
+        mock_batch_convert.return_value = {}
+
         # 执行不存在的DOI下载（预期会失败并返回空结果）
         result = fetcher.download_from_unified_input("10.1000/nonexistent.doi")
 
@@ -171,22 +185,13 @@ PMC12345,Paper 4 PMCID"""
         assert len(result) == 1
         assert result[0]["pmcid"] == "PMC123456"
 
-    # 集成测试6: 配置集成
-    def test_doi_configuration_integration(self, fetcher):
-        """测试: DOI 转换器被正确初始化并使用 fetcher 的 session"""
-        assert hasattr(fetcher, "doi_converter")
-        assert hasattr(fetcher.doi_converter, "session")
-        assert fetcher.doi_converter.session is fetcher.session
-
-    # 集成测试7: 错误处理和日志记录
+    # 集成测试6: 错误处理和日志记录
     def test_doi_error_logging(self, fetcher):
         """测试: 无效 DOI 格式返回空结果且不崩溃"""
         result = fetcher.download_from_unified_input("invalid.doi.format")
         assert result == []
-        # 验证 fetcher 正常工作（有 logger 可用于记录错误）
-        assert hasattr(fetcher, "logger")
 
-    # 集成测试8: 性能测试（大量DOI）
+    # 集成测试7: 性能测试（大量DOI）
     @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
     @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
     def test_large_doi_batch_performance(

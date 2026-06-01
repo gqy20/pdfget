@@ -29,31 +29,6 @@ class TestPDFDownloader:
         """创建 PDFDownloader 实例"""
         return PDFDownloader(str(tmp_dir), session)
 
-    def test_get_safe_filename(self, downloader):
-        """
-        测试: 生成安全的文件名
-        """
-        test_cases = [
-            ("PMC123456", "10.1000/test.doi", "PMC123456_101000testdoi.pdf"),
-            (
-                "PMC123456",
-                "10.1000/test.doi?param=value",
-                "PMC123456_101000testdoiparamvalue.pdf",
-            ),
-            ("PMC123456", "doi with spaces", "PMC123456_doiwithspaces.pdf"),
-            ("PMC123456", "", "PMC123456.pdf"),
-            ("PMC123456", None, "PMC123456.pdf"),
-            (
-                "PMC123456",
-                "10.1000/very-long-doi-with-many-parts-should-be-truncated.pdf",
-                "PMC123456_101000verylongdoiwithmanypartsshouldbetruncated.pdf",
-            ),
-        ]
-
-        for pmcid, doi, expected in test_cases:
-            result = downloader._get_safe_filename(pmcid, doi)
-            assert result == expected
-
     @patch("builtins.open", new_callable=mock_open, read_data=b"pdf content")
     def test_save_pdf_success(self, mock_file, downloader):
         """

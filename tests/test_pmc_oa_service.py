@@ -313,45 +313,96 @@ class TestPMCOAService:
             assert result is False
             mock_download.assert_not_called()
 
-    def test_get_safe_filename(self):
+    def test_extract_pdf_from_tgz_selects_main_paper_by_nxml_match(self, tmp_path):
         """
-        测试: 生成安全的文件名
+        测试: 从 tar.gz 中提取 PDF 时，应选择与 .nxml 同名的正文 PDF，
+             而非第一个（可能是补充材料）。
 
-        测试目标：
-        - 从DOI生成安全文件名
-        - 处理特殊字符
-        - 限制长度
+        复现 Issue #1 的场景：压缩包中第一个 PDF 是补充材料。
         """
+        import tarfile
+        import io
+
         from src.pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
-        service = PMCOAService("/tmp", session)
+        service = PMCOAService(str(tmp_path), session)
 
-        # 测试基本情况
-        filename = service._get_safe_filename("PMC123456", "10.1000/test.doi")
-        assert filename == "PMC123456_101000testdoi.pdf"
+        # 构造一个模拟的 tar.gz，包含：
+        # - .nxml 正文文件: article.nxml
+        # - 第一个 PDF（补充材料）: supp_fig1.pdf
+        # - 第二个 PDF（正文）: article.pdf ← 应该选这个
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+            for name in [b"article.nxml", b"supp_fig1.pdf", b"article.pdf"]:
+                info = tarfile.TarInfo(name=name.decode())
+                info.size = len(b"dummy content")
+                tar.addfile(info, io.BytesIO(b"dummy content"))
 
-        # 测试包含空格的DOI
-        filename = service._get_safe_filename(
-            "PMC123456", "10.1000/test doi with spaces"
-        )
-        assert filename == "PMC123456_101000testsdoiwithspaces.pdf"
+        buffer.seek(0)
+        tgz_path = str(tmp_path / "test.tar.gz")
+        Path(tgz_path).write_bytes(buffer.getvalue())
 
-        # 测试包含特殊字符的DOI
-        filename = service._get_safe_filename(
-            "PMC123456", "10.1000/test.doi?param=value&other=test"
-        )
-        assert "PMC123456_" in filename
-        assert "pdf" in filename
-        assert not any(c in filename for c in "?=&")
+        result = service._extract_pdf_from_tgz(tgz_path, "PMC123", doi="10.1000/test")
 
-        # 测试空DOI
-        filename = service._get_safe_filename("PMC123456", "")
-        assert filename == "PMC123456_unknown.pdf"
+        assert result is not None
+        assert result.endswith("PMC123_101000test.pdf")  # 统一命名格式（选了 article.pdf）
 
-        # 测试None DOI
-        filename = service._get_safe_filename("PMC123456", None)
-        assert filename == "PMC123456_unknown.pdf"
+    def test_extract_pdf_from_tgz_fallback_to_first_when_no_nxml(self, tmp_path):
+        """
+        测试: 压缩包中没有 .nxml 文件时，回退到选择第一个 PDF。
+        """
+        import tarfile
+        import io
+
+        from src.pdfget.pmc_oa_service import PMCOAService
+
+        session = Mock(spec=requests.Session)
+        service = PMCOAService(str(tmp_path), session)
+
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+            for name in [b"only_file.pdf", b"other.pdf"]:
+                info = tarfile.TarInfo(name=name.decode())
+                info.size = len(b"dummy")
+                tar.addfile(info, io.BytesIO(b"dummy"))
+
+        buffer.seek(0)
+        tgz_path = str(tmp_path / "test2.tar.gz")
+        Path(tgz_path).write_bytes(buffer.getvalue())
+
+        result = service._extract_pdf_from_tgz(tgz_path, "PMC456")
+
+        assert result is not None
+        assert result.endswith("PMC456.pdf")  # 无 DOI → 统一为 PMCID.pdf
+
+    def test_extract_pdf_from_tgz_no_matching_pdf_falls_back(self, tmp_path):
+        """
+        测试: 有 .nxml 但没有同名 PDF 时，回退到第一个 PDF。
+        """
+        import tarfile
+        import io
+
+        from src.pdfget.pmc_oa_service import PMCOAService
+
+        session = Mock(spec=requests.Session)
+        service = PMCOAService(str(tmp_path), session)
+
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+            for name in [b"paper.nxml", b"unrelated.pdf", b"another.pdf"]:
+                info = tarfile.TarInfo(name=name.decode())
+                info.size = len(b"x")
+                tar.addfile(info, io.BytesIO(b"x"))
+
+        buffer.seek(0)
+        tgz_path = str(tmp_path / "test3.tar.gz")
+        Path(tgz_path).write_bytes(buffer.getvalue())
+
+        result = service._extract_pdf_from_tgz(tgz_path, "PMC789", doi="10.1000/x")
+
+        assert result is not None
+        assert result.endswith("PMC789_101000x.pdf")  # 统一命名格式（回退到第一个 PDF）
 
     @pytest.mark.integration
     def test_integration_real_api_call(self):

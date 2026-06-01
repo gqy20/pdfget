@@ -4,11 +4,13 @@ PMC OA Web Service 客户端
 使用 PMC 官方 Open Access Web Service 下载 PDF 文件
 """
 
+import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
 
+from .filename import make_pdf_filename
 from .logger import get_logger
 
 
@@ -142,45 +144,6 @@ class PMCOAService:
             self.logger.error(f"Failed to save {description}: {e}")
             return False
 
-    def _get_safe_filename(self, pmcid: str, doi: str) -> str:
-        """
-        生成安全的文件名
-
-        Args:
-            pmcid: PMCID
-            doi: DOI
-
-        Returns:
-            安全的文件名
-        """
-        import re
-
-        # 从 DOI 提取可用的字符
-        if doi:
-            # 移除 .pdf 后缀（如果有）
-            if doi.lower().endswith(".pdf"):
-                doi = doi[:-4]
-
-            # 将第一个空格替换为's'，其他空格直接删除
-            parts = doi.split(" ", 2)  # 最多分成3部分
-            if len(parts) >= 2:
-                safe_doi = parts[0] + "s" + "".join(parts[1:])
-            else:
-                safe_doi = parts[0] if parts else ""
-
-            # 移除所有特殊字符，只保留字母和数字
-            safe_doi = re.sub(r"[^a-zA-Z0-9]", "", safe_doi)
-            safe_doi = safe_doi[:50]  # 限制长度
-            # 确保不完全是空字符串
-            if not safe_doi:
-                safe_doi = "unknown"
-        else:
-            safe_doi = "unknown"
-
-        # 组合文件名
-        filename = f"{pmcid}_{safe_doi}.pdf"
-        return filename
-
     def process_pmcid(self, pmcid: str, doi: str | None = None) -> bool:
         """
         处理单个 PMCID，下载可用的格式
@@ -214,7 +177,7 @@ class PMCOAService:
         # 尝试下载 PDF
         if pdf_links:
             pdf_link = pdf_links[0]
-            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+            pdf_name = make_pdf_filename(pmcid, doi)
             pdf_path = self.output_dir / pdf_name
 
             if self._download_file(pdf_link["href"], str(pdf_path), f"PDF for {pmcid}"):
@@ -229,19 +192,24 @@ class PMCOAService:
                 tgz_link["href"], str(tgz_path), f"tar.gz for {pmcid}"
             ):
                 # 尝试从 tar.gz 中提取 PDF
-                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), pmcid)
+                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), pmcid, doi)
                 if extracted_pdf:
                     success = True
 
         return success
 
-    def _extract_pdf_from_tgz(self, tgz_path: str, pmcid: str) -> str | None:
+    def _extract_pdf_from_tgz(self, tgz_path: str, pmcid: str, doi: str | None = None) -> str | None:
         """
         从 tar.gz 文件中提取 PDF
+
+        优先选择与 .nxml 正文文件同名的 PDF（正文 PDF），
+        若无匹配则回退到第一个 PDF（兼容旧包结构）。
+        提取后重命名为统一格式的文件名。
 
         Args:
             tgz_path: tar.gz 文件路径
             pmcid: PMCID
+            doi: DOI（用于生成统一文件名）
 
         Returns:
             成功返回 PDF 文件路径，失败返回 None
@@ -250,19 +218,48 @@ class PMCOAService:
             import tarfile
 
             with tarfile.open(tgz_path, "r:gz") as tar:
-                # 查找 PDF 文件
-                pdf_files = [f for f in tar.getnames() if f.lower().endswith(".pdf")]
+                names = tar.getnames()
+                pdf_files = [f for f in names if f.lower().endswith(".pdf")]
 
-                if pdf_files:
-                    # 使用第一个 PDF 文件
+                if not pdf_files:
+                    self.logger.warning(f"No PDF found in tar.gz file: {tgz_path}")
+                    return None
+
+                # 优先查找与 .nxml 同名的正文 PDF
+                nxml_files = [f for f in names if f.lower().endswith(".nxml")]
+                if nxml_files:
+                    nxml_stem = Path(nxml_files[0]).stem
+                    matching_pdf = next(
+                        (f for f in pdf_files if Path(f).stem == nxml_stem), None
+                    )
+                    if matching_pdf:
+                        pdf_file = matching_pdf
+                    else:
+                        # 有 .nxml 但没有同名 PDF，回退到第一个
+                        pdf_file = pdf_files[0]
+                        self.logger.debug(
+                            f"No PDF matching .nxml stem '{nxml_stem}', "
+                            f"falling back to first PDF"
+                        )
+                else:
+                    # 没有 .nxml 文件，使用第一个 PDF
                     pdf_file = pdf_files[0]
-                    tar.extract(pdf_file, path=self.output_dir)
 
-                    # 获取提取的 PDF 路径
-                    extracted_pdf = self.output_dir / pdf_file
-                    if extracted_pdf.exists():
+                tar.extract(pdf_file, path=self.output_dir, filter="data")
+
+                extracted_pdf = self.output_dir / pdf_file
+                if extracted_pdf.exists():
+                    # 重命名为统一格式文件名
+                    unified_name = make_pdf_filename(pmcid, doi)
+                    unified_path = self.output_dir / unified_name
+                    if extracted_pdf != unified_path:
+                        shutil.move(str(extracted_pdf), str(unified_path))
+                        self.logger.info(
+                            f"Extracted & renamed PDF from tar.gz: {unified_path}"
+                        )
+                    else:
                         self.logger.info(f"Extracted PDF from tar.gz: {extracted_pdf}")
-                        return str(extracted_pdf)
+                    return str(unified_path)
 
             self.logger.warning(f"No PDF found in tar.gz file: {tgz_path}")
             return None
