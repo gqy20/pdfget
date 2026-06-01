@@ -320,8 +320,8 @@ class TestPMCOAService:
 
         复现 Issue #1 的场景：压缩包中第一个 PDF 是补充材料。
         """
-        import tarfile
         import io
+        import tarfile
 
         from src.pdfget.pmc_oa_service import PMCOAService
 
@@ -352,8 +352,8 @@ class TestPMCOAService:
         """
         测试: 压缩包中没有 .nxml 文件时，回退到选择第一个 PDF。
         """
-        import tarfile
         import io
+        import tarfile
 
         from src.pdfget.pmc_oa_service import PMCOAService
 
@@ -380,8 +380,8 @@ class TestPMCOAService:
         """
         测试: 有 .nxml 但没有同名 PDF 时，回退到第一个 PDF。
         """
-        import tarfile
         import io
+        import tarfile
 
         from src.pdfget.pmc_oa_service import PMCOAService
 
