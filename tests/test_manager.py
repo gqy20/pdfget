@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from pdfget.manager import UnifiedDownloadManager
 

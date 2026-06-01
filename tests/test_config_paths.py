@@ -6,8 +6,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from pdfget.config import DEFAULT_OUTPUT_DIR, get_cache_dir
 
 
@@ -86,7 +84,7 @@ class TestPaperFetcherDefaultPaths:
 
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "custom_out"
-            fetcher = PaperFetcher(output_dir=str(out))
+            PaperFetcher(output_dir=str(out))
             assert out.exists()
 
 
@@ -99,7 +97,6 @@ class TestConfigNoSideEffectsOnImport:
 
     def test_import_config_no_data_dir_created(self):
         """导入 config 不应在项目根目录创建 data/ 文件夹"""
-        root = Path(__file__).resolve().parents[1]
         # 验证 DATA_DIR 常量已不存在（已移除死代码）
         import pdfget.config
 
