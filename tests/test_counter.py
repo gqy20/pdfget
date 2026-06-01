@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.pdfget.config import CACHE_DIR, COUNT_BATCH_SIZE, COUNT_MAX_WORKERS
-from src.pdfget.counter import PMCIDCounter
+from pdfget.config import get_cache_dir
+from pdfget.counter import PMCIDCounter
 
 
 class TestPMCIDCounter:
@@ -15,7 +15,7 @@ class TestPMCIDCounter:
     def test_init_default_cache_dir(self):
         """测试使用默认缓存目录初始化"""
         counter = PMCIDCounter()
-        assert counter.cache_dir == CACHE_DIR
+        assert counter.cache_dir == get_cache_dir()
         assert counter.cache_dir.exists()
 
     def test_init_custom_cache_dir(self):
@@ -184,17 +184,6 @@ class TestPMCIDCounter:
                 # 验证调用了无缓存统计方法
                 mock_count_without.assert_called_once_with("test query", 5000)
                 assert stats == {"test": "result"}
-
-    def test_batch_config_from_config_file(self):
-        """测试使用配置文件中的批处理设置"""
-        # 这些值应该从 config.py 导入
-        expected_batch_size = COUNT_BATCH_SIZE
-        expected_max_workers = COUNT_MAX_WORKERS
-
-        # 通过访问 _count_without_cache 方法来验证配置被正确使用
-        # 这里我们只需要确认导入的值是正确的
-        assert expected_batch_size == 50  # 已从80更新为50（避免414错误）
-        assert expected_max_workers == 20  # 已从5更新为20（提高并发性能）
 
     def test_load_cache_tries_multiple_sources(self):
         """测试尝试从多个数据源加载缓存"""

@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from .config import (
+    DEFAULT_OUTPUT_DIR,
     DEFAULT_SEARCH_LIMIT,
     DEFAULT_SOURCE,
     DOWNLOAD_BASE_DELAY,
@@ -67,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-c",
         help="CSV 列名（默认自动检测: ID > PMCID > doi > pmid > 第一列）",
     )
-    parser.add_argument("-o", default="data/pdfs", help="输出目录")
+    parser.add_argument("-o", default=DEFAULT_OUTPUT_DIR, help="输出目录")
     parser.add_argument(
         "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
     )
@@ -294,7 +295,7 @@ def main() -> None:
     if args.v:
         logger.setLevel(logging.DEBUG)
 
-    fetcher = PaperFetcher(cache_dir="data/cache", output_dir=args.o, default_source=args.S)
+    fetcher = PaperFetcher(output_dir=args.o, default_source=args.S)
 
     logger.info("PDF 下载器启动")
     logger.info(f"   输出目录: {args.o}")

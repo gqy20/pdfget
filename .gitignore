@@ -161,9 +161,5 @@ tmp/
 PROFILE
 
 # Test temporary directories
-MagicMock/
-PaperFetcher().cache_dir/
-unittest.mock/
 temp_*/
-test_*/
 *.tmp

@@ -110,6 +110,19 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv("LOG_LEVEL", "DEBUG")
 
 
+@pytest.fixture()
+def fast_sleep():
+    """Mock 全局 time.sleep 以加速重试/速率限制器相关测试。
+
+    使用方式: 在需要加速的测试类或方法上加 @pytest.mark.usefixtures("fast_sleep")
+    注意: 会影响所有 time.sleep 调用，不要用于需要真实时间的测试。
+    """
+    from unittest.mock import patch
+
+    with patch("time.sleep"):
+        yield
+
+
 @pytest.fixture
 def mock_pdf_content():
     """模拟PDF内容"""
@@ -247,21 +260,6 @@ def csv_file_with_dois(temp_output_dir):
 10.1038/s41586-020-2661-9,Paper 3,Journal 3
 """
     csv_path = temp_output_dir / "dois.csv"
-    csv_path.write_text(csv_content)
-    return csv_path
-
-
-@pytest.fixture
-def csv_file_with_mixed_identifiers(temp_output_dir):
-    """创建包含混合标识符的CSV文件"""
-    csv_content = """ID,Title,Type
-PMC123456,Paper 1,PMCID
-38238491,Paper 2,PMID
-10.1186/s12916-020-01690-4,Paper 3,DOI
-PMC789012,Paper 4,PMCID
-10.1016/j.cell.2020.01.021,Paper 5,DOI
-"""
-    csv_path = temp_output_dir / "mixed_identifiers.csv"
     csv_path.write_text(csv_content)
     return csv_path
 

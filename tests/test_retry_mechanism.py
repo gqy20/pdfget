@@ -8,6 +8,7 @@ import requests
 from src.pdfget.retry import retry_with_backoff
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestFixedGradientBackoff:
     """测试固定梯度重试算法"""
 
@@ -158,8 +159,7 @@ class TestFixedGradientBackoff:
             mock_func = Mock(side_effect=[requests.HTTPError("Fail"), "success"])
             decorated_func = retry_with_backoff(max_retries=2)(mock_func)
 
-            with patch("time.sleep"):  # 跳过实际等待
-                decorated_func()
+            decorated_func()
 
             # 验证记录了警告日志
             assert mock_log.warning.called
@@ -168,11 +168,11 @@ class TestFixedGradientBackoff:
             assert "第 1/2 次重试" in warning_call[0][0]
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestBackoffIntegration:
     """测试重试机制的集成"""
 
-    @patch("time.sleep")
-    def test_with_real_http_request(self, mock_sleep):
+    def test_with_real_http_request(self):
         """测试：与真实HTTP请求的集成"""
         mock_response = Mock()
         mock_response.status_code = 429

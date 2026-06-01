@@ -26,12 +26,6 @@ class TestPMCOAService:
         """创建临时目录"""
         return tmp_path / "pdfs"
 
-    @pytest.fixture
-    def oa_service(self, session, tmp_dir):
-        """创建 PMCOAService 实例 - 这个会在我们实现类后使用"""
-        # 先不导入，等实现后再导入
-        return None
-
     def test_init(self, session, tmp_dir):
         """
         测试: PMCOAService 初始化

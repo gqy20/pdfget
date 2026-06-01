@@ -2,18 +2,7 @@
 配置文件测试
 """
 
-import os
-from pathlib import Path
-
-from pdfget.config import (
-    DELAY,
-    HEADERS,
-    LOG_FORMAT,
-    LOG_LEVEL,
-    MAX_RETRIES,
-    OUTPUT_DIR,
-    TIMEOUT,
-)
+from pdfget.config import DELAY, HEADERS, LOG_FORMAT, LOG_LEVEL, MAX_RETRIES, TIMEOUT
 
 
 class TestConfig:
@@ -33,11 +22,6 @@ class TestConfig:
         """测试延迟常量"""
         assert isinstance(DELAY, (int, float))
         assert DELAY >= 0
-
-    def test_output_dir_constant(self):
-        """测试输出目录常量"""
-        assert isinstance(OUTPUT_DIR, (str, Path))
-        assert len(str(OUTPUT_DIR)) > 0
 
     def test_log_level_constant(self):
         """测试日志级别常量"""
@@ -65,23 +49,3 @@ class TestConfig:
 
         # 延迟时间应该在合理范围内（0-60秒）
         assert 0 <= DELAY <= 60
-
-    def test_environment_override(self):
-        """测试环境变量覆盖"""
-        # 设置环境变量
-        test_timeout = 60
-        os.environ["PDFGET_TIMEOUT"] = str(test_timeout)
-
-        # 重新导入模块以测试环境变量覆盖
-        import importlib
-
-        import pdfget.config
-
-        importlib.reload(pdfget.config)
-
-        # 恢复环境
-        del os.environ["PDFGET_TIMEOUT"]
-
-        # 注意：这个测试取决于实际的配置实现
-        # 如果配置不支持环境变量覆盖，可以跳过
-        pass

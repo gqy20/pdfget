@@ -14,12 +14,12 @@ import requests
 from . import config
 from .config import (
     AVG_PDF_SIZE_MB,
-    CACHE_DIR,
     COUNT_BATCH_SIZE,
     COUNT_MAX_WORKERS,
     NCBI_API_KEY,
     NCBI_EMAIL,
     PUBMED_MAX_RESULTS,
+    get_cache_dir,
 )
 from .logger import get_logger
 from .retry import retry_with_backoff
@@ -41,7 +41,7 @@ class PMCIDCounter:
         Args:
             email: NCBI API邮箱（可选）
             api_key: NCBI API密钥（可选）
-            cache_dir: 缓存目录（可选，默认使用配置中的CACHE_DIR）
+            cache_dir: 缓存目录（可选，默认使用 get_cache_dir()）
             source: 数据源（"pubmed" 或 "europe_pmc"）
             fetcher: PaperFetcher实例（可选）
         """
@@ -50,8 +50,8 @@ class PMCIDCounter:
         self.source = source
         self.logger = get_logger(__name__)
         self.session = requests.Session()
-        # 使用传入的cache_dir或配置中的CACHE_DIR
-        self.cache_dir = Path(cache_dir) if cache_dir else CACHE_DIR
+        # 使用传入的cache_dir或 get_cache_dir()
+        self.cache_dir = Path(cache_dir) if cache_dir else get_cache_dir()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # 如果提供了fetcher，直接使用；否则创建新的

@@ -15,11 +15,13 @@ import requests
 from .abstract_supplementor import AbstractSupplementor
 from .base.ncbi_base import NCBIBaseModule
 from .config import (
+    DEFAULT_OUTPUT_DIR,
     DEFAULT_SOURCE,
     DOWNLOAD_BASE_DELAY,
     NCBI_API_KEY,
     NCBI_EMAIL,
     SOURCES,
+    get_cache_dir,
 )
 from .doi_converter import DOIConverter
 from .downloader import PDFDownloader
@@ -36,8 +38,8 @@ class PaperFetcher(NCBIBaseModule):
 
     def __init__(
         self,
-        cache_dir: str = "data/cache",
-        output_dir: str = "data/pdfs",
+        cache_dir: str | Path | None = None,
+        output_dir: str = DEFAULT_OUTPUT_DIR,
         default_source: str | None = None,
         sources: "list[str] | None" = None,
         email: str = "",
@@ -61,8 +63,8 @@ class PaperFetcher(NCBIBaseModule):
         # 初始化NCBI基类
         super().__init__(session=requests.Session(), email=email, api_key=api_key)
 
-        # 设置获取器特有属性
-        self.cache_dir = Path(cache_dir)
+        # 设置获取器特有属性（缓存目录默认使用 XDG 标准路径）
+        self.cache_dir = Path(cache_dir) if cache_dir else get_cache_dir()
         self.output_dir = Path(output_dir)
         self.default_source = default_source or DEFAULT_SOURCE
         self.sources = sources or SOURCES

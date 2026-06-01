@@ -13,6 +13,7 @@ import requests
 from src.pdfget.config import DOI_QUERY_TIMEOUT
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestDOIConverter:
     """测试 DOIConverter 类"""
 
@@ -105,8 +106,6 @@ class TestDOIConverter:
 
         # 验证返回None（转换失败）
         assert result is None
-
-        # 验证进行了多次重试尝试（通过日志输出可以验证）
 
     # 测试用例4: API返回错误状态码
     def test_doi_to_pmcid_api_error(self, converter, session):

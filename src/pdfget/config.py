@@ -2,15 +2,22 @@
 
 from pathlib import Path
 
-# 项目根目录
-ROOT_DIR = Path(__file__).parent.parent.parent
-DATA_DIR = ROOT_DIR / "data"
-OUTPUT_DIR = DATA_DIR / "pdfs"
-CACHE_DIR = DATA_DIR / ".cache"
 
-# 创建目录
-for d in [DATA_DIR, OUTPUT_DIR, CACHE_DIR]:
-    d.mkdir(exist_ok=True, parents=True)
+def get_cache_dir() -> Path:
+    """返回缓存目录路径，默认遵循 XDG 惯例放在 ~/.cache/pdfget。
+
+    可通过环境变量 PDFGET_CACHE_DIR 覆盖。
+    """
+    import os
+
+    custom = os.environ.get("PDFGET_CACHE_DIR")
+    if custom:
+        return Path(custom)
+    return Path.home() / ".cache" / "pdfget"
+
+
+# 默认输出目录（相对路径，用户运行命令时在当前工作目录下创建）
+DEFAULT_OUTPUT_DIR = "pdfs"
 
 # 下载设置
 TIMEOUT = 30

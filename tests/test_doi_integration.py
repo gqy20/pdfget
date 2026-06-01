@@ -13,6 +13,7 @@ from pdfget.utils.identifier_utils import IdentifierUtils
 from src.pdfget.fetcher import PaperFetcher
 
 
+@pytest.mark.usefixtures("fast_sleep")
 class TestDOIIntegration:
     """测试DOI转换功能与系统的集成"""
 
@@ -172,32 +173,17 @@ PMC12345,Paper 4 PMCID"""
 
     # 集成测试6: 配置集成
     def test_doi_configuration_integration(self, fetcher):
-        """
-        测试: DOI配置与系统配置的集成
-        """
-        # 验证fetcher有访问DOI转换器的能力
-        assert hasattr(fetcher, "session")  # session应该可用于DOI转换器
-
-        # 验证配置可访问
-        from src.pdfget.config import DEFAULT_SOURCE, MAX_RETRIES, RATE_LIMIT, TIMEOUT
-
-        assert DEFAULT_SOURCE in ["pubmed", "europe_pmc"]
-        assert isinstance(TIMEOUT, int)
-        assert isinstance(MAX_RETRIES, int)
-        assert isinstance(RATE_LIMIT, int)
+        """测试: DOI 转换器被正确初始化并使用 fetcher 的 session"""
+        assert hasattr(fetcher, "doi_converter")
+        assert hasattr(fetcher.doi_converter, "session")
+        assert fetcher.doi_converter.session is fetcher.session
 
     # 集成测试7: 错误处理和日志记录
     def test_doi_error_logging(self, fetcher):
-        """
-        测试: DOI处理过程中的错误处理
-        """
-        # 执行不存在的DOI，验证系统能够正常处理错误情况
+        """测试: 无效 DOI 格式返回空结果且不崩溃"""
         result = fetcher.download_from_unified_input("invalid.doi.format")
-
-        # 验证返回空结果而不是抛出异常
         assert result == []
-
-        # 验证fetcher有logger属性（用于日志记录）
+        # 验证 fetcher 正常工作（有 logger 可用于记录错误）
         assert hasattr(fetcher, "logger")
 
     # 集成测试8: 性能测试（大量DOI）
@@ -236,34 +222,3 @@ PMC12345,Paper 4 PMCID"""
 
         # 验证结果数量正确
         assert len(results) == len(doi_list)
-
-    # 集成测试9: 缓存集成
-    def test_doi_cache_integration(self, fetcher):
-        """
-        测试: DOI转换与系统缓存的集成
-        """
-        # 验证缓存目录存在
-        assert hasattr(fetcher, "cache_dir")
-
-        # 验证缓存机制可以用于DOI转换结果
-        # 在实际实现中，DOI转换器应该使用相同的缓存机制
-
-    # 集成测试10: 命令行参数集成
-    @patch("src.pdfget.main.PaperFetcher")
-    @patch("src.pdfget.doi_converter.DOIConverter")
-    def test_command_line_integration(self, mock_converter_class, mock_fetcher_class):
-        """
-        测试: 命令行参数与DOI功能的集成
-        """
-        from src.pdfget.main import main
-
-        # 这个测试验证主程序能够处理DOI参数
-        # 实际的命令行测试可能需要更复杂的设置
-
-        # 验证主程序存在
-        assert callable(main)
-
-        # 在实际实现中，这里应该测试：
-        # 1. python -m pdfget -m "10.1000/test.doi" -d
-        # 2. python -m pdfget -m dois.csv -c DOI -d
-        # 3. python -m pdfget -m "DOI1,DOI2,PMID1,PMCID1" -d

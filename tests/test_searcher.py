@@ -97,27 +97,9 @@ class TestPaperSearcher:
 
     @patch("src.pdfget.searcher.PaperSearcher._search_pubmed_api")
     def test_search_pubmed_empty_result(self, mock_search, searcher):
-        """
-        测试: PubMed 搜索返回空结果
-        """
+        """测试: PubMed 搜索返回空结果"""
         mock_search.return_value = []
-
-        query = "nonexistent term"
-        result = searcher.search_pubmed(query, limit=20)
-
-        assert result == []
-        mock_search.assert_called_once()
-
-    @patch("src.pdfget.searcher.PaperSearcher._search_pubmed_api")
-    def test_search_pubmed_api_error(self, mock_search, searcher):
-        """
-        测试: PubMed API 错误
-        """
-        mock_search.return_value = []
-
-        query = "test query"
-        result = searcher.search_pubmed(query, limit=20)
-
+        result = searcher.search_pubmed("nonexistent term", limit=20)
         assert result == []
 
     def test_parse_query_europepmc_simple(self, searcher):
