@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from pathlib import Path
+from typing import Any
 
 from .config import (
     DEFAULT_OUTPUT_DIR,
@@ -92,7 +93,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def log_download_stats(logger, results: list[dict]) -> dict:
+def log_download_stats(
+    logger: logging.Logger, results: list[dict[str, Any]]
+) -> dict[str, int]:
     """Log download statistics and return the summary."""
     success_count = sum(1 for r in results if r.get("success"))
     pdf_count = sum(1 for r in results if r.get("path"))
@@ -113,14 +116,14 @@ def log_download_stats(logger, results: list[dict]) -> dict:
     }
 
 
-def save_json(path: Path, payload: dict) -> None:
+def save_json(path: Path, payload: dict[str, Any]) -> None:
     """Persist JSON output, creating parent directories when needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as file:
         json.dump(payload, file, indent=2, ensure_ascii=False)
 
 
-def build_search_payload(query: str, papers: list[dict]) -> dict:
+def build_search_payload(query: str, papers: list[dict[str, Any]]) -> dict[str, Any]:
     """Build a schema-first payload for search output."""
     return {
         "schema": "paper_record.v1",
@@ -132,8 +135,8 @@ def build_search_payload(query: str, papers: list[dict]) -> dict:
 
 
 def build_download_payload(
-    results: list[dict], *, source: str, input_value: str | None = None
-) -> dict:
+    results: list[dict[str, Any]], *, source: str, input_value: str | None = None
+) -> dict[str, Any]:
     """Build a schema-first payload for download output."""
     success_count = sum(1 for result in results if result.get("success"))
     payload = {
@@ -149,12 +152,12 @@ def build_download_payload(
     return payload
 
 
-def is_downloadable(paper: dict) -> bool:
+def is_downloadable(paper: dict[str, Any]) -> bool:
     """Whether the paper has a direct download route."""
     return bool(paper.get("pmcid") or paper.get("arxiv_id") or paper.get("pdf_url"))
 
 
-def get_primary_identifier_display(paper: dict) -> tuple[str, str]:
+def get_primary_identifier_display(paper: dict[str, Any]) -> tuple[str, str]:
     """Return the most user-friendly identifier label/value pair."""
     identifier = str(paper.get("identifier") or "")
     identifier_type = str(paper.get("identifier_type") or "")
@@ -180,7 +183,9 @@ def get_primary_identifier_display(paper: dict) -> tuple[str, str]:
     return "", ""
 
 
-def display_search_results(logger, papers: list[dict]) -> None:
+def display_search_results(
+    logger: logging.Logger, papers: list[dict[str, Any]]
+) -> None:
     """Render a compact search result list to the logger."""
     logger.info(f"\n搜索结果 ({len(papers)} 篇):")
     for index, paper in enumerate(papers, 1):
@@ -213,7 +218,9 @@ def display_search_results(logger, papers: list[dict]) -> None:
         logger.info(f"   可下载: {'是' if is_downloadable(paper) else '否'}")
 
 
-def save_search_results(output_dir: str, query: str, papers: list[dict]) -> Path:
+def save_search_results(
+    output_dir: str, query: str, papers: list[dict[str, Any]]
+) -> Path:
     """Save search results to a timestamped JSON file."""
     path = Path(output_dir) / f"search_results_{int(time.time())}.json"
     save_json(path, build_search_payload(query, papers))
@@ -221,9 +228,9 @@ def save_search_results(output_dir: str, query: str, papers: list[dict]) -> Path
 
 
 def emit_search_results(
-    logger,
+    logger: logging.Logger,
     query: str,
-    papers: list[dict],
+    papers: list[dict[str, Any]],
     output_dir: str,
     output_format: str | None,
     *,
@@ -241,8 +248,8 @@ def emit_search_results(
 
 
 def emit_download_results(
-    logger,
-    results: list[dict],
+    logger: logging.Logger,
+    results: list[dict[str, Any]],
     output_dir: str,
     output_format: str | None,
     *,
@@ -295,7 +302,14 @@ def main() -> None:
     if args.v:
         logger.setLevel(logging.DEBUG)
 
-    fetcher = PaperFetcher(output_dir=args.o, default_source=args.S)
+    email = args.e or NCBI_EMAIL
+    api_key = args.k or NCBI_API_KEY
+    fetcher = PaperFetcher(
+        output_dir=args.o,
+        default_source=args.S,
+        email=email,
+        api_key=api_key,
+    )
 
     logger.info("PDF 下载器启动")
     logger.info(f"   输出目录: {args.o}")
@@ -357,8 +371,6 @@ def main() -> None:
                     emit_search_results(logger, args.s, papers, args.o, args.format)
                     return
 
-                email = args.e or NCBI_EMAIL
-                api_key = args.k or NCBI_API_KEY
                 counter = PMCIDCounter(email=email, api_key=api_key, source=args.S)
                 stats = counter.count_pmcid(args.s, limit=args.l)
 

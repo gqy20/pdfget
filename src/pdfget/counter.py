@@ -8,6 +8,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
 import requests
 
@@ -34,8 +35,8 @@ class PMCIDCounter:
         api_key: str | None = None,
         cache_dir: str | None = None,
         source: str = "pubmed",
-        fetcher=None,
-    ):
+        fetcher: Any = None,
+    ) -> None:
         """初始化计数器
 
         Args:
@@ -63,6 +64,8 @@ class PMCIDCounter:
             self.fetcher = PaperFetcher(
                 default_source=source,
                 cache_dir=str(self.cache_dir),
+                email=self.email,
+                api_key=self.api_key,
             )
 
         # 设置请求头
@@ -103,7 +106,7 @@ class PMCIDCounter:
 
         # 使用重试机制（使用默认的5次重试和固定等待时间梯度）
         @retry_with_backoff()
-        def _fetch():
+        def _fetch() -> str:
             response = self.session.get(
                 fetch_url, params=params, timeout=config.TIMEOUT
             )

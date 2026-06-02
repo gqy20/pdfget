@@ -1,5 +1,6 @@
 """PDF下载器配置"""
 
+import os
 from pathlib import Path
 
 
@@ -8,8 +9,6 @@ def get_cache_dir() -> Path:
 
     可通过环境变量 PDFGET_CACHE_DIR 覆盖。
     """
-    import os
-
     custom = os.environ.get("PDFGET_CACHE_DIR")
     if custom:
         return Path(custom)
@@ -49,8 +48,8 @@ LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # NCBI API 设置
-NCBI_EMAIL = "test@gmail.com"
-NCBI_API_KEY = ""  # 可以在这里设置 API 密钥
+NCBI_EMAIL = os.environ.get("PDFGET_NCBI_EMAIL", "")
+NCBI_API_KEY = os.environ.get("PDFGET_NCBI_API_KEY", "")
 
 # PMCID统计设置
 COUNT_BATCH_SIZE = 50  # 每批处理的PMID数量
@@ -63,8 +62,7 @@ PMCID_USE_FALLBACK = (
 )
 
 # 数据源设置
-DEFAULT_SOURCE = "pubmed"  # 默认数据源: europe_pmc, pubmed
-SOURCES = ["pubmed", "europe_pmc"]  # 支持的数据源列表，优先使用PubMed
+DEFAULT_SOURCE = "pubmed"  # 默认数据源: europe_pmc, pubmed, arxiv, both, all
 
 # DOI转换设置
 DOI_QUERY_TIMEOUT = 10  # DOI查询超时时间（秒）

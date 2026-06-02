@@ -28,6 +28,26 @@ class TestPMCIDCounter:
             assert counter.cache_dir == Path(tmpdir)
             assert counter.cache_dir.exists()
 
+    def test_init_passes_credentials_to_internal_fetcher(self):
+        """测试内部 PaperFetcher 继承计数器 NCBI 凭据"""
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            patch("pdfget.fetcher.PaperFetcher") as mock_fetcher,
+        ):
+            PMCIDCounter(
+                email="user@example.com",
+                api_key="api-key",
+                cache_dir=tmpdir,
+                source="pubmed",
+            )
+
+        mock_fetcher.assert_called_once_with(
+            default_source="pubmed",
+            cache_dir=tmpdir,
+            email="user@example.com",
+            api_key="api-key",
+        )
+
     def test_get_cache_file_path(self):
         """测试缓存文件路径生成"""
         counter = PMCIDCounter()

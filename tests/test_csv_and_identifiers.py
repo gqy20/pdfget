@@ -299,6 +299,97 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         finally:
             csv_file.unlink()
 
+    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    def test_direct_identifier_passes_base_delay(self, mock_manager_class):
+        """测试：直接标识符输入会传递自定义下载延迟"""
+        mock_manager = Mock()
+        mock_manager.download_batch.return_value = []
+        mock_manager_class.return_value = mock_manager
+
+        self.fetcher.download_from_unified_input(
+            "PMC123456",
+            max_workers=4,
+            base_delay=0.25,
+        )
+
+        mock_manager_class.assert_called_once_with(
+            fetcher=self.fetcher,
+            max_workers=4,
+            base_delay=0.25,
+        )
+
+    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    def test_direct_mixed_identifiers_preserve_input_order(
+        self, mock_process_pmids, mock_convert_dois, mock_manager_class
+    ):
+        """测试：直接混合标识符按输入顺序传给下载管理器"""
+        mock_process_pmids.return_value = [
+            {"pmid": "38238491", "pmcid": "PMC222222"},
+        ]
+        mock_convert_dois.return_value = {
+            "10.1000/test": "PMC333333",
+        }
+        mock_manager = Mock()
+        mock_manager.download_batch.return_value = []
+        mock_manager_class.return_value = mock_manager
+
+        self.fetcher.download_from_unified_input(
+            "PMC111111,38238491,10.1000/test,2301.12345"
+        )
+
+        papers = mock_manager.download_batch.call_args[0][0]
+        assert [
+            paper.get("pmcid") or paper.get("arxiv_id") for paper in papers
+        ] == [
+            "PMC111111",
+            "PMC222222",
+            "PMC333333",
+            "2301.12345",
+        ]
+
+    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    def test_csv_mixed_identifiers_preserve_input_order(
+        self,
+        mock_process_pmids,
+        mock_convert_dois,
+        mock_manager_class,
+        temp_output_dir,
+    ):
+        """测试：CSV 混合标识符按行顺序传给下载管理器"""
+        csv_data = [
+            ["ID"],
+            ["2301.12345"],
+            ["10.1000/test"],
+            ["PMC111111"],
+            ["38238491"],
+        ]
+        csv_file = create_temp_csv_file(csv_data, temp_output_dir, "ordered_ids.csv")
+        mock_process_pmids.return_value = [
+            {"pmid": "38238491", "pmcid": "PMC222222"},
+        ]
+        mock_convert_dois.return_value = {
+            "10.1000/test": "PMC333333",
+        }
+        mock_manager = Mock()
+        mock_manager.download_batch.return_value = []
+        mock_manager_class.return_value = mock_manager
+
+        self.fetcher.download_from_identifiers(str(csv_file), id_column="ID")
+
+        papers = mock_manager.download_batch.call_args[0][0]
+        assert [
+            paper.get("pmcid") or paper.get("arxiv_id") for paper in papers
+        ] == [
+            "2301.12345",
+            "PMC333333",
+            "PMC111111",
+            "PMC222222",
+        ]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -56,7 +56,9 @@ class PMCIDRetriever(NCBIBaseModule):
         self.logger.debug(f"从 {len(papers)} 篇论文中收集到 {len(pmids)} 个有效 PMIDs")
         return pmids
 
-    def _fetch_batch_with_retry(self, url: str, params: dict):
+    def _fetch_batch_with_retry(
+        self, url: str, params: dict[str, Any]
+    ) -> requests.Response:
         """
         带重试的批量获取请求
 
@@ -71,14 +73,16 @@ class PMCIDRetriever(NCBIBaseModule):
         ncbi_retry = retry_with_backoff(use_config=True)
 
         @ncbi_retry
-        def _fetch():
+        def _fetch() -> requests.Response:
             return self.session.get(
                 url, params=params, timeout=self.config["timeouts"]["request"]
             )
 
         return _fetch()
 
-    def _fetch_single_with_retry(self, url: str, params: dict):
+    def _fetch_single_with_retry(
+        self, url: str, params: dict[str, Any]
+    ) -> requests.Response:
         """
         带重试的单个获取请求
 
@@ -93,7 +97,7 @@ class PMCIDRetriever(NCBIBaseModule):
         single_retry = retry_with_backoff(use_config=True)
 
         @single_retry
-        def _fetch():
+        def _fetch() -> requests.Response:
             return self.session.get(
                 url, params=params, timeout=self.config["timeouts"]["request"]
             )

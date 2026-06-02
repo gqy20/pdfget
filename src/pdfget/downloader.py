@@ -19,6 +19,8 @@ from .retry import retry_with_backoff
 class PDFDownloader:
     """PDF 下载器"""
 
+    DOWNLOAD_CHUNK_SIZE = 8192
+
     def __init__(self, output_dir: str, session: requests.Session):
         """
         初始化 PDF 下载器
@@ -75,6 +77,37 @@ class PDFDownloader:
             self.logger.error(f"PDF 保存失败: {str(e)}")
             return {"success": False, "error": str(e), "path": str(file_path)}
 
+    def _save_pdf_stream(
+        self, response: requests.Response, pmcid: str, doi: str
+    ) -> dict[str, str | bool | int]:
+        """Save a PDF response incrementally without loading it all into memory."""
+        filename = self._get_safe_filename(pmcid, doi)
+        file_path = self.output_dir / filename
+        content_length = 0
+
+        try:
+            with open(file_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=self.DOWNLOAD_CHUNK_SIZE):
+                    if not chunk:
+                        continue
+                    f.write(chunk)
+                    content_length += len(chunk)
+
+            if content_length == 0:
+                file_path.unlink(missing_ok=True)
+                return {"success": False, "error": "PDF 内容为空", "path": str(file_path)}
+
+            self.logger.info(f"PDF 保存成功: {file_path}")
+            return {
+                "success": True,
+                "path": str(file_path),
+                "content_length": content_length,
+            }
+        except Exception as e:
+            self.logger.error(f"PDF 保存失败: {str(e)}")
+            file_path.unlink(missing_ok=True)
+            return {"success": False, "error": str(e), "path": str(file_path)}
+
     def _try_download_from_url(self, url: str, pmcid: str, doi: str) -> dict[str, Any]:
         """
         尝试从单个 URL 下载 PDF
@@ -103,17 +136,11 @@ class PDFDownloader:
                     "error": f"不是 PDF 文件 (content-type: {content_type})",
                 }
 
-            # 读取内容
-            content = response.content
-            if not content:
-                return {"success": False, "error": "PDF 内容为空"}
-
             # 保存文件
-            save_result = self._save_pdf(content, pmcid, doi)
+            save_result = self._save_pdf_stream(response, pmcid, doi)
             if save_result["success"]:
                 save_result["source_url"] = url
                 save_result["content_type"] = content_type
-                save_result["content_length"] = len(content)
 
             return save_result
 
@@ -347,7 +374,7 @@ class PDFDownloader:
             "pdf_sources": self.pdf_sources,
         }
 
-    def _download_with_retry(self, url: str):
+    def _download_with_retry(self, url: str) -> requests.Response:
         """
         带重试的PDF下载请求
 
@@ -361,7 +388,7 @@ class PDFDownloader:
         download_retry = retry_with_backoff()
 
         @download_retry
-        def _fetch():
+        def _fetch() -> requests.Response:
             return self.session.get(url, timeout=30, stream=True)
 
         return _fetch()

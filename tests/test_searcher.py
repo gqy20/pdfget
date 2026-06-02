@@ -178,6 +178,33 @@ class TestPaperSearcher:
             searcher.search_papers("test query", source="all")
             mock_search.assert_called_once_with("test query", 50, include_arxiv=True)
 
+    def test_search_all_sources_applies_final_limit(self, searcher):
+        """
+        测试: 多源搜索最终结果不超过 limit
+        """
+        with (
+            patch.object(
+                searcher,
+                "search_pubmed",
+                return_value=[
+                    {"pmid": "1", "title": "PubMed 1"},
+                    {"pmid": "2", "title": "PubMed 2"},
+                ],
+            ),
+            patch.object(
+                searcher,
+                "search_europepmc",
+                return_value=[
+                    {"pmid": "3", "title": "Europe PMC 1"},
+                    {"pmid": "4", "title": "Europe PMC 2"},
+                ],
+            ),
+        ):
+            results = searcher.search_all_sources("test query", limit=3)
+
+        assert len(results) == 3
+        assert [paper["pmid"] for paper in results] == ["1", "2", "3"]
+
     def test_search_papers_default_source(self, searcher):
         """
         测试: 使用默认源搜索

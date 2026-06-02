@@ -34,6 +34,7 @@ class UnifiedDownloadManager:
         self._failed = 0
         self._pdf_count = 0
         self._total = 0
+        self._thread_local = threading.local()
 
     def _normalize_input(
         self, items: list[str] | list[dict]
@@ -82,14 +83,26 @@ class UnifiedDownloadManager:
         return PaperFetcher(
             cache_dir=str(self.fetcher.cache_dir),
             output_dir=str(self.fetcher.output_dir),
+            email=self.fetcher.email,
+            api_key=self.fetcher.api_key,
+            default_source=self.fetcher.default_source,
         )
 
+    def _get_thread_fetcher(self) -> PaperFetcher:
+        """Return a fetcher instance reused within the current worker thread."""
+        fetcher = getattr(self._thread_local, "fetcher", None)
+        if fetcher is None:
+            fetcher = self._create_thread_fetcher()
+            self._thread_local.fetcher = fetcher
+        return fetcher
+
     def _download_single_task(
-        self, paper: dict[str, Any], fetcher: PaperFetcher, timeout: int = 30
+        self, paper: dict[str, Any], timeout: int = 30
     ) -> dict[str, Any]:
         """Download a single paper inside a worker thread."""
         try:
             time.sleep(self._get_delay())
+            fetcher = self._get_thread_fetcher()
             result = fetcher.pdf_downloader.download_paper(paper)
             result["doi"] = paper.get("doi", "")
             result["pmcid"] = paper.get("pmcid", "") or ""
@@ -123,10 +136,7 @@ class UnifiedDownloadManager:
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_index: dict[Any, int] = {}
             for index, paper in enumerate(papers):
-                thread_fetcher = self._create_thread_fetcher()
-                future = executor.submit(
-                    self._download_single_task, paper, thread_fetcher, timeout
-                )
+                future = executor.submit(self._download_single_task, paper, timeout)
                 future_to_index[future] = index
 
             for future in as_completed(future_to_index):

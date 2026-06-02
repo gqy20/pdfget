@@ -62,7 +62,7 @@ class NCBIBaseModule:
         """处理NCBI API请求频率限制"""
         self.rate_limiter.wait_for_rate_limit()
 
-    def _build_ncbi_params(self, **kwargs) -> dict[str, Any]:
+    def _build_ncbi_params(self, **kwargs: Any) -> dict[str, Any]:
         """构建NCBI API请求参数
 
         Args:

@@ -331,7 +331,7 @@ class DOIConverter(NCBIBaseModule):
 
         return results
 
-    def _make_request_with_retry(self, **kwargs) -> requests.Response | None:
+    def _make_request_with_retry(self, **kwargs: Any) -> requests.Response | None:
         """
         带重试的请求方法
 

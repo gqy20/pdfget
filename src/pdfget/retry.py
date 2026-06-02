@@ -4,19 +4,22 @@ import random
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import ParamSpec, TypeVar
 
 import requests
 
 from .config import MAX_RETRIES
 from .logger import get_logger
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
 
 def retry_with_backoff(
     max_retries: int | None = None,  # 如果为None，使用配置中的值
     retryable_status_codes: tuple[int, ...] = (429, 502, 503, 504),
     use_config: bool = True,  # 是否使用全局配置
-) -> Callable:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     固定梯度重试装饰器
 
@@ -35,9 +38,9 @@ def retry_with_backoff(
         当use_config=True且max_retries=None时，使用DEFAULT_CONFIG.max_retries
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             last_exception = None
 
             # 确定实际的重试次数
@@ -80,6 +83,7 @@ def retry_with_backoff(
             # 理论上不会执行到这里
             if last_exception:
                 raise last_exception
+            raise RuntimeError("retry wrapper exited without result or exception")
 
         return wrapper
 

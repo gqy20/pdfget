@@ -2,6 +2,9 @@
 配置文件测试
 """
 
+import importlib
+
+import pdfget.config as config_module
 from pdfget.config import DELAY, HEADERS, LOG_FORMAT, LOG_LEVEL, MAX_RETRIES, TIMEOUT
 
 
@@ -49,3 +52,17 @@ class TestConfig:
 
         # 延迟时间应该在合理范围内（0-60秒）
         assert 0 <= DELAY <= 60
+
+    def test_ncbi_credentials_from_environment(self, monkeypatch):
+        """测试 NCBI 凭据从环境变量读取"""
+        monkeypatch.setenv("PDFGET_NCBI_EMAIL", "user@example.com")
+        monkeypatch.setenv("PDFGET_NCBI_API_KEY", "secret-key")
+
+        reloaded = importlib.reload(config_module)
+
+        assert reloaded.NCBI_EMAIL == "user@example.com"
+        assert reloaded.NCBI_API_KEY == "secret-key"
+
+        monkeypatch.delenv("PDFGET_NCBI_EMAIL", raising=False)
+        monkeypatch.delenv("PDFGET_NCBI_API_KEY", raising=False)
+        importlib.reload(config_module)

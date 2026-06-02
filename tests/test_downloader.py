@@ -64,8 +64,7 @@ class TestPDFDownloader:
         assert "error" in result
         assert "path" in result
 
-    @patch("src.pdfget.downloader.PDFDownloader._save_pdf")
-    def test_try_download_from_url_success(self, mock_save, downloader):
+    def test_try_download_from_url_success(self, downloader):
         """
         测试: 成功从 URL 下载
         """
@@ -77,18 +76,39 @@ class TestPDFDownloader:
         mock_response = Mock()
         mock_response.raise_for_status.return_value = None
         mock_response.headers = {"content-type": "application/pdf"}
-        mock_response.content = b"pdf data"
+        mock_response.iter_content.return_value = [b"pdf ", b"data"]
 
         downloader.session.get = Mock(return_value=mock_response)
-        mock_save.return_value = {"success": True, "path": "/path/to/file.pdf"}
 
         result = downloader._try_download_from_url(url, pmcid, doi)
 
         assert result["success"] is True
-        assert result["path"] == "/path/to/file.pdf"
+        assert Path(result["path"]).read_bytes() == b"pdf data"
         assert result["source_url"] == url
         assert result["content_type"] == "application/pdf"
         assert result["content_length"] == 8
+        mock_response.iter_content.assert_called_once_with(chunk_size=8192)
+
+    def test_try_download_from_url_empty_pdf(self, downloader):
+        """
+        测试: PDF 响应体为空
+        """
+        url = "http://example.com/paper.pdf"
+        pmcid = "PMC123456"
+        doi = "10.1000/test"
+
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.headers = {"content-type": "application/pdf"}
+        mock_response.iter_content.return_value = []
+
+        downloader.session.get = Mock(return_value=mock_response)
+
+        result = downloader._try_download_from_url(url, pmcid, doi)
+
+        assert result["success"] is False
+        assert result["error"] == "PDF 内容为空"
+        assert not Path(result["path"]).exists()
 
     @patch("src.pdfget.downloader.PDFDownloader._save_pdf")
     def test_try_download_from_url_not_pdf(self, mock_save, downloader):

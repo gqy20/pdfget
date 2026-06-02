@@ -2,6 +2,7 @@
 配置路径测试 - 验证缓存目录遵循 XDG 惯例
 """
 
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -86,6 +87,78 @@ class TestPaperFetcherDefaultPaths:
             out = Path(tmp) / "custom_out"
             PaperFetcher(output_dir=str(out))
             assert out.exists()
+
+    def test_fetcher_cache_info_uses_cache_manager_files(self):
+        """PaperFetcher 缓存统计应匹配 CacheManager 实际文件命名"""
+        from pdfget.fetcher import PaperFetcher
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fetcher = PaperFetcher(cache_dir=tmp)
+            fetcher.cache_manager.set("search:pubmed:test query", [{"pmid": "1"}])
+
+            info = fetcher.get_cache_info()
+
+            assert info["search_cache_count"] == 1
+            assert info["search_cache_size_bytes"] > 0
+            assert info["search_cache_dir"] == str(fetcher.cache_dir)
+
+    def test_fetcher_clear_cache_uses_cache_manager(self):
+        """PaperFetcher 清理搜索缓存应删除 CacheManager 实际缓存文件"""
+        from pdfget.fetcher import PaperFetcher
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fetcher = PaperFetcher(cache_dir=tmp)
+            fetcher.cache_manager.set("search:pubmed:test query", [{"pmid": "1"}])
+
+            fetcher.clear_cache(search_cache=True, pdf_cache=False)
+
+            assert fetcher.cache_manager.get_cache_info()["count"] == 0
+
+    def test_fetcher_export_results_json(self):
+        """PaperFetcher export_results 支持 JSON 兼容输出"""
+        from pdfget.fetcher import PaperFetcher
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fetcher = PaperFetcher(cache_dir=tmp)
+            output_path = fetcher.export_results(
+                [{"pmid": "1", "title": "Test"}],
+                format_type="json",
+                filename="papers.json",
+            )
+
+            assert json.loads(Path(output_path).read_text(encoding="utf-8")) == [
+                {"pmid": "1", "title": "Test"}
+            ]
+
+    def test_fetcher_export_results_accepts_legacy_format_keyword(self):
+        """PaperFetcher export_results 保留 format= 关键字兼容"""
+        from pdfget.fetcher import PaperFetcher
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fetcher = PaperFetcher(cache_dir=tmp)
+            output_path = fetcher.export_results(
+                [{"pmid": "1", "title": "Test"}],
+                format="csv",
+                filename="papers.csv",
+            )
+
+            assert Path(output_path).read_text(encoding="utf-8").splitlines() == [
+                "pmid,title",
+                "1,Test",
+            ]
+
+    def test_fetcher_export_results_rejects_unknown_format(self):
+        """PaperFetcher export_results 对未知格式报错"""
+        from pdfget.fetcher import PaperFetcher
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fetcher = PaperFetcher(cache_dir=tmp)
+            try:
+                fetcher.export_results([], format_type="xml")
+            except ValueError as exc:
+                assert "不支持的格式" in str(exc)
+            else:
+                raise AssertionError("Expected ValueError")
 
 
 class TestConfigNoSideEffectsOnImport:

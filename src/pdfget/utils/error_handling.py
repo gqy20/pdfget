@@ -7,16 +7,19 @@
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, ParamSpec, TypeVar
 
 import requests
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def handle_ncbi_errors(
     default_return: Any = None,
     error_message: str = "",
     logger: logging.Logger | None = None,
-) -> Callable:
+) -> Callable[[Callable[P, R]], Callable[P, R | Any]]:
     """
     NCBI API异常处理装饰器
 
@@ -29,9 +32,9 @@ def handle_ncbi_errors(
         装饰器函数
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R | Any]:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | Any:
             # 获取日志器
             func_logger = logger
             if func_logger is None and args and hasattr(args[0], "logger"):

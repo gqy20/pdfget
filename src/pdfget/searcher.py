@@ -351,7 +351,7 @@ class PaperSearcher(NCBIBaseModule):
                     unique_papers.append(paper)
             else:
                 unique_papers.append(paper)
-        return unique_papers
+        return unique_papers[:limit]
 
     def search_papers(
         self, query: str, limit: int = 50, source: str | None = None

@@ -89,6 +89,65 @@ def test_main_search_arxiv_skips_pmcid_counter(monkeypatch, tmp_path):
     main_module.PMCIDCounter.assert_not_called()
 
 
+def test_main_passes_ncbi_credentials_to_fetcher(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Test Paper",
+            "authors": [],
+            "year": "2024",
+            "pmid": "12345678",
+        }
+    ]
+
+    fetcher_factory = Mock(return_value=fetcher)
+    monkeypatch.setattr(main_module, "PaperFetcher", fetcher_factory)
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        main_module,
+        "PMCIDCounter",
+        Mock(
+            return_value=Mock(
+                count_pmcid=Mock(
+                    return_value={
+                        "query": "transformer",
+                        "total": 1,
+                        "checked": 1,
+                        "with_pmcid": 0,
+                        "without_pmcid": 1,
+                        "rate": 0.0,
+                        "elapsed_seconds": 1.0,
+                        "estimated_size_mb": 0,
+                    }
+                )
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-e",
+            "user@example.com",
+            "-k",
+            "api-key",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    fetcher_factory.assert_called_once_with(
+        output_dir=str(tmp_path),
+        default_source=main_module.DEFAULT_SOURCE,
+        email="user@example.com",
+        api_key="api-key",
+    )
+
+
 def test_main_search_arxiv_json_format_outputs_schema(monkeypatch, tmp_path, capsys):
     fetcher = Mock()
     fetcher.search_papers.return_value = [
