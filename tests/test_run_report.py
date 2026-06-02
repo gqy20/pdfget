@@ -49,6 +49,9 @@ def test_build_run_summary_pairs_papers_and_results():
     assert summary["results"][1]["stage"] == "download_pdf"
     assert summary["results"][1]["paper"]["title"] == "Paper Two"
     assert summary["results"][1]["error"] == "timeout"
+    assert summary["results"][1]["retryable"] is True
+    assert summary["results"][1]["retry_reason"] == "download_pdf"
+    assert summary["results"][0]["retryable"] is False
 
 
 def test_save_run_summary_writes_latest_and_archived_copy(tmp_path):
@@ -70,8 +73,23 @@ def test_load_failed_papers_returns_only_retryable_failures(tmp_path):
     report = build_run_summary(
         [
             {"success": True, "path": "one.pdf", "pmcid": "PMC1"},
-            {"success": False, "error": "timeout", "arxiv_id": "2401.00001"},
-            {"success": False, "error": "no identifier"},
+            {
+                "success": False,
+                "error": "timeout",
+                "arxiv_id": "2401.00001",
+                "stage": "download_pdf",
+            },
+            {
+                "success": False,
+                "error": "No downloadable identifier found",
+                "stage": "resolve_identifier",
+            },
+            {
+                "success": False,
+                "error": "不是 PDF 文件",
+                "pdf_url": "https://example.com/html",
+                "stage": "validate_response",
+            },
         ],
         source="input",
         output_dir=str(tmp_path),
@@ -83,6 +101,43 @@ def test_load_failed_papers_returns_only_retryable_failures(tmp_path):
 
     assert len(papers) == 1
     assert papers[0]["arxiv_id"] == "2401.00001"
+
+
+def test_load_failed_papers_infers_retryability_for_legacy_reports(tmp_path):
+    path = tmp_path / "legacy_summary.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": "run_summary.v1",
+                "results": [
+                    {
+                        "status": "failed",
+                        "paper": {"pmcid": "PMC1", "source": "pubmed"},
+                        "result": {
+                            "success": False,
+                            "error": "下载失败: 503",
+                            "stage": "download_pdf",
+                        },
+                    },
+                    {
+                        "status": "failed",
+                        "paper": {"pmcid": "PMC2", "source": "pubmed"},
+                        "result": {
+                            "success": False,
+                            "error": "不是 PDF 文件",
+                            "stage": "validate_response",
+                        },
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    papers = load_failed_papers(path)
+
+    assert len(papers) == 1
+    assert papers[0]["pmcid"] == "PMC1"
 
 
 def test_load_failed_papers_rejects_unknown_schema(tmp_path):

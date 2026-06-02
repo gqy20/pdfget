@@ -46,6 +46,52 @@ class PDFDownloader:
             "https://europepmc.org/articles/{pmcid}?pdf=render",
         ]
 
+    def _build_result(
+        self,
+        *,
+        success: bool,
+        stage: str,
+        source: str = "",
+        path: str = "",
+        error: str = "",
+        message: str = "",
+        pmcid: str = "",
+        doi: str = "",
+        arxiv_id: str = "",
+        pdf_url: str = "",
+        source_url: str = "",
+        content_type: str = "",
+        content_length: int | None = None,
+        skipped_existing: bool = False,
+    ) -> dict[str, Any]:
+        """Build a stable download result shape while preserving optional fields."""
+        result: dict[str, Any] = {
+            "success": success,
+            "stage": stage,
+            "source": source,
+            "path": path,
+            "error": error,
+        }
+        if message:
+            result["message"] = message
+        if pmcid:
+            result["pmcid"] = pmcid
+        if doi:
+            result["doi"] = doi
+        if arxiv_id:
+            result["arxiv_id"] = arxiv_id
+        if pdf_url:
+            result["pdf_url"] = pdf_url
+        if source_url:
+            result["source_url"] = source_url
+        if content_type:
+            result["content_type"] = content_type
+        if content_length is not None:
+            result["content_length"] = content_length
+        if skipped_existing:
+            result["skipped_existing"] = True
+        return result
+
     def _get_safe_filename(self, pmcid: str, doi: str) -> str:
         """生成安全的文件名（委托给共享函数）"""
         return make_pdf_filename(pmcid, doi)
@@ -72,15 +118,26 @@ class PDFDownloader:
                 f.write(content)
 
             self.logger.info(f"PDF 保存成功: {file_path}")
-            return {"success": True, "path": str(file_path)}
+            return self._build_result(
+                success=True,
+                stage="save_file",
+                source="file",
+                path=str(file_path),
+                pmcid=pmcid,
+                doi=doi,
+                content_length=len(content),
+            )
         except Exception as e:
             self.logger.error(f"PDF 保存失败: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "path": str(file_path),
-                "stage": "save_file",
-            }
+            return self._build_result(
+                success=False,
+                stage="save_file",
+                source="file",
+                path=str(file_path),
+                error=str(e),
+                pmcid=pmcid,
+                doi=doi,
+            )
 
     def _save_pdf_stream(
         self, response: requests.Response, pmcid: str, doi: str
@@ -100,28 +157,38 @@ class PDFDownloader:
 
             if content_length == 0:
                 file_path.unlink(missing_ok=True)
-                return {
-                    "success": False,
-                    "error": "PDF 内容为空",
-                    "path": str(file_path),
-                    "stage": "save_file",
-                }
+                return self._build_result(
+                    success=False,
+                    stage="save_file",
+                    source="file",
+                    path=str(file_path),
+                    error="PDF 内容为空",
+                    pmcid=pmcid,
+                    doi=doi,
+                )
 
             self.logger.info(f"PDF 保存成功: {file_path}")
-            return {
-                "success": True,
-                "path": str(file_path),
-                "content_length": content_length,
-            }
+            return self._build_result(
+                success=True,
+                stage="save_file",
+                source="file",
+                path=str(file_path),
+                pmcid=pmcid,
+                doi=doi,
+                content_length=content_length,
+            )
         except Exception as e:
             self.logger.error(f"PDF 保存失败: {str(e)}")
             file_path.unlink(missing_ok=True)
-            return {
-                "success": False,
-                "error": str(e),
-                "path": str(file_path),
-                "stage": "save_file",
-            }
+            return self._build_result(
+                success=False,
+                stage="save_file",
+                source="file",
+                path=str(file_path),
+                error=str(e),
+                pmcid=pmcid,
+                doi=doi,
+            )
 
     def _try_download_from_url(self, url: str, pmcid: str, doi: str) -> dict[str, Any]:
         """
@@ -146,34 +213,58 @@ class PDFDownloader:
             content_type = response.headers.get("content-type", "").lower()
             if "application/pdf" not in content_type:
                 self.logger.debug(f"不是 PDF 文件: {content_type}")
-                return {
-                    "success": False,
-                    "error": f"不是 PDF 文件 (content-type: {content_type})",
-                    "stage": "validate_response",
-                }
+                return self._build_result(
+                    success=False,
+                    stage="validate_response",
+                    source="url",
+                    error=f"不是 PDF 文件 (content-type: {content_type})",
+                    pmcid=pmcid if pmcid.startswith("PMC") else "",
+                    doi=doi,
+                    source_url=url,
+                    content_type=content_type,
+                )
 
             # 保存文件
             save_result = self._save_pdf_stream(response, pmcid, doi)
+            if not pmcid.startswith("PMC"):
+                save_result.pop("pmcid", None)
             if save_result["success"]:
                 save_result["source_url"] = url
                 save_result["content_type"] = content_type
+                save_result["source"] = "url"
 
             return save_result
 
         except requests.exceptions.Timeout:
-            return {"success": False, "error": "下载超时", "stage": "download_pdf"}
+            return self._build_result(
+                success=False,
+                stage="download_pdf",
+                source="url",
+                error="下载超时",
+                pmcid=pmcid if pmcid.startswith("PMC") else "",
+                doi=doi,
+                source_url=url,
+            )
         except requests.exceptions.RequestException as e:
-            return {
-                "success": False,
-                "error": f"下载失败: {str(e)}",
-                "stage": "download_pdf",
-            }
+            return self._build_result(
+                success=False,
+                stage="download_pdf",
+                source="url",
+                error=f"下载失败: {str(e)}",
+                pmcid=pmcid if pmcid.startswith("PMC") else "",
+                doi=doi,
+                source_url=url,
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"未知错误: {str(e)}",
-                "stage": "download_pdf",
-            }
+            return self._build_result(
+                success=False,
+                stage="download_pdf",
+                source="url",
+                error=f"未知错误: {str(e)}",
+                pmcid=pmcid if pmcid.startswith("PMC") else "",
+                doi=doi,
+                source_url=url,
+            )
 
     def download_pdf(self, pmcid: str, doi: str) -> dict[str, Any]:
         """
@@ -215,12 +306,15 @@ class PDFDownloader:
 
             if pdf_path.exists():
                 self.logger.info(f"PDF 下载成功（PMC OA Service）: {pdf_path}")
-                return {
-                    "success": True,
-                    "path": str(pdf_path),
-                    "source": "PMC OA Service",
-                    "content_length": pdf_path.stat().st_size,
-                }
+                return self._build_result(
+                    success=True,
+                    stage="download_pdf",
+                    source="PMC OA Service",
+                    path=str(pdf_path),
+                    pmcid=pmcid,
+                    doi=doi,
+                    content_length=pdf_path.stat().st_size,
+                )
             else:
                 self.logger.warning("PMC OA Service 处理成功但未找到PDF文件")
         else:
@@ -242,7 +336,14 @@ class PDFDownloader:
         # 所有源都失败
         error_msg = f"所有 {len(self.pdf_sources)} 个 PDF 源都失败"
         self.logger.error(error_msg)
-        return {"success": False, "error": error_msg, "stage": "download_pdf"}
+        return self._build_result(
+            success=False,
+            stage="download_pdf",
+            source="pmc",
+            error=error_msg,
+            pmcid=pmcid,
+            doi=doi,
+        )
 
     def check_pdf_exists(self, pmcid: str, doi: str) -> bool:
         """
@@ -288,12 +389,16 @@ class PDFDownloader:
         if self.check_pdf_exists(pmcid, doi):
             file_path = self.get_pdf_path(pmcid, doi)
             self.logger.info(f"PDF 已存在: {file_path}")
-            return {
-                "success": True,
-                "path": file_path,
-                "source": "cache",
-                "message": "PDF 已存在，无需重新下载",
-            }
+            return self._build_result(
+                success=True,
+                stage="cache_hit",
+                source="cache",
+                path=file_path or "",
+                pmcid=pmcid,
+                doi=doi,
+                message="PDF 已存在，无需重新下载",
+                skipped_existing=True,
+            )
 
         return self.download_pdf(pmcid, doi)
 
@@ -424,7 +529,10 @@ class PDFDownloader:
             normalized_arxiv_id = normalized_arxiv_id[6:].strip()
 
         url = f"https://arxiv.org/pdf/{normalized_arxiv_id}.pdf"
-        return self._try_download_from_url(url, normalized_arxiv_id, "")
+        result = self._try_download_from_url(url, normalized_arxiv_id, "")
+        result["arxiv_id"] = normalized_arxiv_id
+        result["source"] = "arxiv"
+        return result
 
     def download_paper(self, paper: dict[str, Any]) -> dict[str, Any]:
         """Download a paper using the normalized schema."""
@@ -435,13 +543,20 @@ class PDFDownloader:
         pdf_url = record.get("pdf_url", "")
 
         if pmcid:
-            return self.download_pdf(pmcid, doi)
+            return self.download_if_not_exists(pmcid, doi)
         if arxiv_id:
             return self.download_arxiv_pdf(arxiv_id)
         if pdf_url:
-            return self._try_download_from_url(pdf_url, record.get("identifier") or record.get("title", "paper"), doi)
-        return {
-            "success": False,
-            "error": "No downloadable identifier found",
-            "stage": "resolve_identifier",
-        }
+            result = self._try_download_from_url(
+                pdf_url,
+                record.get("identifier") or record.get("title", "paper"),
+                doi,
+            )
+            result["pdf_url"] = pdf_url
+            return result
+        return self._build_result(
+            success=False,
+            stage="resolve_identifier",
+            source="resolver",
+            error="No downloadable identifier found",
+        )

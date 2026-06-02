@@ -42,6 +42,11 @@ class TestPDFDownloader:
         assert result["success"] is True
         assert "path" in result
         assert Path(result["path"]).name == "PMC123456_101000test.pdf"
+        assert result["stage"] == "save_file"
+        assert result["source"] == "file"
+        assert result["pmcid"] == "PMC123456"
+        assert result["doi"] == "10.1000/test"
+        assert result["content_length"] == len(b"pdf content")
 
     def test_save_pdf_failure(self, downloader):
         """
@@ -86,6 +91,8 @@ class TestPDFDownloader:
         assert result["success"] is True
         assert Path(result["path"]).read_bytes() == b"pdf data"
         assert result["source_url"] == url
+        assert result["source"] == "url"
+        assert result["stage"] == "save_file"
         assert result["content_type"] == "application/pdf"
         assert result["content_length"] == 8
         mock_response.iter_content.assert_called_once_with(chunk_size=8192)
@@ -234,6 +241,8 @@ class TestPDFDownloader:
         assert result["success"] is True
         assert result["path"] == "/path/to/file.pdf"
         assert result["source"] == "cache"
+        assert result["stage"] == "cache_hit"
+        assert result["skipped_existing"] is True
         assert "PDF 已存在" in result["message"]
 
     @patch("pdfget.downloader.PDFDownloader.check_pdf_exists")
@@ -253,6 +262,39 @@ class TestPDFDownloader:
 
         assert result["success"] is True
         mock_download.assert_called_once_with(pmcid, doi)
+
+    def test_download_paper_skips_existing_pmc_pdf(self, downloader, tmp_dir):
+        pmcid = "PMC123456"
+        doi = "10.1000/test"
+        file_path = tmp_dir / downloader._get_safe_filename(pmcid, doi)
+        file_path.write_bytes(b"existing pdf")
+        downloader.download_pdf = Mock()
+
+        result = downloader.download_paper({"pmcid": pmcid, "doi": doi})
+
+        assert result["success"] is True
+        assert result["source"] == "cache"
+        assert result["stage"] == "cache_hit"
+        assert result["path"] == str(file_path)
+        downloader.download_pdf.assert_not_called()
+
+    def test_direct_url_result_does_not_mislabel_identifier_as_pmcid(self, downloader):
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.headers = {"content-type": "application/pdf"}
+        mock_response.iter_content.return_value = [b"pdf"]
+        downloader.session.get = Mock(return_value=mock_response)
+
+        result = downloader.download_paper(
+            {
+                "title": "Direct PDF",
+                "pdf_url": "https://example.com/direct.pdf",
+            }
+        )
+
+        assert result["success"] is True
+        assert "pmcid" not in result
+        assert result["pdf_url"] == "https://example.com/direct.pdf"
 
     def test_list_downloaded_pdfs(self, downloader, tmp_dir):
         """

@@ -32,6 +32,10 @@ class DownloadResult(TypedDict, total=False):
     full_text_url: str
     error: str
     stage: str
+    message: str
+    content_type: str
+    content_length: int
+    skipped_existing: bool
 
 
 class DownloadPayload(TypedDict):
@@ -47,7 +51,7 @@ class DownloadPayload(TypedDict):
 
 
 class RunSummaryEntry(TypedDict):
-    """One retryable run summary entry."""
+    """One run summary entry."""
 
     index: int
     status: Literal["success", "failed"]
@@ -58,6 +62,8 @@ class RunSummaryEntry(TypedDict):
     result: DownloadResult
     path: str
     error: str
+    retryable: bool
+    retry_reason: str
 
 
 class RunSummary(TypedDict):

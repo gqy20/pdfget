@@ -11,6 +11,8 @@ from .paper_schema import PaperRecord, build_identifier, normalize_paper_record
 from .schemas import DownloadResult, RunSummary, RunSummaryEntry
 
 RUN_SUMMARY_SCHEMA: Literal["run_summary.v1"] = "run_summary.v1"
+RETRYABLE_STAGES = {"download_pdf", "save_file", "worker_error"}
+NON_RETRYABLE_STAGES = {"resolve_identifier", "validate_response", "cache_hit"}
 
 
 def _result_paper(result: DownloadResult) -> PaperRecord:
@@ -36,6 +38,35 @@ def _entry_paper(
     return _result_paper(result)
 
 
+def classify_retryability(
+    result: DownloadResult,
+    paper: dict[str, Any] | PaperRecord,
+) -> tuple[bool, str]:
+    """Return whether a failed result should be retried by default."""
+    if result.get("success"):
+        return False, ""
+
+    normalized = normalize_paper_record(paper, str(paper.get("source") or "resume"))
+    if not normalized["is_downloadable"]:
+        return False, "not_downloadable"
+
+    stage = str(result.get("stage") or "")
+    error = str(result.get("error") or "").lower()
+    if stage in NON_RETRYABLE_STAGES:
+        return False, stage
+    if "no downloadable identifier" in error or "no identifier" in error:
+        return False, "missing_identifier"
+    if "不是 pdf 文件" in error or "not pdf" in error:
+        return False, "not_pdf"
+    if stage in RETRYABLE_STAGES:
+        return True, stage
+    if "timeout" in error or "超时" in error:
+        return True, "timeout"
+    if "failed" in error or "失败" in error:
+        return True, "download_failed"
+    return False, "unknown_failure"
+
+
 def build_run_summary(
     results: list[DownloadResult],
     *,
@@ -52,6 +83,7 @@ def build_run_summary(
         paper = _entry_paper(papers, result, index)
         identifier, identifier_type = build_identifier({**paper, **result})
         success = bool(result.get("success"))
+        retryable, retry_reason = classify_retryability(result, paper)
         entries.append(
             {
                 "index": index,
@@ -63,6 +95,8 @@ def build_run_summary(
                 "result": result,
                 "path": result.get("path") or "",
                 "error": result.get("error") or "",
+                "retryable": retryable,
+                "retry_reason": retry_reason,
             }
         )
 
@@ -116,6 +150,12 @@ def load_failed_papers(report_path: str | Path) -> list[PaperRecord]:
         if entry.get("status") != "failed":
             continue
         paper = entry.get("paper") or _result_paper(entry.get("result") or {})
+        result = entry.get("result") or {}
+        retryable = entry.get("retryable")
+        if retryable is None:
+            retryable, _ = classify_retryability(result, paper)
+        if not retryable:
+            continue
         normalized = normalize_paper_record(paper, str(paper.get("source") or "resume"))
         if normalized["is_downloadable"]:
             papers.append(normalized)
