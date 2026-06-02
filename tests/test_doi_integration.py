@@ -25,8 +25,10 @@ class TestDOIIntegration:
     # 集成测试1: CSV文件中包含DOI的完整流程
     @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
     @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.fetcher.PaperFetcher._convert_pmids_to_pmcids")
-    def test_csv_with_dois_complete_flow(self, mock_pmids, mock_batch_convert, mock_download, fetcher):
+    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    def test_csv_with_dois_complete_flow(
+        self, mock_process_pmids, mock_batch_convert, mock_download, fetcher
+    ):
         """
         测试: CSV文件包含DOI时的完整处理流程（mock 所有转换避免真实网络请求）
         """
@@ -36,7 +38,9 @@ class TestDOIIntegration:
             "10.1016/j.cell.2020.01.021": "PMC789012",
         }
         # 模拟 PMID → PMCID 转换结果
-        mock_pmids.return_value = ["PMC999999"]
+        mock_process_pmids.return_value = [
+            {"pmid": "38238491", "pmcid": "PMC999999"}
+        ]
 
         # 模拟下载结果
         mock_download.return_value = [
@@ -60,8 +64,8 @@ PMC12345,Paper 4 PMCID"""
             csv_path = f.name
 
         try:
-            # 执行下载（通过实际的download_from_identifiers方法）
-            results = fetcher.download_from_identifiers(csv_path, id_column="ID")
+            # 执行下载（通过统一输入入口）
+            results = fetcher.download_from_unified_input(csv_path, column="ID")
 
             # 验证下载管理器被调用
             mock_download.assert_called_once()
@@ -103,18 +107,10 @@ PMC12345,Paper 4 PMCID"""
         assert len(result) > 0
 
     # 集成测试3: 混合标识符输入
-    @patch("src.pdfget.fetcher.PaperFetcher._convert_dois_to_pmcids")
-    @patch("src.pdfget.fetcher.PaperFetcher._convert_pmids_to_pmcids")
-    def test_mixed_identifiers_input(
-        self, mock_convert_pmids, mock_convert_dois, fetcher
-    ):
+    def test_mixed_identifiers_input(self, fetcher):
         """
         测试: PMCID、PMID、DOI混合输入的处理
         """
-        # 模拟转换结果
-        mock_convert_dois.return_value = ["PMC111111"]
-        mock_convert_pmids.return_value = ["PMC222222"]
-
         # 混合标识符输入
         mixed_input = "10.1000/doi.test,38238491,PMC333333"
 

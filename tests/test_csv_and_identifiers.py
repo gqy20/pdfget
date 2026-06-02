@@ -197,8 +197,8 @@ class TestPMIDConversion(CSVTestMixin):
         self.fetcher = PaperFetcher(cache_dir="test_cache", output_dir="test_output")
 
     @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
-    def test_convert_pmids_to_pmcids(self, mock_process):
-        """测试：PMID 批量转换为 PMCID"""
+    def test_convert_pmids_to_pmcid_mapping(self, mock_process):
+        """测试：PMID 批量转换为 PMID -> PMCID 映射"""
         # 模拟转换结果
         mock_process.return_value = [
             {"pmid": "38238491", "pmcid": "PMC10851947"},
@@ -207,23 +207,24 @@ class TestPMIDConversion(CSVTestMixin):
         ]
 
         pmids = ["38238491", "38238492", "38238493"]
-        result = self.fetcher._convert_pmids_to_pmcids(pmids)
+        result = self.fetcher._convert_pmids_to_pmcid_mapping(pmids)
 
         # 验证调用
         assert mock_process.called
-        # 验证返回的 PMCID 列表
-        assert len(result) == 2  # 只返回有 PMCID 的
-        assert "PMC10851947" in result
-        assert "PMC10851948" in result
+        # 验证返回的 PMID -> PMCID 映射
+        assert result == {
+            "38238491": "PMC10851947",
+            "38238492": "PMC10851948",
+        }
 
     @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_convert_empty_pmids(self, mock_process):
         """测试：空 PMID 列表"""
-        result = self.fetcher._convert_pmids_to_pmcids([])
+        result = self.fetcher._convert_pmids_to_pmcid_mapping([])
 
         # 应该不调用 API
         assert not mock_process.called
-        assert len(result) == 0
+        assert result == {}
 
 
 class TestCSVDowloadIntegration(CSVTestMixin):
@@ -234,8 +235,10 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         self.fetcher = PaperFetcher()
 
     @patch("src.pdfget.manager.UnifiedDownloadManager")
-    def test_download_from_pmcid_csv(self, mock_manager_class, csv_file_with_pmcids):
-        """测试：从 PMCID CSV 文件下载论文"""
+    def test_download_from_unified_input_pmcid_csv(
+        self, mock_manager_class, csv_file_with_pmcids
+    ):
+        """测试：从 PMCID CSV 文件通过统一入口下载论文"""
         # Mock UnifiedDownloadManager 实例
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
@@ -259,8 +262,11 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         ]
 
         # 调用下载方法
-        results = self.fetcher.download_from_pmcid_csv(
-            str(csv_file_with_pmcids), limit=None, max_workers=10
+        results = self.fetcher.download_from_unified_input(
+            str(csv_file_with_pmcids),
+            column="PMCID",
+            limit=None,
+            max_workers=10,
         )
 
         # 验证结果
@@ -273,7 +279,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.assert_called_once()
 
     @patch("src.pdfget.manager.UnifiedDownloadManager")
-    def test_download_from_pmcid_csv_with_limit(
+    def test_download_from_unified_input_pmcid_csv_with_limit(
         self, mock_manager_class, temp_output_dir
     ):
         """测试：带限制的下载"""
@@ -283,12 +289,14 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
 
         # 创建包含多个 PMCID 的 CSV 文件
-        csv_data = [["ID"], ["123456"], ["789012"], ["345678"], ["901234"]]
+        csv_data = [["ID"], ["PMC123456"], ["PMC789012"], ["PMC345678"], ["PMC901234"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "many_pmcids.csv")
 
         try:
             # 限制只下载前 2 个
-            self.fetcher.download_from_pmcid_csv(str(csv_file), limit=2)
+            self.fetcher.download_from_unified_input(
+                str(csv_file), column="ID", limit=2
+            )
 
             # 验证只传递了前 2 个论文
             call_args = mock_manager.download_batch.call_args
@@ -378,7 +386,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
         mock_manager_class.return_value = mock_manager
 
-        self.fetcher.download_from_identifiers(str(csv_file), id_column="ID")
+        self.fetcher.download_from_unified_input(str(csv_file), column="ID")
 
         papers = mock_manager.download_batch.call_args[0][0]
         assert [
