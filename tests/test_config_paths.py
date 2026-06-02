@@ -130,22 +130,22 @@ class TestPaperFetcherDefaultPaths:
                 {"pmid": "1", "title": "Test"}
             ]
 
-    def test_fetcher_export_results_accepts_legacy_format_keyword(self):
-        """PaperFetcher export_results 保留 format= 关键字兼容"""
+    def test_fetcher_export_results_rejects_legacy_format_keyword(self):
+        """PaperFetcher export_results 不再接受旧 format= 关键字"""
         from pdfget.fetcher import PaperFetcher
 
         with tempfile.TemporaryDirectory() as tmp:
             fetcher = PaperFetcher(cache_dir=tmp)
-            output_path = fetcher.export_results(
-                [{"pmid": "1", "title": "Test"}],
-                format="csv",
-                filename="papers.csv",
-            )
-
-            assert Path(output_path).read_text(encoding="utf-8").splitlines() == [
-                "pmid,title",
-                "1,Test",
-            ]
+            try:
+                fetcher.export_results(
+                    [{"pmid": "1", "title": "Test"}],
+                    format="csv",  # type: ignore[call-arg]
+                    filename="papers.csv",
+                )
+            except TypeError as exc:
+                assert "unexpected keyword argument" in str(exc)
+            else:
+                raise AssertionError("Expected TypeError")
 
     def test_fetcher_export_results_rejects_unknown_format(self):
         """PaperFetcher export_results 对未知格式报错"""

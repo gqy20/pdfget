@@ -37,19 +37,6 @@ class UnifiedDownloadManager:
         self._total = 0
         self._thread_local = threading.local()
 
-    def _normalize_input(
-        self, items: list[str] | list[dict]
-    ) -> tuple[list[dict], list[str]]:
-        """Normalize a DOI list or paper list into a common shape."""
-        papers: list[dict] = []
-        if items and isinstance(items[0], dict):
-            papers = items  # type: ignore[assignment]
-            dois = [paper["doi"] for paper in papers if paper.get("doi")]  # type: ignore[index]
-        else:
-            papers = [{"doi": item} for item in items]
-            dois = items  # type: ignore[assignment]
-        return papers, dois
-
     def _paper_identity(self, paper: dict[str, Any]) -> str:
         """Return the best identifier for mapping results back to inputs."""
         return paper.get("doi") or paper.get("pmcid") or paper.get("arxiv_id") or ""
@@ -168,20 +155,20 @@ class UnifiedDownloadManager:
 
     def download_batch(
         self,
-        items: list[str] | list[dict],
+        papers: list[dict[str, Any]],
         timeout: int = 30,
     ) -> list[dict[str, Any]]:
         """Download a batch of papers."""
-        if not items:
+        if not papers:
             return []
 
-        papers, dois = self._normalize_input(items)
+        doi_count = sum(1 for paper in papers if paper.get("doi"))
         pmcid_count = sum(1 for paper in papers if paper.get("pmcid"))
         arxiv_count = sum(
             1 for paper in papers if paper.get("arxiv_id") or paper.get("pdf_url")
         )
 
-        if not dois and not pmcid_count and not arxiv_count:
+        if not doi_count and not pmcid_count and not arxiv_count:
             self.logger.warning("没有有效的 DOI、PMCID 或 arXiv 标识符可以下载")
             return []
 

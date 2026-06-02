@@ -62,7 +62,7 @@ twine upload dist/*
 - **download_plan** (`download_plan.py`) - 搜索结果、直接输入、续跑和下载器之间的统一计划协议
 - **download_service** (`download_service.py`) - Python API 的统一输入下载 façade
 - **PDFDownloader** (`downloader.py`) - 单篇 PDF 下载，从 PMC OA Service、Europe PMC、arXiv 等来源下载
-- **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器，按下载计划中的论文记录执行下载
+- **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器，只按下载计划中的论文记录执行下载
 - **PMCIDRetriever** (`pmcid.py`) - 批量 PMCID 获取，使用 ESummary API 优化
 - **Counter** (`counter.py`) - PMCID 统计分析，显示 PMC 比例
 - **Formatter** (`formatter.py`) - 结果格式化输出
@@ -93,6 +93,9 @@ twine upload dist/*
 - 统计分析：`pdfget -s "query" --count`
 
 ### 扩展性设计
+- 检索、输入解析和下载之间通过 `download_plan.v1` 连接；下载管理器不再兼容裸 DOI 字符串列表，调用方需要先生成论文记录或使用 `download_from_unified_input()`
+- 运行报告使用 `run_summary.v1`，包含成功、失败和计划阶段跳过的记录；续跑只加载可重试失败项
+- 搜索结果导出使用 `format_type` 参数，日志初始化由 `configure_logging()` / `setup_logger()` 负责，不保留旧参数别名
 - 模块化架构支持添加新数据源
 - 下载源可在 `pdf_sources` 配置中扩展
 - 支持多种输出格式（console、json、markdown）

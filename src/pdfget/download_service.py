@@ -16,7 +16,7 @@ class DownloadManager(Protocol):
 
     def download_batch(
         self,
-        items: list[str] | list[dict[str, Any]],
+        papers: list[dict[str, Any]],
         timeout: int = 30,
     ) -> list[DownloadResult]: ...
 

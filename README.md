@@ -236,6 +236,7 @@ pdfget -m pmcids.csv -d --delay 0.5
 ### 失败续跑
 
 每次下载都会在输出目录生成 `download_plan.json`、`run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息和可重试的论文记录。
+`run_summary.json` 同时包含下载计划中被跳过的记录，例如重复项、缺少下载路由或无法解析的标识符；`--resume` 默认只重试报告中标记为可重试的失败项。
 
 ```bash
 # 重试上一次失败的下载项
@@ -268,6 +269,8 @@ results = download_from_unified_input(
     max_workers=3,
 )
 ```
+
+下载链路使用 `download_plan.v1` 作为边界协议。`UnifiedDownloadManager.download_batch()` 只接收计划产出的论文记录，不再接收裸 DOI 字符串列表；如果要处理 CSV、PMCID、PMID、DOI 或 arXiv 混合输入，请先使用 `build_download_plan_from_unified_input()` 或直接调用 `download_from_unified_input()`。搜索结果导出使用 `format_type="json" | "csv" | "tsv"` 参数。
 
 ### PMC 过滤技巧
 

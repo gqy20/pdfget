@@ -130,15 +130,9 @@ def setup_logger(
     name: str,
     level: str | None = None,
     log_format: str | None = None,
-    use_colors: bool = True,
     log_file: Path | None = None,
 ) -> Logger:
-    """Return a configured structured logger.
-
-    The ``use_colors`` parameter is kept for backward compatibility; text output
-    auto-detects terminal color support.
-    """
-    del use_colors
+    """Return a configured structured logger."""
     configure_logging(
         level=level,
         log_format=log_format or _LOG_FORMAT,

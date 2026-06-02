@@ -273,7 +273,6 @@ class PaperFetcher(NCBIBaseModule):
         papers: list[dict],
         format_type: str = "json",
         filename: "str | None" = None,
-        **kwargs: str,
     ) -> str:
         """
         导出搜索结果
@@ -286,12 +285,6 @@ class PaperFetcher(NCBIBaseModule):
         Returns:
             输出文件路径
         """
-        if "format" in kwargs:
-            format_type = kwargs.pop("format")
-        if kwargs:
-            unexpected = ", ".join(kwargs)
-            raise TypeError(f"不支持的参数: {unexpected}")
-
         format_type = format_type.lower()
         if not filename:
             timestamp = time.strftime("%Y%m%d_%H%M%S")

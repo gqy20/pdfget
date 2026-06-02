@@ -13,6 +13,7 @@ planning, download, reporting, logging, and CLI workflows.
 - `test_downloader.py`: single-paper PDF download behavior
 - `test_searcher.py`: PubMed, Europe PMC, arXiv, and combined search behavior
 - `test_counter.py`: PMCID statistics and credential propagation
+- `test_config_paths.py`: cache/export behavior and public API migration boundaries
 
 ## Run Tests
 
