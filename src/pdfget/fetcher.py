@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-简化版文献获取器 - Linus风格
-只做一件事：下载开放获取文献
-遵循KISS原则：Keep It Simple, Stupid
-"""
+"""Search, metadata enrichment, and identifier resolution facade."""
 
 import json
 import time
@@ -35,7 +31,7 @@ from .utils.error_handling import handle_ncbi_errors
 
 
 class PaperFetcher(NCBIBaseModule):
-    """简单文献获取器"""
+    """Coordinate paper search, metadata enrichment, and identifier resolution."""
 
     def __init__(
         self,
@@ -83,7 +79,6 @@ class PaperFetcher(NCBIBaseModule):
         self.doi_converter = DOIConverter(
             self.session, email=self.email, api_key=self.api_key
         )
-        self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
         self.abstract_supplementor = AbstractSupplementor(timeout=5, delay=0.2)
 
     def _get_cache_key(self, query: str, source: str) -> str:
@@ -187,7 +182,7 @@ class PaperFetcher(NCBIBaseModule):
             "search_cache_size_bytes": search_cache["size_bytes"],
             "search_cache_size_mb": search_cache["size_mb"],
             "search_cache_dir": search_cache["directory"],
-            "pdf_cache": self.pdf_downloader.get_cache_info(),
+            "pdf_cache": PDFDownloader(str(self.output_dir), self.session).get_cache_info(),
         }
 
     def clear_cache(self, search_cache: bool = True, pdf_cache: bool = False) -> None:
@@ -202,7 +197,9 @@ class PaperFetcher(NCBIBaseModule):
             self.cache_manager.clear()
 
         if pdf_cache:
-            deleted_count = self.pdf_downloader.cleanup_old_pdfs(max_age_days=0)
+            deleted_count = PDFDownloader(
+                str(self.output_dir), self.session
+            ).cleanup_old_pdfs(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
 
     def _read_identifiers_from_csv(

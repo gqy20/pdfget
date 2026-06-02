@@ -7,10 +7,9 @@ import pytest
 from pdfget.manager import UnifiedDownloadManager
 
 
-class _ThreadFetcher:
+class _ThreadDownloader:
     def __init__(self):
-        self.pdf_downloader = Mock()
-        self.pdf_downloader.download_paper.side_effect = self._download_paper
+        self.download_paper = Mock(side_effect=self._download_paper)
 
     @staticmethod
     def _download_paper(paper):
@@ -30,7 +29,7 @@ def test_download_batch_preserves_duplicate_identifier_order():
     fetcher.default_source = "pubmed"
 
     manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=2, base_delay=0)
-    manager._create_thread_fetcher = Mock(side_effect=lambda: _ThreadFetcher())
+    manager._create_thread_downloader = Mock(side_effect=_ThreadDownloader)
 
     papers = [
         {"pmcid": "PMC123", "title": "first"},
@@ -52,27 +51,29 @@ def test_download_batch_reuses_fetcher_within_worker_thread():
     fetcher.api_key = "api-key"
     fetcher.default_source = "pubmed"
 
-    created_fetchers = []
+    created_downloaders = []
 
-    class RecordingFetcher(_ThreadFetcher):
+    class RecordingDownloader:
         def __init__(self):
-            super().__init__()
             self.thread_ids = []
 
             def _record_thread(paper):
                 self.thread_ids.append(threading.get_ident())
                 time.sleep(0.01)
-                return self._download_paper(paper)
+                return {
+                    "success": True,
+                    "path": f"{paper['title']}.pdf",
+                }
 
-            self.pdf_downloader.download_paper.side_effect = _record_thread
+            self.download_paper = Mock(side_effect=_record_thread)
 
-    def _create_fetcher():
-        thread_fetcher = RecordingFetcher()
-        created_fetchers.append(thread_fetcher)
-        return thread_fetcher
+    def _create_downloader():
+        downloader = RecordingDownloader()
+        created_downloaders.append(downloader)
+        return downloader
 
     manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=1, base_delay=0)
-    manager._create_thread_fetcher = Mock(side_effect=_create_fetcher)
+    manager._create_thread_downloader = Mock(side_effect=_create_downloader)
 
     papers = [
         {"pmcid": "PMC1", "title": "first"},
@@ -82,31 +83,22 @@ def test_download_batch_reuses_fetcher_within_worker_thread():
     results = manager.download_batch(papers)
 
     assert [result["path"] for result in results] == ["first.pdf", "second.pdf"]
-    manager._create_thread_fetcher.assert_called_once()
-    assert len(created_fetchers[0].thread_ids) == 2
-    assert len(set(created_fetchers[0].thread_ids)) == 1
+    manager._create_thread_downloader.assert_called_once()
+    assert len(created_downloaders[0].thread_ids) == 2
+    assert len(set(created_downloaders[0].thread_ids)) == 1
 
 
-def test_create_thread_fetcher_preserves_parent_credentials():
+def test_create_thread_downloader_uses_parent_output_dir():
     fetcher = Mock()
-    fetcher.cache_dir = "cache"
     fetcher.output_dir = "pdfs"
-    fetcher.email = "user@example.com"
-    fetcher.api_key = "api-key"
-    fetcher.default_source = "arxiv"
+    fetcher.session = Mock()
 
     manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=1, base_delay=0)
 
-    with patch("pdfget.manager.PaperFetcher") as created:
-        manager._create_thread_fetcher()
+    with patch("pdfget.manager.PDFDownloader") as created:
+        manager._create_thread_downloader()
 
-    created.assert_called_once_with(
-        cache_dir="cache",
-        output_dir="pdfs",
-        email="user@example.com",
-        api_key="api-key",
-        default_source="arxiv",
-    )
+    created.assert_called_once_with("pdfs", fetcher.session)
 
 
 @pytest.mark.usefixtures("fast_sleep")
@@ -118,11 +110,11 @@ def test_download_batch_marks_worker_errors_with_stage():
     fetcher.api_key = ""
     fetcher.default_source = "pubmed"
 
-    thread_fetcher = Mock()
-    thread_fetcher.pdf_downloader.download_paper.side_effect = RuntimeError("boom")
+    thread_downloader = Mock()
+    thread_downloader.download_paper.side_effect = RuntimeError("boom")
 
     manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=1, base_delay=0)
-    manager._create_thread_fetcher = Mock(return_value=thread_fetcher)
+    manager._create_thread_downloader = Mock(return_value=thread_downloader)
 
     results = manager.download_batch([{"pmcid": "PMC1"}])
 

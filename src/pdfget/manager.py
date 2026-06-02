@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from .config import DOWNLOAD_BASE_DELAY, DOWNLOAD_RANDOM_DELAY
+from .downloader import PDFDownloader
 from .fetcher import PaperFetcher
 from .logger import get_logger
 
@@ -78,23 +79,17 @@ class UnifiedDownloadManager:
                 f"成功: {self._successful} PDF: {self._pdf_count} 失败: {self._failed}"
             )
 
-    def _create_thread_fetcher(self) -> PaperFetcher:
-        """Create an isolated fetcher instance for each worker thread."""
-        return PaperFetcher(
-            cache_dir=str(self.fetcher.cache_dir),
-            output_dir=str(self.fetcher.output_dir),
-            email=self.fetcher.email,
-            api_key=self.fetcher.api_key,
-            default_source=self.fetcher.default_source,
-        )
+    def _create_thread_downloader(self) -> PDFDownloader:
+        """Create an isolated downloader instance for each worker thread."""
+        return PDFDownloader(str(self.fetcher.output_dir), self.fetcher.session)
 
-    def _get_thread_fetcher(self) -> PaperFetcher:
-        """Return a fetcher instance reused within the current worker thread."""
-        fetcher = getattr(self._thread_local, "fetcher", None)
-        if fetcher is None:
-            fetcher = self._create_thread_fetcher()
-            self._thread_local.fetcher = fetcher
-        return fetcher
+    def _get_thread_downloader(self) -> PDFDownloader:
+        """Return a downloader instance reused within the current worker thread."""
+        downloader = getattr(self._thread_local, "downloader", None)
+        if downloader is None:
+            downloader = self._create_thread_downloader()
+            self._thread_local.downloader = downloader
+        return downloader
 
     def _download_single_task(
         self, paper: dict[str, Any], timeout: int = 30
@@ -102,8 +97,8 @@ class UnifiedDownloadManager:
         """Download a single paper inside a worker thread."""
         try:
             time.sleep(self._get_delay())
-            fetcher = self._get_thread_fetcher()
-            result = fetcher.pdf_downloader.download_paper(paper)
+            downloader = self._get_thread_downloader()
+            result = downloader.download_paper(paper)
             result["doi"] = paper.get("doi", "")
             result["pmcid"] = paper.get("pmcid", "") or ""
             result["arxiv_id"] = paper.get("arxiv_id", "") or ""
