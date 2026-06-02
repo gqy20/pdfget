@@ -78,6 +78,11 @@
 
 下载计划是搜索、直接输入、失败续跑和下载器之间的统一中间协议。它决定哪些论文进入下载器，哪些被跳过，以及跳过原因。
 
+每次下载或 `--dry-run` 都会在输出目录保存下载计划：
+
+- `download_plan.json`：最近一次下载计划
+- `download_plan_YYYYMMDD_HHMMSS.json`：同一内容的归档副本
+
 顶层字段：
 
 | 字段 | 类型 | 说明 |
@@ -173,6 +178,7 @@
 | `output_dir` | string | 本次运行输出目录 |
 | `input_value` | string | 原始搜索词、统一输入值或报告路径 |
 | `previous_report` | string | 当 `source=resume` 时，记录被重试的报告路径 |
+| `download_plan_path` | string | 本次运行对应的 `download_plan.json` 路径 |
 | `total` | number | 条目总数 |
 | `success` | number | 成功条目数 |
 | `failed` | number | 失败条目数 |

@@ -176,6 +176,7 @@ uv run pdfget -s "machine learning" -l 20
 - `-l NUM` - 处理数量（默认 200）
 - `-t NUM` - 并发线程数（默认 3）
 - `--delay SEC` - 下载延迟秒数（默认 1.0）
+- `--dry-run` - 只生成搜索结果和下载计划，不实际下载
 - `-o DIR` - 输出目录（默认 data/pdfs）
 - `-v` - 详细输出
 
@@ -211,6 +212,9 @@ pdfget -s "large language model" -S all -l 30
 
 # 指定输出目录
 pdfget -s "machine learning" -l 50 -d -o ~/papers
+
+# 仅预览下载计划，不实际下载
+pdfget -s "vision transformer" -S all -l 30 -d --dry-run
 ```
 
 ### CSV 批量下载
@@ -231,7 +235,7 @@ pdfget -m pmcids.csv -d --delay 0.5
 
 ### 失败续跑
 
-每次下载都会在输出目录生成 `run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息和可重试的论文记录。
+每次下载都会在输出目录生成 `download_plan.json`、`run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息和可重试的论文记录。
 
 ```bash
 # 重试上一次失败的下载项

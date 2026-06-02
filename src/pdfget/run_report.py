@@ -43,6 +43,7 @@ def build_run_summary(
     output_dir: str,
     input_value: str | None = None,
     previous_report: str | None = None,
+    download_plan_path: str | None = None,
 ) -> dict[str, Any]:
     """Build a retryable summary for one download run."""
     entries: list[dict[str, Any]] = []
@@ -79,6 +80,8 @@ def build_run_summary(
         payload["input_value"] = input_value
     if previous_report is not None:
         payload["previous_report"] = previous_report
+    if download_plan_path is not None:
+        payload["download_plan_path"] = download_plan_path
     return payload
 
 

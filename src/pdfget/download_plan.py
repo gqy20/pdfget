@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import time
+from pathlib import Path
 from typing import Literal, TypedDict
 
 from .paper_schema import PaperRecord, normalize_paper_record
@@ -135,3 +138,19 @@ def ready_papers(plan: DownloadPlan) -> list[PaperRecord]:
         for entry in plan["entries"]
         if entry["status"] == "ready"
     ]
+
+
+def save_download_plan(output_dir: str, plan: DownloadPlan) -> Path:
+    """Save the latest download plan and a timestamped copy."""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    latest_path = output_path / "download_plan.json"
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    archived_path = output_path / f"download_plan_{timestamp}.json"
+
+    for path in (latest_path, archived_path):
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(plan, file, indent=2, ensure_ascii=False)
+
+    return latest_path

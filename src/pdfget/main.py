@@ -17,7 +17,7 @@ from .config import (
     TIMEOUT,
 )
 from .counter import PMCIDCounter
-from .download_plan import build_download_plan, ready_papers
+from .download_plan import build_download_plan, ready_papers, save_download_plan
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
 from .logger import Logger, configure_logging, get_main_logger
@@ -92,6 +92,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-e", help="NCBI API 邮箱（提高请求限制）")
     parser.add_argument("-k", help="NCBI API 密钥（可选）")
     parser.add_argument("--delay", type=float, help="下载延迟时间（秒，默认 1.0）")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="只生成搜索结果和下载计划，不实际下载",
+    )
     parser.add_argument(
         "--log-format",
         choices=["text", "json"],
@@ -184,6 +189,13 @@ def log_download_plan(logger: Logger, plan: dict[str, Any]) -> None:
     )
     if duplicate_count or no_route_count:
         logger.info(f"   跳过原因: 重复 {duplicate_count}，无下载路径 {no_route_count}")
+
+
+def emit_download_plan(logger: Logger, plan: dict[str, Any], output_dir: str) -> Path:
+    """Persist the download plan for audit and dry-run workflows."""
+    plan_file = save_download_plan(output_dir, plan)  # type: ignore[arg-type]
+    logger.info(f"\n下载计划已保存到: {plan_file}")
+    return plan_file
 
 
 def get_primary_identifier_display(paper: dict[str, Any]) -> tuple[str, str]:
@@ -305,6 +317,7 @@ def emit_run_summary(
     source: str,
     input_value: str | None = None,
     previous_report: str | None = None,
+    download_plan_path: str | None = None,
 ) -> Path:
     """Save a retryable run summary for every download run."""
     summary = build_run_summary(
@@ -314,6 +327,7 @@ def emit_run_summary(
         output_dir=output_dir,
         input_value=input_value,
         previous_report=previous_report,
+        download_plan_path=download_plan_path,
     )
     summary_file = save_run_summary(output_dir, summary)
     logger.info(f"\n运行报告已保存到: {summary_file}")
@@ -397,7 +411,11 @@ def main() -> None:
 
                 plan = build_download_plan(papers, source="search")
                 log_download_plan(logger, plan)
+                plan_file = emit_download_plan(logger, plan, args.o)
                 downloadable_papers = ready_papers(plan)
+                if args.dry_run:
+                    logger.info("\nDry run 完成，未执行下载")
+                    return
                 logger.info(f"\n开始下载 PDF，找到 {len(downloadable_papers)} 篇可下载文献")
 
                 if downloadable_papers:
@@ -419,6 +437,7 @@ def main() -> None:
                         papers=downloadable_papers,
                         source="search",
                         input_value=args.s,
+                        download_plan_path=str(plan_file),
                     )
                     emit_download_results(
                         logger,
@@ -458,7 +477,11 @@ def main() -> None:
                 limit=args.l,
             )
             log_download_plan(logger, plan)
+            plan_file = emit_download_plan(logger, plan, args.o)
             downloadable_papers = ready_papers(plan)
+            if args.dry_run:
+                logger.info("\nDry run 完成，未执行下载")
+                return
             download_manager = UnifiedDownloadManager(
                 fetcher=fetcher,
                 max_workers=args.t,
@@ -474,6 +497,7 @@ def main() -> None:
                 papers=downloadable_papers,
                 source="unified_input",
                 input_value=args.m,
+                download_plan_path=str(plan_file),
             )
             emit_download_results(
                 logger,
@@ -492,7 +516,11 @@ def main() -> None:
 
             plan = build_download_plan(papers, source="resume")
             log_download_plan(logger, plan)
+            plan_file = emit_download_plan(logger, plan, args.o)
             downloadable_papers = ready_papers(plan)
+            if args.dry_run:
+                logger.info("\nDry run 完成，未执行下载")
+                return
             logger.info(f"准备重试 {len(downloadable_papers)} 个失败项")
             download_manager = UnifiedDownloadManager(
                 fetcher=fetcher,
@@ -508,6 +536,7 @@ def main() -> None:
                 papers=downloadable_papers,
                 source="resume",
                 previous_report=args.resume,
+                download_plan_path=str(plan_file),
             )
             emit_download_results(
                 logger,

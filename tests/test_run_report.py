@@ -35,12 +35,14 @@ def test_build_run_summary_pairs_papers_and_results():
         source="search",
         output_dir="pdfs",
         input_value="test query",
+        download_plan_path="pdfs/download_plan.json",
     )
 
     assert summary["schema"] == "run_summary.v1"
     assert summary["total"] == 2
     assert summary["success"] == 1
     assert summary["failed"] == 1
+    assert summary["download_plan_path"] == "pdfs/download_plan.json"
     assert summary["results"][0]["status"] == "success"
     assert summary["results"][1]["identifier"] == "2401.00001"
     assert summary["results"][1]["identifier_type"] == "arxiv"

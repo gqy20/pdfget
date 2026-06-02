@@ -311,6 +311,48 @@ def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
     assert papers[0]["arxiv_id"] == "2401.00001"
 
 
+def test_main_download_dry_run_writes_plan_without_downloading(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Downloadable arXiv Paper",
+            "authors": ["Author One"],
+            "journal": "arXiv",
+            "year": "2024",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+        }
+    ]
+
+    download_manager_class = Mock()
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "UnifiedDownloadManager", download_manager_class)
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-d",
+            "--dry-run",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    download_manager_class.assert_not_called()
+    plan = json.loads((tmp_path / "download_plan.json").read_text(encoding="utf-8"))
+    assert plan["schema"] == "download_plan.v1"
+    assert plan["ready"] == 1
+    assert not (tmp_path / "download_results.json").exists()
+    assert not (tmp_path / "run_summary.json").exists()
+
+
 def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     fetcher = Mock()
     fetcher.build_download_plan_from_unified_input.return_value = (
@@ -411,6 +453,43 @@ def test_main_unified_input_json_format_outputs_download_schema(
     )
     assert payload["schema"] == "download_result.v1"
     assert payload["input_value"] == "2301.12345"
+
+
+def test_main_unified_input_dry_run_writes_plan_without_downloading(
+    monkeypatch, tmp_path
+):
+    fetcher = Mock()
+    fetcher.build_download_plan_from_unified_input.return_value = (
+        main_module.build_download_plan(
+            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+            source="unified_input",
+        )
+    )
+
+    download_manager_class = Mock()
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "UnifiedDownloadManager", download_manager_class)
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-m",
+            "2301.12345",
+            "--dry-run",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    fetcher.build_download_plan_from_unified_input.assert_called_once()
+    download_manager_class.assert_not_called()
+    plan = json.loads((tmp_path / "download_plan.json").read_text(encoding="utf-8"))
+    assert plan["source"] == "unified_input"
+    assert plan["ready"] == 1
+    assert not (tmp_path / "download_results.json").exists()
 
 
 def test_main_search_json_format_keeps_stdout_machine_readable(
@@ -557,6 +636,7 @@ def test_main_download_writes_run_summary_for_failed_results(monkeypatch, tmp_pa
     summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
     assert summary["schema"] == "run_summary.v1"
     assert summary["failed"] == 1
+    assert summary["download_plan_path"] == str(tmp_path / "download_plan.json")
     assert summary["results"][0]["status"] == "failed"
     assert summary["results"][0]["paper"]["arxiv_id"] == "2401.00001"
 

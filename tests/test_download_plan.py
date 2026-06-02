@@ -2,6 +2,7 @@ from pdfget.download_plan import (
     build_download_plan,
     choose_download_strategy,
     ready_papers,
+    save_download_plan,
 )
 from pdfget.paper_schema import normalize_paper_record
 
@@ -102,3 +103,14 @@ def test_choose_download_strategy_prefers_pmc_then_arxiv_then_pdf():
     assert choose_download_strategy(pmc_record) == "pmc"
     assert choose_download_strategy(arxiv_record) == "arxiv"
     assert choose_download_strategy(pdf_record) == "direct_pdf"
+
+
+def test_save_download_plan_writes_latest_and_archived_copy(tmp_path):
+    plan = build_download_plan([{"pmcid": "PMC1", "source": "pubmed"}], source="search")
+
+    latest = save_download_plan(str(tmp_path), plan)
+
+    assert latest == tmp_path / "download_plan.json"
+    assert latest.exists()
+    archived = list(tmp_path.glob("download_plan_*.json"))
+    assert len(archived) == 1
