@@ -21,7 +21,12 @@ def test_build_run_summary_pairs_papers_and_results():
     ]
     results = [
         {"success": True, "path": "one.pdf", "pmcid": "PMC1"},
-        {"success": False, "error": "timeout", "arxiv_id": "2401.00001"},
+        {
+            "success": False,
+            "error": "timeout",
+            "arxiv_id": "2401.00001",
+            "stage": "download_pdf",
+        },
     ]
 
     summary = build_run_summary(
@@ -39,6 +44,7 @@ def test_build_run_summary_pairs_papers_and_results():
     assert summary["results"][0]["status"] == "success"
     assert summary["results"][1]["identifier"] == "2401.00001"
     assert summary["results"][1]["identifier_type"] == "arxiv"
+    assert summary["results"][1]["stage"] == "download_pdf"
     assert summary["results"][1]["paper"]["title"] == "Paper Two"
     assert summary["results"][1]["error"] == "timeout"
 

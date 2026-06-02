@@ -62,6 +62,7 @@ class TestPDFDownloader:
 
         assert result["success"] is False
         assert "error" in result
+        assert result["stage"] == "save_file"
         assert "path" in result
 
     def test_try_download_from_url_success(self, downloader):
@@ -108,6 +109,7 @@ class TestPDFDownloader:
 
         assert result["success"] is False
         assert result["error"] == "PDF 内容为空"
+        assert result["stage"] == "save_file"
         assert not Path(result["path"]).exists()
 
     @patch("src.pdfget.downloader.PDFDownloader._save_pdf")
@@ -128,6 +130,7 @@ class TestPDFDownloader:
 
         assert result["success"] is False
         assert "不是 PDF 文件" in result["error"]
+        assert result["stage"] == "validate_response"
 
     def test_download_pdf_success_first_source(self, downloader):
         """
@@ -165,6 +168,7 @@ class TestPDFDownloader:
 
         assert result["success"] is False
         assert "所有 1 个 PDF 源都失败" in result["error"]
+        assert result["stage"] == "download_pdf"
         assert downloader._try_download_from_url.call_count == len(
             downloader.pdf_sources
         )

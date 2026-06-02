@@ -6,6 +6,7 @@
 
 - 搜索结果：`paper_record.v1`
 - 下载结果：`download_result.v1`
+- 运行报告：`run_summary.v1`
 
 ## paper_record.v1
 
@@ -100,9 +101,65 @@
 | `success` | bool | 是否成功 |
 | `path` | string | 本地文件路径 |
 | `error` | string | 失败原因 |
+| `stage` | string | 失败阶段，成功时可能为空 |
 | `pmcid` | string | 关联 PMCID |
 | `doi` | string | 关联 DOI |
 | `arxiv_id` | string | 关联 arXiv ID |
+
+## run_summary.v1
+
+每次下载都会在输出目录保存运行报告：
+
+- `run_summary.json`：最近一次下载运行报告
+- `run_summary_YYYYMMDD_HHMMSS.json`：同一内容的归档副本
+
+报告用于人工排查，也用于 `--resume` 重试失败项。
+
+顶层字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `schema` | string | 固定为 `run_summary.v1` |
+| `timestamp` | number | 生成时间戳 |
+| `source` | string | 下载入口，例如 `search` / `unified_input` / `resume` |
+| `output_dir` | string | 本次运行输出目录 |
+| `input_value` | string | 原始搜索词、统一输入值或报告路径 |
+| `previous_report` | string | 当 `source=resume` 时，记录被重试的报告路径 |
+| `total` | number | 条目总数 |
+| `success` | number | 成功条目数 |
+| `failed` | number | 失败条目数 |
+| `results` | object[] | 单条运行条目 |
+
+单条 `results[]` 条目：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `index` | number | 本次运行中的顺序 |
+| `status` | string | `success` 或 `failed` |
+| `stage` | string | 失败阶段，成功时可能为空 |
+| `identifier` | string | 推荐主标识 |
+| `identifier_type` | string | 主标识类型 |
+| `paper` | object | 可重试的标准化论文记录，遵循 `paper_record.v1` |
+| `result` | object | 原始下载结果，遵循 `download_result.v1` 单条结果约定 |
+| `path` | string | 本地文件路径 |
+| `error` | string | 失败原因 |
+
+标准失败阶段：
+
+| 阶段 | 说明 |
+|------|------|
+| `resolve_identifier` | 输入记录缺少可下载标识符或 URL |
+| `download_pdf` | 下载请求失败、超时或所有下载源失败 |
+| `validate_response` | 下载响应不是 PDF 等内容校验失败 |
+| `save_file` | PDF 文件保存失败或响应体为空 |
+| `worker_error` | 并发 worker 执行时捕获到未预期异常 |
+
+`--resume` 行为：
+
+- 只读取 `run_summary.v1` 中 `status=failed` 的条目
+- 优先使用条目中的 `paper` 字段重试
+- 不可下载的失败项会被跳过
+- 新运行会生成新的 `run_summary.v1`，并在 `previous_report` 中记录来源报告
 
 ## 兼容性约定
 

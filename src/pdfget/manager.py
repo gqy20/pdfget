@@ -122,6 +122,7 @@ class UnifiedDownloadManager:
                 "arxiv_id": paper.get("arxiv_id", ""),
                 "success": False,
                 "error": str(exc),
+                "stage": "worker_error",
             }
 
     def _download_concurrent(self, papers: list[dict], timeout: int = 30) -> list[dict]:
@@ -152,6 +153,7 @@ class UnifiedDownloadManager:
                             "arxiv_id": paper.get("arxiv_id", ""),
                             "success": False,
                             "error": str(exc),
+                            "stage": "worker_error",
                         }
                     )
 
@@ -164,6 +166,7 @@ class UnifiedDownloadManager:
                 "arxiv_id": paper.get("arxiv_id", ""),
                 "success": False,
                 "error": "Not found",
+                "stage": "worker_error",
             }
             for paper, result in zip(papers, ordered_results, strict=True)
         ]

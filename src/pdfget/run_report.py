@@ -54,6 +54,7 @@ def build_run_summary(
             {
                 "index": index,
                 "status": "success" if success else "failed",
+                "stage": result.get("stage") or "",
                 "identifier": identifier,
                 "identifier_type": identifier_type,
                 "paper": paper,

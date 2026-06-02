@@ -75,7 +75,12 @@ class PDFDownloader:
             return {"success": True, "path": str(file_path)}
         except Exception as e:
             self.logger.error(f"PDF 保存失败: {str(e)}")
-            return {"success": False, "error": str(e), "path": str(file_path)}
+            return {
+                "success": False,
+                "error": str(e),
+                "path": str(file_path),
+                "stage": "save_file",
+            }
 
     def _save_pdf_stream(
         self, response: requests.Response, pmcid: str, doi: str
@@ -95,7 +100,12 @@ class PDFDownloader:
 
             if content_length == 0:
                 file_path.unlink(missing_ok=True)
-                return {"success": False, "error": "PDF 内容为空", "path": str(file_path)}
+                return {
+                    "success": False,
+                    "error": "PDF 内容为空",
+                    "path": str(file_path),
+                    "stage": "save_file",
+                }
 
             self.logger.info(f"PDF 保存成功: {file_path}")
             return {
@@ -106,7 +116,12 @@ class PDFDownloader:
         except Exception as e:
             self.logger.error(f"PDF 保存失败: {str(e)}")
             file_path.unlink(missing_ok=True)
-            return {"success": False, "error": str(e), "path": str(file_path)}
+            return {
+                "success": False,
+                "error": str(e),
+                "path": str(file_path),
+                "stage": "save_file",
+            }
 
     def _try_download_from_url(self, url: str, pmcid: str, doi: str) -> dict[str, Any]:
         """
@@ -134,6 +149,7 @@ class PDFDownloader:
                 return {
                     "success": False,
                     "error": f"不是 PDF 文件 (content-type: {content_type})",
+                    "stage": "validate_response",
                 }
 
             # 保存文件
@@ -145,11 +161,19 @@ class PDFDownloader:
             return save_result
 
         except requests.exceptions.Timeout:
-            return {"success": False, "error": "下载超时"}
+            return {"success": False, "error": "下载超时", "stage": "download_pdf"}
         except requests.exceptions.RequestException as e:
-            return {"success": False, "error": f"下载失败: {str(e)}"}
+            return {
+                "success": False,
+                "error": f"下载失败: {str(e)}",
+                "stage": "download_pdf",
+            }
         except Exception as e:
-            return {"success": False, "error": f"未知错误: {str(e)}"}
+            return {
+                "success": False,
+                "error": f"未知错误: {str(e)}",
+                "stage": "download_pdf",
+            }
 
     def download_pdf(self, pmcid: str, doi: str) -> dict[str, Any]:
         """
@@ -218,7 +242,7 @@ class PDFDownloader:
         # 所有源都失败
         error_msg = f"所有 {len(self.pdf_sources)} 个 PDF 源都失败"
         self.logger.error(error_msg)
-        return {"success": False, "error": error_msg}
+        return {"success": False, "error": error_msg, "stage": "download_pdf"}
 
     def check_pdf_exists(self, pmcid: str, doi: str) -> bool:
         """
@@ -416,4 +440,8 @@ class PDFDownloader:
             return self.download_arxiv_pdf(arxiv_id)
         if pdf_url:
             return self._try_download_from_url(pdf_url, record.get("identifier") or record.get("title", "paper"), doi)
-        return {"success": False, "error": "No downloadable identifier found"}
+        return {
+            "success": False,
+            "error": "No downloadable identifier found",
+            "stage": "resolve_identifier",
+        }

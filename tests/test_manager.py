@@ -107,3 +107,25 @@ def test_create_thread_fetcher_preserves_parent_credentials():
         api_key="api-key",
         default_source="arxiv",
     )
+
+
+@pytest.mark.usefixtures("fast_sleep")
+def test_download_batch_marks_worker_errors_with_stage():
+    fetcher = Mock()
+    fetcher.cache_dir = "cache"
+    fetcher.output_dir = "pdfs"
+    fetcher.email = ""
+    fetcher.api_key = ""
+    fetcher.default_source = "pubmed"
+
+    thread_fetcher = Mock()
+    thread_fetcher.pdf_downloader.download_paper.side_effect = RuntimeError("boom")
+
+    manager = UnifiedDownloadManager(fetcher=fetcher, max_workers=1, base_delay=0)
+    manager._create_thread_fetcher = Mock(return_value=thread_fetcher)
+
+    results = manager.download_batch([{"pmcid": "PMC1"}])
+
+    assert results[0]["success"] is False
+    assert results[0]["error"] == "boom"
+    assert results[0]["stage"] == "worker_error"
