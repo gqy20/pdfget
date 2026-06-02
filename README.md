@@ -165,9 +165,10 @@ uv run pdfget -s "machine learning" -l 20
 
 ## 核心参数
 
-### 必需参数（二选一）
+### 必需参数（三选一）
 - `-s QUERY` - 搜索文献
 - `-m INPUT` - 批量输入（CSV文件/标识符）
+- `--resume REPORT` - 从运行报告重试失败项
 - `-S SOURCE` - 选择搜索数据源
 
 ### 常用参数
@@ -226,6 +227,15 @@ pdfget -m "2401.01234,2301.12345" -d
 
 # 调整下载速度
 pdfget -m pmcids.csv -d --delay 0.5
+```
+
+### 失败续跑
+
+每次下载都会在输出目录生成 `run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息和可重试的论文记录。
+
+```bash
+# 重试上一次失败的下载项
+pdfget --resume data/pdfs/run_summary.json -o data/pdfs -t 3
 ```
 
 ### PMC 过滤技巧

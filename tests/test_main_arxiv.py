@@ -481,3 +481,128 @@ def test_main_download_json_format_keeps_stdout_machine_readable(
     assert payload["schema"] == "download_result.v1"
     assert payload["results"][0]["arxiv_id"] == "2401.00001"
     assert "PDF 下载器启动" in captured.err
+
+
+def test_main_download_writes_run_summary_for_failed_results(monkeypatch, tmp_path):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Downloadable arXiv Paper",
+            "authors": ["Author One"],
+            "journal": "arXiv",
+            "year": "2024",
+            "arxiv_id": "2401.00001",
+            "pdf_url": "https://arxiv.org/pdf/2401.00001.pdf",
+        }
+    ]
+
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {
+            "success": False,
+            "error": "timeout",
+            "arxiv_id": "2401.00001",
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "transformer",
+            "-S",
+            "arxiv",
+            "-d",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
+    assert summary["schema"] == "run_summary.v1"
+    assert summary["failed"] == 1
+    assert summary["results"][0]["status"] == "failed"
+    assert summary["results"][0]["paper"]["arxiv_id"] == "2401.00001"
+
+    download_payload = json.loads(
+        (tmp_path / "download_results.json").read_text(encoding="utf-8")
+    )
+    assert download_payload["total"] == 1
+    assert download_payload["success"] == 0
+
+
+def test_main_resume_retries_failed_report_entries(monkeypatch, tmp_path):
+    report_path = tmp_path / "previous_run.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema": "run_summary.v1",
+                "results": [
+                    {
+                        "status": "success",
+                        "paper": {"pmcid": "PMC1", "source": "pubmed"},
+                        "result": {"success": True, "pmcid": "PMC1"},
+                    },
+                    {
+                        "status": "failed",
+                        "paper": {
+                            "title": "Failed arXiv",
+                            "arxiv_id": "2401.00001",
+                            "source": "arxiv",
+                        },
+                        "result": {"success": False, "error": "timeout"},
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    fetcher = Mock()
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {
+            "success": True,
+            "path": str(tmp_path / "2401.00001.pdf"),
+            "arxiv_id": "2401.00001",
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "--resume",
+            str(report_path),
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    download_manager.download_batch.assert_called_once()
+    retried_papers = download_manager.download_batch.call_args.args[0]
+    assert len(retried_papers) == 1
+    assert retried_papers[0]["arxiv_id"] == "2401.00001"
+
+    summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
+    assert summary["source"] == "resume"
+    assert summary["previous_report"] == str(report_path)

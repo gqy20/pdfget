@@ -21,6 +21,7 @@ from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
 from .logger import Logger, configure_logging, get_main_logger
 from .manager import UnifiedDownloadManager
+from .run_report import build_run_summary, load_failed_papers, save_run_summary
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-m",
         help="批量输入（CSV文件/单个标识符/逗号分隔列表），支持混合 PMCID/PMID/DOI/arXiv ID",
     )
+    group.add_argument("--resume", help="从 run_summary.json 重试失败项")
 
     parser.add_argument(
         "-c",
@@ -278,6 +280,30 @@ def emit_download_results(
     return download_results_file
 
 
+def emit_run_summary(
+    logger: Logger,
+    results: list[dict[str, Any]],
+    output_dir: str,
+    *,
+    papers: list[dict[str, Any]] | None = None,
+    source: str,
+    input_value: str | None = None,
+    previous_report: str | None = None,
+) -> Path:
+    """Save a retryable run summary for every download run."""
+    summary = build_run_summary(
+        results,
+        papers=papers,
+        source=source,
+        output_dir=output_dir,
+        input_value=input_value,
+        previous_report=previous_report,
+    )
+    summary_file = save_run_summary(output_dir, summary)
+    logger.info(f"\n运行报告已保存到: {summary_file}")
+    return summary_file
+
+
 def print_pmcid_stats(stats: dict) -> None:
     """Print PMCID statistics in console mode."""
     print("\nPMCID统计结果:")
@@ -367,16 +393,22 @@ def main() -> None:
                     results = download_manager.download_batch(
                         downloadable_papers, timeout=TIMEOUT
                     )
-                    stats = log_download_stats(logger, results)
-
-                    if stats["success_count"] > 0:
-                        emit_download_results(
-                            logger,
-                            results,
-                            args.o,
-                            args.format,
-                            source="search",
-                        )
+                    log_download_stats(logger, results)
+                    emit_run_summary(
+                        logger,
+                        results,
+                        args.o,
+                        papers=downloadable_papers,
+                        source="search",
+                        input_value=args.s,
+                    )
+                    emit_download_results(
+                        logger,
+                        results,
+                        args.o,
+                        args.format,
+                        source="search",
+                    )
             else:
                 if args.S == "arxiv":
                     papers = fetcher.search_papers(args.s, limit=args.l, source=args.S)
@@ -410,19 +442,55 @@ def main() -> None:
                 base_delay=args.delay,
             )
 
-            stats = log_download_stats(logger, results)
+            log_download_stats(logger, results)
+            emit_run_summary(
+                logger,
+                results,
+                args.o,
+                source="unified_input",
+                input_value=args.m,
+            )
+            emit_download_results(
+                logger,
+                results,
+                args.o,
+                args.format,
+                source="unified_input",
+                input_value=args.m,
+            )
+        elif args.resume:
+            logger.info(f"\n重试失败下载: {args.resume}")
+            papers = load_failed_papers(args.resume)
+            if not papers:
+                logger.info("运行报告中没有可重试的失败项")
+                return
 
-            if stats["success_count"] > 0:
-                emit_download_results(
-                    logger,
-                    results,
-                    args.o,
-                    args.format,
-                    source="unified_input",
-                    input_value=args.m,
-                )
+            logger.info(f"准备重试 {len(papers)} 个失败项")
+            download_manager = UnifiedDownloadManager(
+                fetcher=fetcher,
+                max_workers=args.t,
+                base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
+            )
+            results = download_manager.download_batch(papers, timeout=TIMEOUT)
+            log_download_stats(logger, results)
+            emit_run_summary(
+                logger,
+                results,
+                args.o,
+                papers=papers,
+                source="resume",
+                previous_report=args.resume,
+            )
+            emit_download_results(
+                logger,
+                results,
+                args.o,
+                args.format,
+                source="resume",
+                input_value=args.resume,
+            )
         else:
-            logger.error("请指定 -s 或 -m 参数")
+            logger.error("请指定 -s、-m 或 --resume 参数")
             raise SystemExit(1)
 
     except KeyboardInterrupt:
