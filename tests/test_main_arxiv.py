@@ -313,7 +313,15 @@ def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
 
 def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     fetcher = Mock()
-    fetcher.download_from_unified_input.return_value = [
+    fetcher.build_download_plan_from_unified_input.return_value = (
+        main_module.build_download_plan(
+            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+            source="unified_input",
+        )
+    )
+
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
         {
             "arxiv_id": "2301.12345",
             "success": True,
@@ -322,6 +330,11 @@ def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     ]
 
     monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
     monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
     monkeypatch.setattr(
         "sys.argv",
@@ -338,20 +351,28 @@ def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
 
     main_module.main()
 
-    fetcher.download_from_unified_input.assert_called_once_with(
+    fetcher.build_download_plan_from_unified_input.assert_called_once_with(
         input_value="2301.12345",
         column=None,
         limit=main_module.DEFAULT_SEARCH_LIMIT,
-        max_workers=2,
-        base_delay=None,
     )
+    main_module.UnifiedDownloadManager.assert_called_once()
+    assert main_module.UnifiedDownloadManager.call_args.kwargs["max_workers"] == 2
+    download_manager.download_batch.assert_called_once()
 
 
 def test_main_unified_input_json_format_outputs_download_schema(
     monkeypatch, tmp_path, capsys
 ):
     fetcher = Mock()
-    fetcher.download_from_unified_input.return_value = [
+    fetcher.build_download_plan_from_unified_input.return_value = (
+        main_module.build_download_plan(
+            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+            source="unified_input",
+        )
+    )
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
         {
             "arxiv_id": "2301.12345",
             "success": True,
@@ -360,6 +381,11 @@ def test_main_unified_input_json_format_outputs_download_schema(
     ]
 
     monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
     monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
     monkeypatch.setattr(
         "sys.argv",

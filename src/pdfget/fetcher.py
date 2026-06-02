@@ -24,6 +24,7 @@ from .config import (
     get_cache_dir,
 )
 from .doi_converter import DOIConverter
+from .download_plan import DownloadPlan, build_download_plan, ready_papers
 from .downloader import PDFDownloader
 from .paper_schema import normalize_paper_record
 from .pmcid import PMCIDRetriever
@@ -713,6 +714,32 @@ class PaperFetcher(NCBIBaseModule):
         Returns:
             下载结果列表
         """
+        plan = self.build_download_plan_from_unified_input(
+            input_value=input_value,
+            column=column,
+            limit=limit,
+        )
+        papers = ready_papers(plan)
+        if not papers:
+            self.logger.warning("没有找到可下载的标识符")
+            return []
+
+        from .manager import UnifiedDownloadManager
+
+        download_manager = UnifiedDownloadManager(
+            fetcher=self,
+            max_workers=max_workers,
+            base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
+        )
+        return download_manager.download_batch(papers)
+
+    def build_download_plan_from_unified_input(
+        self,
+        input_value: str,
+        column: str | None = None,
+        limit: int | None = None,
+    ) -> DownloadPlan:
+        """Build a download plan from a CSV path or identifier string."""
         # 检测输入类型
         input_type = self._detect_input_type(input_value)
 
@@ -732,14 +759,11 @@ class PaperFetcher(NCBIBaseModule):
                 else:
                     raise ValueError(f"无法自动检测CSV列名: {input_value}")
 
-            # 使用现有的download_from_identifiers方法
-            return self.download_from_identifiers(
-                csv_path=input_value,
-                id_column=column,
-                limit=limit,
-                max_workers=max_workers,
-                base_delay=base_delay,
-            )
+            identifiers = self._read_identifier_values_from_csv(input_value, column)
+            papers = self._build_papers_from_identifiers_in_order(identifiers)
+            if limit is not None and limit > 0:
+                papers = papers[:limit]
+            return build_download_plan(papers, source="unified_input")
 
         elif input_type in ["single", "multiple"]:
             # 直接输入的标识符
@@ -751,23 +775,11 @@ class PaperFetcher(NCBIBaseModule):
             self.logger.info(f"检测到 {len(identifiers)} 个标识符")
             papers = self._build_papers_from_identifiers_in_order(identifiers)
 
-            if not papers:
-                self.logger.warning("没有找到可下载的标识符")
-                return []
-
             # 应用限制
             if limit:
                 papers = papers[:limit]
 
-            # 下载
-            from .manager import UnifiedDownloadManager
-
-            download_manager = UnifiedDownloadManager(
-                fetcher=self,
-                max_workers=max_workers,
-                base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
-            )
-            return download_manager.download_batch(papers)
+            return build_download_plan(papers, source="unified_input")
 
         else:
             raise ValueError(f"未知的输入类型: {input_type}")

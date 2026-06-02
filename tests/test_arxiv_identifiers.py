@@ -64,6 +64,14 @@ class TestArxivCSVAndInput(CSVTestMixin):
         papers = mock_manager.download_batch.call_args[0][0]
         assert papers[0]["arxiv_id"] == "2301.12345"
 
+    def test_build_download_plan_from_unified_input_routes_arxiv(self):
+        plan = self.fetcher.build_download_plan_from_unified_input("2301.12345")
+
+        assert plan["schema"] == "download_plan.v1"
+        assert plan["ready"] == 1
+        assert plan["entries"][0]["strategy"] == "arxiv"
+        assert plan["entries"][0]["paper"]["arxiv_id"] == "2301.12345"
+
     @patch("pdfget.manager.UnifiedDownloadManager")
     def test_download_from_identifiers_routes_arxiv_csv(self, mock_manager_class, temp_output_dir):
         csv_data = [["ID"], ["arXiv:2301.12345"], ["2301.12346v2"]]

@@ -5,6 +5,7 @@
 当前稳定版本：
 
 - 搜索结果：`paper_record.v1`
+- 下载计划：`download_plan.v1`
 - 下载结果：`download_result.v1`
 - 运行报告：`run_summary.v1`
 
@@ -72,6 +73,53 @@
 
 - stdout 输出与 `search_results_*.json` 落盘内容使用同一 payload 结构
 - `schema` 字段用于让上层智能体或脚本显式识别协议版本
+
+## download_plan.v1
+
+下载计划是搜索、直接输入、失败续跑和下载器之间的统一中间协议。它决定哪些论文进入下载器，哪些被跳过，以及跳过原因。
+
+顶层字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `schema` | string | 固定为 `download_plan.v1` |
+| `source` | string | 计划来源，例如 `search` / `unified_input` / `resume` |
+| `total` | number | 输入条目总数 |
+| `ready` | number | 可进入下载器的条目数 |
+| `skipped` | number | 被跳过的条目数 |
+| `entries` | object[] | 单条计划条目 |
+
+单条 `entries[]` 条目：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `index` | number | 原始输入顺序 |
+| `status` | string | `ready` 或 `skipped` |
+| `strategy` | string | 下载策略：`pmc` / `arxiv` / `direct_pdf` |
+| `identifier` | string | 推荐主标识 |
+| `identifier_type` | string | 主标识类型 |
+| `download_url` | string | 推荐下载 URL |
+| `skip_reason` | string | 跳过原因，当前为 `duplicate` / `no_download_route` / 空字符串 |
+| `duplicate_of` | number | 重复项指向的保留条目 index；非重复时为 `null` |
+| `dedupe_key` | string | 去重键 |
+| `merged_sources` | string[] | 被合并到保留条目的来源列表 |
+| `source` | string | 计划来源 |
+| `paper` | object | 标准化论文记录，遵循 `paper_record.v1` |
+
+去重优先级：
+
+1. `pmcid`
+2. `doi`
+3. `arxiv_id`
+4. `pmid`
+5. 标准化标题
+
+默认行为：
+
+- 第一个可下载条目保留为 `ready`
+- 后续重复条目标记为 `skipped`，`skip_reason=duplicate`
+- 重复来源会合并到保留条目的 `merged_sources`
+- 缺少 `pmcid`、`arxiv_id` 和 `pdf_url` 的条目标记为 `skipped`，`skip_reason=no_download_route`
 
 ## download_result.v1
 

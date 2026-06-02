@@ -17,6 +17,7 @@ from .config import (
     TIMEOUT,
 )
 from .counter import PMCIDCounter
+from .download_plan import build_download_plan, ready_papers
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
 from .logger import Logger, configure_logging, get_main_logger
@@ -168,6 +169,21 @@ def build_download_payload(
 def is_downloadable(paper: dict[str, Any]) -> bool:
     """Whether the paper has a direct download route."""
     return bool(paper.get("pmcid") or paper.get("arxiv_id") or paper.get("pdf_url"))
+
+
+def log_download_plan(logger: Logger, plan: dict[str, Any]) -> None:
+    """Log a compact download plan summary."""
+    duplicate_count = sum(
+        1 for entry in plan["entries"] if entry.get("skip_reason") == "duplicate"
+    )
+    no_route_count = sum(
+        1 for entry in plan["entries"] if entry.get("skip_reason") == "no_download_route"
+    )
+    logger.info(
+        f"\n下载计划: 总计 {plan['total']}，可下载 {plan['ready']}，跳过 {plan['skipped']}"
+    )
+    if duplicate_count or no_route_count:
+        logger.info(f"   跳过原因: 重复 {duplicate_count}，无下载路径 {no_route_count}")
 
 
 def get_primary_identifier_display(paper: dict[str, Any]) -> tuple[str, str]:
@@ -379,7 +395,9 @@ def main() -> None:
                     stream_output=args.format != "json",
                 )
 
-                downloadable_papers = [paper for paper in papers if is_downloadable(paper)]
+                plan = build_download_plan(papers, source="search")
+                log_download_plan(logger, plan)
+                downloadable_papers = ready_papers(plan)
                 logger.info(f"\n开始下载 PDF，找到 {len(downloadable_papers)} 篇可下载文献")
 
                 if downloadable_papers:
@@ -434,19 +452,26 @@ def main() -> None:
 
         elif args.m:
             logger.info(f"\n批量输入下载: {args.m}")
-            results = fetcher.download_from_unified_input(
+            plan = fetcher.build_download_plan_from_unified_input(
                 input_value=args.m,
                 column=args.c,
                 limit=args.l,
-                max_workers=args.t,
-                base_delay=args.delay,
             )
+            log_download_plan(logger, plan)
+            downloadable_papers = ready_papers(plan)
+            download_manager = UnifiedDownloadManager(
+                fetcher=fetcher,
+                max_workers=args.t,
+                base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
+            )
+            results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
 
             log_download_stats(logger, results)
             emit_run_summary(
                 logger,
                 results,
                 args.o,
+                papers=downloadable_papers,
                 source="unified_input",
                 input_value=args.m,
             )
@@ -465,19 +490,22 @@ def main() -> None:
                 logger.info("运行报告中没有可重试的失败项")
                 return
 
-            logger.info(f"准备重试 {len(papers)} 个失败项")
+            plan = build_download_plan(papers, source="resume")
+            log_download_plan(logger, plan)
+            downloadable_papers = ready_papers(plan)
+            logger.info(f"准备重试 {len(downloadable_papers)} 个失败项")
             download_manager = UnifiedDownloadManager(
                 fetcher=fetcher,
                 max_workers=args.t,
                 base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
             )
-            results = download_manager.download_batch(papers, timeout=TIMEOUT)
+            results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
             log_download_stats(logger, results)
             emit_run_summary(
                 logger,
                 results,
                 args.o,
-                papers=papers,
+                papers=downloadable_papers,
                 source="resume",
                 previous_report=args.resume,
             )
