@@ -9,6 +9,7 @@ from typing import Any
 
 from .config import DOWNLOAD_BASE_DELAY, TIMEOUT
 from .download_plan import build_download_plan, ready_papers, save_download_plan
+from .input_planner import build_download_plan_from_unified_input
 from .logger import Logger
 from .run_report import build_run_summary, load_failed_papers, save_run_summary
 
@@ -354,10 +355,12 @@ def run_unified_input_workflow(
 ) -> None:
     """Run CSV or direct identifier download mode."""
     logger.info(f"\n批量输入下载: {args.m}")
-    plan = fetcher.build_download_plan_from_unified_input(
-        input_value=args.m,
+    plan = build_download_plan_from_unified_input(
+        args.m,
         column=args.c,
         limit=args.l,
+        resolver=fetcher,
+        logger=logger,
     )
     log_download_plan(logger, plan)
     plan_file = emit_download_plan(logger, plan, args.o)

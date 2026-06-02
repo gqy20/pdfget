@@ -18,22 +18,19 @@ from .base.ncbi_base import NCBIBaseModule
 from .config import (
     DEFAULT_OUTPUT_DIR,
     DEFAULT_SOURCE,
-    DOWNLOAD_BASE_DELAY,
     NCBI_API_KEY,
     NCBI_EMAIL,
     get_cache_dir,
 )
 from .doi_converter import DOIConverter
-from .download_plan import DownloadPlan, build_download_plan, ready_papers
+from .download_plan import DownloadPlan
+from .download_service import download_from_unified_input
 from .downloader import PDFDownloader
 from .input_parser import (
-    auto_detect_column,
-    build_papers_from_identifiers,
     classify_identifiers,
-    detect_input_type,
-    parse_identifier_string,
     read_identifier_values_from_csv,
 )
+from .input_planner import build_download_plan_from_unified_input
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
@@ -352,24 +349,14 @@ class PaperFetcher(NCBIBaseModule):
         Returns:
             下载结果列表
         """
-        plan = self.build_download_plan_from_unified_input(
-            input_value=input_value,
+        return download_from_unified_input(
+            self,
+            input_value,
             column=column,
             limit=limit,
-        )
-        papers = ready_papers(plan)
-        if not papers:
-            self.logger.warning("没有找到可下载的标识符")
-            return []
-
-        from .manager import UnifiedDownloadManager
-
-        download_manager = UnifiedDownloadManager(
-            fetcher=self,
             max_workers=max_workers,
-            base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
+            base_delay=base_delay,
         )
-        return download_manager.download_batch(papers)
 
     def build_download_plan_from_unified_input(
         self,
@@ -378,53 +365,13 @@ class PaperFetcher(NCBIBaseModule):
         limit: int | None = None,
     ) -> DownloadPlan:
         """Build a download plan from a CSV path or identifier string."""
-        # 检测输入类型
-        input_type = detect_input_type(input_value)
-
-        if input_type == "invalid":
-            raise ValueError(f"无效的输入: {input_value}")
-
-        if input_type == "csv_file":
-            # CSV文件输入
-            self.logger.info(f"检测到CSV文件输入: {input_value}")
-
-            # 如果未指定列名，自动检测
-            if column is None:
-                try:
-                    detected_column = auto_detect_column(input_value)
-                except Exception as exc:
-                    self.logger.error(f"自动检测列名失败: {exc}")
-                    detected_column = None
-                if detected_column:
-                    self.logger.info(f"自动检测到列名: {detected_column}")
-                    column = detected_column
-                else:
-                    raise ValueError(f"无法自动检测CSV列名: {input_value}")
-
-            identifiers = read_identifier_values_from_csv(input_value, column)
-            papers = build_papers_from_identifiers(identifiers)
-            if limit is not None and limit > 0:
-                papers = papers[:limit]
-            return build_download_plan(papers, source="unified_input", resolver=self)
-
-        elif input_type in ["single", "multiple"]:
-            # 直接输入的标识符
-            identifiers = parse_identifier_string(input_value)
-
-            if not identifiers:
-                raise ValueError(f"未找到有效的标识符: {input_value}")
-
-            self.logger.info(f"检测到 {len(identifiers)} 个标识符")
-            papers = build_papers_from_identifiers(identifiers)
-
-            # 应用限制
-            if limit:
-                papers = papers[:limit]
-
-            return build_download_plan(papers, source="unified_input", resolver=self)
-
-        else:
-            raise ValueError(f"未知的输入类型: {input_type}")
+        return build_download_plan_from_unified_input(
+            input_value,
+            column=column,
+            limit=limit,
+            resolver=self,
+            logger=self.logger,
+        )
 
     def __enter__(self) -> "PaperFetcher":
         """支持上下文管理器"""

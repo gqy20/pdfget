@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from pdfget import main as main_module
 
@@ -355,10 +355,12 @@ def test_main_download_dry_run_writes_plan_without_downloading(monkeypatch, tmp_
 
 def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     fetcher = Mock()
-    fetcher.build_download_plan_from_unified_input.return_value = (
-        main_module.build_download_plan(
-            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
-            source="unified_input",
+    plan_builder = Mock(
+        return_value=(
+            main_module.build_download_plan(
+                [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+                source="unified_input",
+            )
         )
     )
 
@@ -372,6 +374,10 @@ def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     ]
 
     monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        "pdfget.cli_workflows.build_download_plan_from_unified_input",
+        plan_builder,
+    )
     monkeypatch.setattr(
         main_module,
         "UnifiedDownloadManager",
@@ -393,10 +399,12 @@ def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
 
     main_module.main()
 
-    fetcher.build_download_plan_from_unified_input.assert_called_once_with(
-        input_value="2301.12345",
+    plan_builder.assert_called_once_with(
+        "2301.12345",
         column=None,
         limit=main_module.DEFAULT_SEARCH_LIMIT,
+        resolver=fetcher,
+        logger=ANY,
     )
     main_module.UnifiedDownloadManager.assert_called_once()
     assert main_module.UnifiedDownloadManager.call_args.kwargs["max_workers"] == 2
@@ -407,10 +415,12 @@ def test_main_unified_input_json_format_outputs_download_schema(
     monkeypatch, tmp_path, capsys
 ):
     fetcher = Mock()
-    fetcher.build_download_plan_from_unified_input.return_value = (
-        main_module.build_download_plan(
-            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
-            source="unified_input",
+    plan_builder = Mock(
+        return_value=(
+            main_module.build_download_plan(
+                [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+                source="unified_input",
+            )
         )
     )
     download_manager = Mock()
@@ -423,6 +433,10 @@ def test_main_unified_input_json_format_outputs_download_schema(
     ]
 
     monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        "pdfget.cli_workflows.build_download_plan_from_unified_input",
+        plan_builder,
+    )
     monkeypatch.setattr(
         main_module,
         "UnifiedDownloadManager",
@@ -459,15 +473,21 @@ def test_main_unified_input_dry_run_writes_plan_without_downloading(
     monkeypatch, tmp_path
 ):
     fetcher = Mock()
-    fetcher.build_download_plan_from_unified_input.return_value = (
-        main_module.build_download_plan(
-            [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
-            source="unified_input",
+    plan_builder = Mock(
+        return_value=(
+            main_module.build_download_plan(
+                [{"arxiv_id": "2301.12345", "source": "direct_arxiv"}],
+                source="unified_input",
+            )
         )
     )
 
     download_manager_class = Mock()
     monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        "pdfget.cli_workflows.build_download_plan_from_unified_input",
+        plan_builder,
+    )
     monkeypatch.setattr(main_module, "UnifiedDownloadManager", download_manager_class)
     monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
     monkeypatch.setattr(
@@ -484,7 +504,7 @@ def test_main_unified_input_dry_run_writes_plan_without_downloading(
 
     main_module.main()
 
-    fetcher.build_download_plan_from_unified_input.assert_called_once()
+    plan_builder.assert_called_once()
     download_manager_class.assert_not_called()
     plan = json.loads((tmp_path / "download_plan.json").read_text(encoding="utf-8"))
     assert plan["source"] == "unified_input"
