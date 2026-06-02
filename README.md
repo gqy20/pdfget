@@ -242,6 +242,33 @@ pdfget -m pmcids.csv -d --delay 0.5
 pdfget --resume data/pdfs/run_summary.json -o data/pdfs -t 3
 ```
 
+### Python API
+
+如果需要在脚本中调用统一输入下载或只生成下载计划，可以使用包顶层导出的 façade：
+
+```python
+from pdfget import (
+    PaperFetcher,
+    build_download_plan_from_unified_input,
+    download_from_unified_input,
+)
+
+fetcher = PaperFetcher(output_dir="data/pdfs")
+
+plan = build_download_plan_from_unified_input(
+    "PMC123456,10.1186/s12916-020-01690-4,2301.12345",
+    resolver=fetcher,
+    logger=fetcher.logger,
+)
+
+results = download_from_unified_input(
+    fetcher,
+    "identifiers.csv",
+    column="ID",
+    max_workers=3,
+)
+```
+
 ### PMC 过滤技巧
 
 ```bash
