@@ -4,14 +4,21 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Literal, Protocol, TypedDict
 
 from .paper_schema import PaperRecord, normalize_paper_record
 
 DownloadStrategy = Literal["pmc", "arxiv", "direct_pdf"]
 PlanStatus = Literal["ready", "skipped"]
-SkipReason = Literal["", "no_download_route", "duplicate"]
+SkipReason = Literal[
+    "",
+    "no_download_route",
+    "duplicate",
+    "unresolved_identifier",
+    "missing_identifier",
+]
 
 
 class DownloadPlanEntry(TypedDict):
@@ -27,6 +34,8 @@ class DownloadPlanEntry(TypedDict):
     duplicate_of: int | None
     dedupe_key: str
     merged_sources: list[str]
+    resolved_by: str
+    resolved_from: str
     source: str
     paper: PaperRecord
 
@@ -40,6 +49,14 @@ class DownloadPlan(TypedDict):
     ready: int
     skipped: int
     entries: list[DownloadPlanEntry]
+
+
+class IdentifierResolver(Protocol):
+    """Resolve PMID/DOI values to PMCID values for download planning."""
+
+    def resolve_pmids(self, pmids: list[str]) -> Mapping[str, str]: ...
+
+    def resolve_dois(self, dois: list[str]) -> Mapping[str, str]: ...
 
 
 def choose_download_strategy(paper: PaperRecord) -> DownloadStrategy | None:
@@ -76,21 +93,77 @@ def _append_unique(values: list[str], value: str) -> None:
         values.append(value)
 
 
+def _resolve_download_record(
+    paper: PaperRecord,
+    *,
+    pmid_to_pmcid: Mapping[str, str],
+    doi_to_pmcid: Mapping[str, str],
+) -> tuple[PaperRecord, str, str]:
+    """Add resolved download identifiers to a paper record when possible."""
+    if paper["pmcid"] or paper["arxiv_id"] or paper["pdf_url"]:
+        return paper, "", ""
+
+    if paper["pmid"] and paper["pmid"] in pmid_to_pmcid:
+        return (
+            normalize_paper_record({**paper, "pmcid": pmid_to_pmcid[paper["pmid"]]}),
+            "pmid_to_pmcid",
+            paper["pmid"],
+        )
+
+    if paper["doi"] and paper["doi"] in doi_to_pmcid:
+        return (
+            normalize_paper_record({**paper, "pmcid": doi_to_pmcid[paper["doi"]]}),
+            "doi_to_pmcid",
+            paper["doi"],
+        )
+
+    return paper, "", ""
+
+
 def build_download_plan(
-    papers: list[dict], *, source: str = "unknown"
+    papers: list[dict],
+    *,
+    source: str = "unknown",
+    resolver: IdentifierResolver | None = None,
 ) -> DownloadPlan:
     """Build a download plan from normalized or raw paper dictionaries."""
+    normalized_papers = [
+        normalize_paper_record(paper, str(paper.get("source") or source))
+        for paper in papers
+    ]
+    pmids_to_resolve = [
+        paper["pmid"]
+        for paper in normalized_papers
+        if paper["pmid"] and not choose_download_strategy(paper)
+    ]
+    dois_to_resolve = [
+        paper["doi"]
+        for paper in normalized_papers
+        if paper["doi"] and not choose_download_strategy(paper)
+    ]
+    pmid_to_pmcid = resolver.resolve_pmids(pmids_to_resolve) if resolver else {}
+    doi_to_pmcid = resolver.resolve_dois(dois_to_resolve) if resolver else {}
+
     entries: list[DownloadPlanEntry] = []
     seen_ready: dict[str, int] = {}
-    for index, paper in enumerate(papers):
-        normalized = normalize_paper_record(paper, str(paper.get("source") or source))
+    for index, normalized_paper in enumerate(normalized_papers):
+        normalized, resolved_by, resolved_from = _resolve_download_record(
+            normalized_paper,
+            pmid_to_pmcid=pmid_to_pmcid,
+            doi_to_pmcid=doi_to_pmcid,
+        )
         strategy = choose_download_strategy(normalized)
         dedupe_key = build_dedupe_key(normalized)
         duplicate_of = seen_ready.get(dedupe_key) if dedupe_key else None
         status: PlanStatus = "ready" if strategy and duplicate_of is None else "skipped"
         skip_reason: SkipReason = ""
         if not strategy:
-            skip_reason = "no_download_route"
+            if not dedupe_key:
+                skip_reason = "missing_identifier"
+            elif normalized["pmid"] or normalized["doi"]:
+                skip_reason = "unresolved_identifier"
+            else:
+                skip_reason = "no_download_route"
         elif duplicate_of is not None:
             skip_reason = "duplicate"
 
@@ -107,6 +180,8 @@ def build_download_plan(
                 "duplicate_of": duplicate_of,
                 "dedupe_key": dedupe_key,
                 "merged_sources": merged_sources,
+                "resolved_by": resolved_by,
+                "resolved_from": resolved_from,
                 "source": source,
                 "paper": normalized,
             }

@@ -104,10 +104,12 @@
 | `identifier` | string | 推荐主标识 |
 | `identifier_type` | string | 主标识类型 |
 | `download_url` | string | 推荐下载 URL |
-| `skip_reason` | string | 跳过原因，当前为 `duplicate` / `no_download_route` / 空字符串 |
+| `skip_reason` | string | 跳过原因，当前为 `duplicate` / `no_download_route` / `unresolved_identifier` / `missing_identifier` / 空字符串 |
 | `duplicate_of` | number | 重复项指向的保留条目 index；非重复时为 `null` |
 | `dedupe_key` | string | 去重键 |
 | `merged_sources` | string[] | 被合并到保留条目的来源列表 |
+| `resolved_by` | string | 解析方式，例如 `pmid_to_pmcid` / `doi_to_pmcid` |
+| `resolved_from` | string | 被解析的原始标识符 |
 | `source` | string | 计划来源 |
 | `paper` | object | 标准化论文记录，遵循 `paper_record.v1` |
 
@@ -124,7 +126,10 @@
 - 第一个可下载条目保留为 `ready`
 - 后续重复条目标记为 `skipped`，`skip_reason=duplicate`
 - 重复来源会合并到保留条目的 `merged_sources`
-- 缺少 `pmcid`、`arxiv_id` 和 `pdf_url` 的条目标记为 `skipped`，`skip_reason=no_download_route`
+- DOI/PMID 会在计划阶段尝试解析为 PMCID，并记录 `resolved_by` / `resolved_from`
+- DOI/PMID 无法解析为下载路径时标记为 `skipped`，`skip_reason=unresolved_identifier`
+- 缺少可用标识符时标记为 `skipped`，`skip_reason=missing_identifier`
+- 有标识符但缺少 `pmcid`、`arxiv_id` 和 `pdf_url` 的条目标记为 `skipped`，`skip_reason=no_download_route`
 
 ## download_result.v1
 

@@ -7,6 +7,14 @@ from pdfget.download_plan import (
 from pdfget.paper_schema import normalize_paper_record
 
 
+class _Resolver:
+    def resolve_pmids(self, pmids: list[str]) -> dict[str, str]:
+        return {"12345678": "PMC123456"} if "12345678" in pmids else {}
+
+    def resolve_dois(self, dois: list[str]) -> dict[str, str]:
+        return {"10.1000/test": "PMC1000"} if "10.1000/test" in dois else {}
+
+
 def test_build_download_plan_marks_ready_and_skipped_entries():
     papers = [
         {"pmcid": "PMC1", "source": "pubmed"},
@@ -87,6 +95,43 @@ def test_build_download_plan_deduplicates_by_title_when_identifiers_are_missing(
     assert plan["entries"][0]["dedupe_key"] == "title:a normalized title"
     assert plan["entries"][1]["skip_reason"] == "duplicate"
     assert ready_papers(plan)[0]["pdf_url"] == "https://example.com/first.pdf"
+
+
+def test_build_download_plan_resolves_pmid_and_doi_to_pmcid():
+    plan = build_download_plan(
+        [
+            {"pmid": "12345678", "source": "pubmed"},
+            {"doi": "10.1000/test", "source": "pubmed"},
+        ],
+        source="search",
+        resolver=_Resolver(),
+    )
+
+    assert plan["ready"] == 2
+    assert plan["entries"][0]["resolved_by"] == "pmid_to_pmcid"
+    assert plan["entries"][0]["resolved_from"] == "12345678"
+    assert plan["entries"][0]["paper"]["pmcid"] == "PMC123456"
+    assert plan["entries"][1]["resolved_by"] == "doi_to_pmcid"
+    assert plan["entries"][1]["resolved_from"] == "10.1000/test"
+    assert plan["entries"][1]["paper"]["pmcid"] == "PMC1000"
+
+
+def test_build_download_plan_marks_unresolved_identifiers():
+    plan = build_download_plan(
+        [
+            {"pmid": "99999999", "source": "pubmed"},
+            {"doi": "10.1000/missing", "source": "pubmed"},
+        ],
+        source="search",
+        resolver=_Resolver(),
+    )
+
+    assert plan["ready"] == 0
+    assert plan["skipped"] == 2
+    assert [entry["skip_reason"] for entry in plan["entries"]] == [
+        "unresolved_identifier",
+        "unresolved_identifier",
+    ]
 
 
 def test_choose_download_strategy_prefers_pmc_then_arxiv_then_pdf():

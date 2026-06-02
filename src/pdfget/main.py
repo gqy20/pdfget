@@ -409,7 +409,7 @@ def main() -> None:
                     stream_output=args.format != "json",
                 )
 
-                plan = build_download_plan(papers, source="search")
+                plan = build_download_plan(papers, source="search", resolver=fetcher)
                 log_download_plan(logger, plan)
                 plan_file = emit_download_plan(logger, plan, args.o)
                 downloadable_papers = ready_papers(plan)
@@ -514,7 +514,7 @@ def main() -> None:
                 logger.info("运行报告中没有可重试的失败项")
                 return
 
-            plan = build_download_plan(papers, source="resume")
+            plan = build_download_plan(papers, source="resume", resolver=fetcher)
             log_download_plan(logger, plan)
             plan_file = emit_download_plan(logger, plan, args.o)
             downloadable_papers = ready_papers(plan)

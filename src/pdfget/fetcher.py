@@ -334,13 +334,18 @@ class PaperFetcher(NCBIBaseModule):
         if not papers:
             return []
 
+        plan = build_download_plan(papers, source="pmcid_csv", resolver=self)
+        ready = ready_papers(plan)
+        if not ready:
+            return []
+
         from .manager import UnifiedDownloadManager
 
         download_manager = UnifiedDownloadManager(
             fetcher=self,
             max_workers=max_workers,
         )
-        return download_manager.download_batch(papers)
+        return download_manager.download_batch(ready)
 
     def _convert_pmids_to_pmcids(self, pmids: list[str]) -> list[str]:
         """
@@ -415,89 +420,72 @@ class PaperFetcher(NCBIBaseModule):
     def _build_papers_from_identifiers_in_order(
         self, identifiers: list[str]
     ) -> list[dict]:
-        """Build downloadable paper records in the same order as user input."""
-        entries: list[tuple[str, str]] = []
-        pmids: list[str] = []
-        dois: list[str] = []
-
+        """Build paper records in the same order as user input."""
+        papers: list[dict] = []
         for identifier in identifiers:
             id_type = IdentifierUtils.detect_identifier_type(identifier)
             if id_type == "pmcid":
                 normalized_pmcid = IdentifierUtils.format_pmcid(identifier)
                 if normalized_pmcid:
-                    entries.append(("pmcid", normalized_pmcid))
+                    papers.append(
+                        normalize_paper_record(
+                            {
+                                "pmcid": normalized_pmcid,
+                                "title": f"PMCID: {normalized_pmcid}",
+                                "source": "direct_pmcid",
+                            },
+                            "direct_pmcid",
+                            matched_by="pmcid",
+                        )
+                    )
             elif id_type == "pmid":
-                entries.append(("pmid", identifier))
-                pmids.append(identifier)
+                papers.append(
+                    normalize_paper_record(
+                        {
+                            "pmid": identifier,
+                            "title": f"PMID: {identifier}",
+                            "source": "mixed_identifiers",
+                        },
+                        "mixed_identifiers",
+                        matched_by="pmid",
+                    )
+                )
             elif id_type == "doi":
-                entries.append(("doi", identifier))
-                dois.append(identifier)
+                papers.append(
+                    normalize_paper_record(
+                        {
+                            "doi": identifier,
+                            "title": f"DOI: {identifier}",
+                            "source": "mixed_identifiers",
+                        },
+                        "mixed_identifiers",
+                        matched_by="doi",
+                    )
+                )
             elif id_type == "arxiv":
                 normalized_arxiv_id = IdentifierUtils.normalize_arxiv_id(identifier)
                 if normalized_arxiv_id:
-                    entries.append(("arxiv", normalized_arxiv_id))
-
-        pmid_to_pmcid = self._convert_pmids_to_pmcid_mapping(pmids)
-        doi_to_pmcid = self._convert_dois_to_pmcid_mapping(dois)
-
-        papers: list[dict] = []
-        for id_type, value in entries:
-            if id_type == "pmcid":
-                papers.append(
-                    normalize_paper_record(
-                        {
-                            "pmcid": value,
-                            "title": f"PMCID: {value}",
-                            "source": "direct_pmcid",
-                        },
-                        "direct_pmcid",
-                        matched_by="pmcid",
-                    )
-                )
-            elif id_type == "pmid":
-                pmcid = pmid_to_pmcid.get(value)
-                if pmcid:
                     papers.append(
                         normalize_paper_record(
                             {
-                                "pmid": value,
-                                "pmcid": pmcid,
-                                "title": f"PMID: {value}",
-                                "source": "mixed_identifiers",
+                                "arxiv_id": normalized_arxiv_id,
+                                "title": f"arXiv: {normalized_arxiv_id}",
+                                "source": "direct_arxiv",
                             },
-                            "mixed_identifiers",
-                            matched_by="pmid",
+                            "direct_arxiv",
+                            matched_by="arxiv_id",
                         )
                     )
-            elif id_type == "doi":
-                pmcid = doi_to_pmcid.get(value)
-                if pmcid:
-                    papers.append(
-                        normalize_paper_record(
-                            {
-                                "doi": value,
-                                "pmcid": pmcid,
-                                "title": f"DOI: {value}",
-                                "source": "mixed_identifiers",
-                            },
-                            "mixed_identifiers",
-                            matched_by="doi",
-                        )
-                    )
-            elif id_type == "arxiv":
-                papers.append(
-                    normalize_paper_record(
-                        {
-                            "arxiv_id": value,
-                            "title": f"arXiv: {value}",
-                            "source": "direct_arxiv",
-                        },
-                        "direct_arxiv",
-                        matched_by="arxiv_id",
-                    )
-                )
 
         return papers
+
+    def resolve_pmids(self, pmids: list[str]) -> dict[str, str]:
+        """Resolve PMIDs to PMCIDs for download planning."""
+        return self._convert_pmids_to_pmcid_mapping(pmids)
+
+    def resolve_dois(self, dois: list[str]) -> dict[str, str]:
+        """Resolve DOIs to PMCIDs for download planning."""
+        return self._convert_dois_to_pmcid_mapping(dois)
 
     def download_from_identifiers(
         self,
@@ -526,11 +514,14 @@ class PaperFetcher(NCBIBaseModule):
         if limit is not None and limit > 0:
             papers = papers[:limit]
 
-        if not papers:
+        plan = build_download_plan(papers, source="unified_input", resolver=self)
+        ready = ready_papers(plan)
+
+        if not ready:
             self.logger.warning("没有有效的标识符可以下载")
             return []
 
-        self.logger.info(f"准备下载 {len(papers)} 篇文献")
+        self.logger.info(f"准备下载 {len(ready)} 篇文献")
 
         # 7. 使用统一下载管理器下载
         from .manager import UnifiedDownloadManager
@@ -541,7 +532,7 @@ class PaperFetcher(NCBIBaseModule):
             base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
         )
 
-        return download_manager.download_batch(papers)
+        return download_manager.download_batch(ready)
 
     def export_results(
         self,
@@ -763,7 +754,7 @@ class PaperFetcher(NCBIBaseModule):
             papers = self._build_papers_from_identifiers_in_order(identifiers)
             if limit is not None and limit > 0:
                 papers = papers[:limit]
-            return build_download_plan(papers, source="unified_input")
+            return build_download_plan(papers, source="unified_input", resolver=self)
 
         elif input_type in ["single", "multiple"]:
             # 直接输入的标识符
@@ -779,7 +770,7 @@ class PaperFetcher(NCBIBaseModule):
             if limit:
                 papers = papers[:limit]
 
-            return build_download_plan(papers, source="unified_input")
+            return build_download_plan(papers, source="unified_input", resolver=self)
 
         else:
             raise ValueError(f"未知的输入类型: {input_type}")
