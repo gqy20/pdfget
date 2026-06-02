@@ -367,23 +367,3 @@ class PMCIDRetriever(NCBIBaseModule):
             f"PMCID 更新完成：{success_count}/{len(papers)} 篇论文获得 PMCID"
         )
         return updated_papers
-
-    def get_single_pmcid(self, paper: dict[str, Any]) -> str | None:
-        """
-        获取单篇论文的 PMCID（兼容原接口）
-
-        Args:
-            paper: 包含 pmid 的论文字典
-
-        Returns:
-            PMCID 或 None
-        """
-        pmid = paper.get("pmid")
-        if not pmid:
-            return None
-
-        # 先尝试批量获取缓存（如果有）
-        # 这里可以添加缓存逻辑
-
-        # 逐个获取
-        return self._fetch_pmcid_individual(pmid)

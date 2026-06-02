@@ -708,7 +708,7 @@ def test_main_download_writes_run_summary_for_failed_results(monkeypatch, tmp_pa
     main_module.main()
 
     summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
-    assert summary["schema"] == "run_summary.v1"
+    assert summary["schema"] == "run_summary.v2"
     assert summary["failed"] == 1
     assert summary["download_plan_path"] == str(tmp_path / "download_plan.json")
     assert summary["results"][0]["status"] == "failed"
@@ -726,7 +726,7 @@ def test_main_resume_retries_failed_report_entries(monkeypatch, tmp_path):
     report_path.write_text(
         json.dumps(
             {
-                "schema": "run_summary.v1",
+                "schema": "run_summary.v2",
                 "results": [
                     {
                         "status": "success",
@@ -741,6 +741,7 @@ def test_main_resume_retries_failed_report_entries(monkeypatch, tmp_path):
                             "source": "arxiv",
                         },
                         "result": {"success": False, "error": "timeout"},
+                        "retryable": True,
                     },
                 ],
             }

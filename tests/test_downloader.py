@@ -4,7 +4,7 @@
 """
 
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -28,47 +28,6 @@ class TestPDFDownloader:
     def downloader(self, session, tmp_dir):
         """创建 PDFDownloader 实例"""
         return PDFDownloader(str(tmp_dir), session)
-
-    @patch("builtins.open", new_callable=mock_open, read_data=b"pdf content")
-    def test_save_pdf_success(self, mock_file, downloader):
-        """
-        测试: 成功保存 PDF
-        """
-        pmcid = "PMC123456"
-        doi = "10.1000/test"
-
-        result = downloader._save_pdf(b"pdf content", pmcid, doi)
-
-        assert result["success"] is True
-        assert "path" in result
-        assert Path(result["path"]).name == "PMC123456_101000test.pdf"
-        assert result["stage"] == "save_file"
-        assert result["source"] == "file"
-        assert result["pmcid"] == "PMC123456"
-        assert result["doi"] == "10.1000/test"
-        assert result["content_length"] == len(b"pdf content")
-
-    def test_save_pdf_failure(self, downloader):
-        """
-        测试: 保存 PDF 失败
-        """
-        pmcid = "PMC123456"
-        doi = "10.1000/test"
-
-        import unittest.mock
-
-        with (
-            unittest.mock.patch(
-                "builtins.open", side_effect=OSError("Permission denied")
-            ),
-            unittest.mock.patch("pathlib.Path.mkdir"),
-        ):
-            result = downloader._save_pdf(b"pdf content", pmcid, doi)
-
-        assert result["success"] is False
-        assert "error" in result
-        assert result["stage"] == "save_file"
-        assert "path" in result
 
     def test_try_download_from_url_success(self, downloader):
         """
@@ -119,8 +78,7 @@ class TestPDFDownloader:
         assert result["stage"] == "save_file"
         assert not Path(result["path"]).exists()
 
-    @patch("pdfget.downloader.PDFDownloader._save_pdf")
-    def test_try_download_from_url_not_pdf(self, mock_save, downloader):
+    def test_try_download_from_url_not_pdf(self, downloader):
         """
         测试: URL 返回的不是 PDF
         """

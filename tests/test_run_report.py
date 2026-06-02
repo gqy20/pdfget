@@ -39,7 +39,7 @@ def test_build_run_summary_pairs_papers_and_results():
         download_plan_path="pdfs/download_plan.json",
     )
 
-    assert summary["schema"] == "run_summary.v1"
+    assert summary["schema"] == "run_summary.v2"
     assert summary["total"] == 2
     assert summary["success"] == 1
     assert summary["failed"] == 1
@@ -146,7 +146,7 @@ def test_save_run_summary_writes_latest_and_archived_copy(tmp_path):
     latest = save_run_summary(str(tmp_path), summary)
 
     assert latest == tmp_path / "run_summary.json"
-    assert json.loads(latest.read_text(encoding="utf-8"))["schema"] == "run_summary.v1"
+    assert json.loads(latest.read_text(encoding="utf-8"))["schema"] == "run_summary.v2"
     archived = list(tmp_path.glob("run_summary_*.json"))
     assert len(archived) == 1
 
@@ -185,7 +185,7 @@ def test_load_failed_papers_returns_only_retryable_failures(tmp_path):
     assert papers[0]["arxiv_id"] == "2401.00001"
 
 
-def test_load_failed_papers_infers_retryability_for_legacy_reports(tmp_path):
+def test_load_failed_papers_rejects_legacy_v1_reports(tmp_path):
     path = tmp_path / "legacy_summary.json"
     path.write_text(
         json.dumps(
@@ -216,10 +216,8 @@ def test_load_failed_papers_infers_retryability_for_legacy_reports(tmp_path):
         encoding="utf-8",
     )
 
-    papers = load_failed_papers(path)
-
-    assert len(papers) == 1
-    assert papers[0]["pmcid"] == "PMC1"
+    with pytest.raises(ValueError, match="不支持的运行报告 schema"):
+        load_failed_papers(path)
 
 
 def test_load_failed_papers_rejects_unknown_schema(tmp_path):

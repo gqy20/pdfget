@@ -279,7 +279,7 @@ class PMCIDCounter:
         response = self.session.get(
             search_url,
             params=search_params,
-            timeout=config.TIMEOUT,  # type: ignore[arg-type]
+            timeout=float(config.TIMEOUT),
         )
         response.raise_for_status()
 

@@ -12,7 +12,7 @@ from .download_service import download_from_unified_input
 from .downloader import PDFDownloader
 from .fetcher import PaperFetcher
 from .input_planner import build_download_plan_from_unified_input
-from .logger import configure_logging, get_logger, setup_logger
+from .logger import configure_logging, get_logger
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 
@@ -26,5 +26,4 @@ __all__ = [
     "configure_logging",
     "download_from_unified_input",
     "get_logger",
-    "setup_logger",
 ]

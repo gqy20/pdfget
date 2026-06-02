@@ -126,24 +126,10 @@ def configure_logging(
     _CONFIGURED = True
 
 
-def setup_logger(
-    name: str,
-    level: str | None = None,
-    log_format: str | None = None,
-    log_file: Path | None = None,
-) -> Logger:
-    """Return a configured structured logger."""
-    configure_logging(
-        level=level,
-        log_format=log_format or _LOG_FORMAT,
-        log_file=log_file,
-    )
-    return cast(Logger, structlog.get_logger(name))
-
-
 def get_logger(name: str) -> Logger:
     """Get a module logger."""
-    return setup_logger(name)
+    configure_logging(log_format=_LOG_FORMAT)
+    return cast(Logger, structlog.get_logger(name))
 
 
 def get_main_logger() -> Logger:

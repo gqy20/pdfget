@@ -29,7 +29,6 @@ class DownloadResult(TypedDict, total=False):
     source: str
     success: bool
     path: str
-    full_text_url: str
     error: str
     stage: str
     message: str
@@ -70,7 +69,7 @@ class RunSummaryEntry(TypedDict):
 class RunSummary(TypedDict):
     """Retryable download run summary payload."""
 
-    schema: Literal["run_summary.v1"]
+    schema: Literal["run_summary.v2"]
     timestamp: float
     source: str
     output_dir: str

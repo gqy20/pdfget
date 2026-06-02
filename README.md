@@ -168,7 +168,7 @@ uv run pdfget -s "machine learning" -l 20
 ### 必需参数（三选一）
 - `-s QUERY` - 搜索文献
 - `-m INPUT` - 批量输入（CSV文件/标识符）
-- `--resume REPORT` - 从运行报告重试失败项
+- `--resume REPORT_OR_PLAN` - 从运行报告重试失败项，或从下载计划继续执行
 - `-S SOURCE` - 选择搜索数据源
 
 ### 常用参数

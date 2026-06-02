@@ -136,49 +136,6 @@ class PDFDownloader:
         """生成安全的文件名（委托给共享函数）"""
         return make_pdf_filename(pmcid, doi)
 
-    def _save_pdf(
-        self, content: bytes, pmcid: str, doi: str
-    ) -> dict[str, str | bool | int]:
-        """
-        保存 PDF 到本地
-
-        Args:
-            content: PDF 内容
-            pmcid: PMCID
-            doi: DOI
-
-        Returns:
-            保存结果字典
-        """
-        filename = self._get_safe_filename(pmcid, doi)
-        file_path = self.output_dir / filename
-
-        try:
-            with open(file_path, "wb") as f:
-                f.write(content)
-
-            self.logger.info(f"PDF 保存成功: {file_path}")
-            return self._build_result(
-                success=True,
-                stage="save_file",
-                source="file",
-                path=str(file_path),
-                pmcid=pmcid,
-                doi=doi,
-                content_length=len(content),
-            )
-        except Exception as e:
-            self.logger.error(f"PDF 保存失败: {str(e)}")
-            return self._build_result(
-                success=False,
-                stage="save_file",
-                source="file",
-                path=str(file_path),
-                error=str(e),
-                pmcid=pmcid,
-                doi=doi,
-            )
-
     def _save_pdf_stream(
         self, response: requests.Response, pmcid: str, doi: str
     ) -> dict[str, str | bool | int]:

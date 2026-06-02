@@ -99,20 +99,17 @@ def log_download_stats(
     """Log download statistics and return the summary."""
     success_count = sum(1 for r in results if r.get("success"))
     pdf_count = sum(1 for r in results if r.get("path"))
-    html_count = sum(1 for r in results if r.get("full_text_url"))
 
     logger.info("\n下载统计:")
     logger.info(f"   总计: {len(results)}")
     logger.info(f"   成功: {success_count}")
     logger.info(f"   PDF: {pdf_count}")
-    logger.info(f"   HTML: {html_count}")
     logger.info(f"   失败: {len(results) - success_count}")
 
     return {
         "total": len(results),
         "success_count": success_count,
         "pdf_count": pdf_count,
-        "html_count": html_count,
     }
 
 
@@ -167,7 +164,7 @@ def is_downloadable(paper: dict[str, Any]) -> bool:
     return bool(paper.get("pmcid") or paper.get("arxiv_id") or paper.get("pdf_url"))
 
 
-def log_download_plan(logger: Logger, plan: dict[str, Any]) -> None:
+def log_download_plan(logger: Logger, plan: DownloadPlan) -> None:
     """Log a compact download plan summary."""
     duplicate_count = sum(
         1 for entry in plan["entries"] if entry.get("skip_reason") == "duplicate"
@@ -182,9 +179,9 @@ def log_download_plan(logger: Logger, plan: dict[str, Any]) -> None:
         logger.info(f"   跳过原因: 重复 {duplicate_count}，无下载路径 {no_route_count}")
 
 
-def emit_download_plan(logger: Logger, plan: dict[str, Any], output_dir: str) -> Path:
+def emit_download_plan(logger: Logger, plan: DownloadPlan, output_dir: str) -> Path:
     """Persist the download plan for audit and dry-run workflows."""
-    plan_file = save_download_plan(output_dir, plan)  # type: ignore[arg-type]
+    plan_file = save_download_plan(output_dir, plan)
     logger.info(f"\n下载计划已保存到: {plan_file}")
     return plan_file
 
@@ -335,7 +332,7 @@ def load_resume_plan_or_papers(
     schema = payload.get("schema")
     if schema == "download_plan.v1":
         return load_download_plan(resume_path), "download_plan"
-    if schema == "run_summary.v1":
+    if schema == "run_summary.v2":
         papers = load_failed_papers(resume_path)
         return build_download_plan(papers, source="resume", resolver=fetcher), "run_summary"
     raise ValueError(f"不支持的续跑文件 schema: {schema}")

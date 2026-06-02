@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 
 class PaperRecord(TypedDict):
@@ -128,4 +128,4 @@ def normalize_paper_record(
     base["is_downloadable"] = is_downloadable
     base["download_url"] = download_url
 
-    return base  # type: ignore[return-value]
+    return cast(PaperRecord, base)

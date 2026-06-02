@@ -122,7 +122,7 @@ class PaperFetcher(NCBIBaseModule):
                     self.cache_manager.set(
                         cache_key, cached_papers, ttl=3600
                     )  # 1小时TTL
-                return cached_papers  # type: ignore[no-any-return]
+                return cast(list[dict[Any, Any]], cached_papers)
 
         # 执行搜索
         papers = self.searcher.search_papers(query, limit, source)
@@ -325,25 +325,3 @@ class PaperFetcher(NCBIBaseModule):
     ) -> None:
         """退出时清理资源"""
         self.session.close()
-
-
-# 便捷函数
-def quick_search(
-    query: str, limit: int = 20, source: str | None = None
-) -> list[dict[Any, Any]]:
-    """
-    快速搜索文献
-
-    Args:
-        query: 搜索关键词
-        limit: 结果数量
-        source: 数据源
-
-    Returns:
-        文献列表
-    """
-    with PaperFetcher() as fetcher:
-        return cast(
-            list[dict[Any, Any]],
-            fetcher.search_papers(query, limit, source or DEFAULT_SOURCE),
-        )

@@ -11,7 +11,7 @@ from typing import Any, Literal
 from .paper_schema import PaperRecord, build_identifier, normalize_paper_record
 from .schemas import DownloadResult, RunSummary, RunSummaryEntry
 
-RUN_SUMMARY_SCHEMA: Literal["run_summary.v1"] = "run_summary.v1"
+RUN_SUMMARY_SCHEMA: Literal["run_summary.v2"] = "run_summary.v2"
 RETRYABLE_STAGES = {"download_pdf", "save_file", "worker_error"}
 NON_RETRYABLE_STAGES = {"resolve_identifier", "validate_response", "cache_hit"}
 
@@ -295,10 +295,7 @@ def load_failed_papers(report_path: str | Path) -> list[PaperRecord]:
         if entry.get("status") != "failed":
             continue
         paper = entry.get("paper") or _result_paper(entry.get("result") or {})
-        result = entry.get("result") or {}
         retryable = entry.get("retryable")
-        if retryable is None:
-            retryable, _ = classify_retryability(result, paper)
         if not retryable:
             continue
         normalized = normalize_paper_record(paper, str(paper.get("source") or "resume"))

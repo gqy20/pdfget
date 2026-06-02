@@ -71,7 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-m",
         help="批量输入（CSV文件/单个标识符/逗号分隔列表），支持混合 PMCID/PMID/DOI/arXiv ID",
     )
-    group.add_argument("--resume", help="从 run_summary.json 重试失败项")
+    group.add_argument("--resume", help="从 run_summary.json 或 download_plan.json 续跑")
 
     parser.add_argument(
         "-c",

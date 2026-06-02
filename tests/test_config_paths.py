@@ -136,10 +136,11 @@ class TestPaperFetcherDefaultPaths:
 
         with tempfile.TemporaryDirectory() as tmp:
             fetcher = PaperFetcher(cache_dir=tmp)
+            legacy_kwargs = {"format": "csv"}
             try:
                 fetcher.export_results(
                     [{"pmid": "1", "title": "Test"}],
-                    format="csv",  # type: ignore[call-arg]
+                    **legacy_kwargs,
                     filename="papers.csv",
                 )
             except TypeError as exc:
