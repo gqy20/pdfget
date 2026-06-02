@@ -10,7 +10,7 @@ __description__ = "智能文献搜索与批量下载工具，支持高级检索�
 from .counter import PMCIDCounter
 from .downloader import PDFDownloader
 from .fetcher import PaperFetcher
-from .logger import get_logger, setup_logger
+from .logger import configure_logging, get_logger, setup_logger
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 
@@ -20,6 +20,7 @@ __all__ = [
     "PDFDownloader",
     "PaperSearcher",
     "PMCIDCounter",
+    "configure_logging",
     "get_logger",
     "setup_logger",
 ]

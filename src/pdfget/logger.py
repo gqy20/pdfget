@@ -1,47 +1,129 @@
 #!/usr/bin/env python3
-"""统一的日志配置模块
+"""Project-wide structured logging configuration."""
 
-提供整个项目的日志配置和管理功能，确保所有模块使用一致的日志格式。
-"""
+from __future__ import annotations
 
 import logging
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from types import TracebackType
+from typing import Any, ParamSpec, TypeVar, cast
 
-from .config import LOG_FORMAT, LOG_LEVEL
+import structlog
+
+from .config import LOG_LEVEL
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+Logger = structlog.stdlib.BoundLogger
+
+_CONFIGURED = False
+_LOG_FORMAT = "text"
+_LOG_LEVEL = LOG_LEVEL
 
 
-# 日志颜色配置
-class ColoredFormatter(logging.Formatter):
-    """带颜色的日志格式化器"""
+class EventRenamer:
+    """Rename structlog's event key to message for JSON log readability."""
 
-    # ANSI 颜色代码
-    COLORS = {
-        "DEBUG": "\033[36m",  # 青色
-        "INFO": "\033[32m",  # 绿色
-        "WARNING": "\033[33m",  # 黄色
-        "ERROR": "\033[31m",  # 红色
-        "CRITICAL": "\033[35m",  # 紫色
-    }
-    RESET = "\033[0m"
+    def __call__(
+        self, logger: logging.Logger, method_name: str, event_dict: dict[str, Any]
+    ) -> dict[str, Any]:
+        if "event" in event_dict:
+            event_dict["message"] = event_dict.pop("event")
+        return event_dict
 
-    def format(self, record: logging.LogRecord) -> str:
-        # 添加颜色
-        if hasattr(record, "levelname") and record.levelname in self.COLORS:
-            record.levelname = (
-                f"{self.COLORS[record.levelname]}{record.levelname}{self.RESET}"
-            )
 
-        # 格式化消息
-        formatted = super().format(record)
+def _level_name(level: str | int | None) -> str:
+    if isinstance(level, int):
+        return logging.getLevelName(level)
+    return (level or LOG_LEVEL).upper()
 
-        # 如果消息包含 emoji，不添加额外的颜色
-        if any(c in formatted for c in ["🚀", "✅", "❌", "📊", "📄", "🔍", "💾"]):
-            return formatted
 
-        return formatted
+def configure_logging(
+    *,
+    level: str | int | None = None,
+    log_format: str = "text",
+    quiet: bool = False,
+    log_file: Path | None = None,
+    force: bool = False,
+) -> None:
+    """Configure logging for all pdfget modules.
+
+    Logs are always emitted to stderr so stdout can remain machine-readable.
+    """
+    global _CONFIGURED, _LOG_FORMAT, _LOG_LEVEL
+
+    if _CONFIGURED and not force:
+        return
+
+    if force:
+        structlog.reset_defaults()
+
+    level_name = "ERROR" if quiet else _level_name(level)
+    log_level = getattr(logging, level_name, logging.INFO)
+    _LOG_FORMAT = log_format
+    _LOG_LEVEL = level_name
+
+    timestamper = structlog.processors.TimeStamper(fmt="iso", utc=False)
+    shared_processors: list[Any] = [
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        timestamper,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+    ]
+
+    if log_format == "json":
+        renderer: Any = structlog.processors.JSONRenderer(ensure_ascii=False)
+        formatter_processors = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            EventRenamer(),
+            renderer,
+        ]
+    else:
+        renderer = structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty())
+        formatter_processors = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            renderer,
+        ]
+
+    formatter = structlog.stdlib.ProcessorFormatter(
+        foreign_pre_chain=shared_processors,
+        processors=formatter_processors,
+    )
+
+    root_logger = logging.getLogger()
+    for handler in list(root_logger.handlers):
+        root_logger.removeHandler(handler)
+
+    stream_handler = logging.StreamHandler(sys.stderr)
+    stream_handler.setLevel(log_level)
+    stream_handler.setFormatter(formatter)
+    root_logger.addHandler(stream_handler)
+
+    if log_file:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
+    root_logger.setLevel(log_level)
+
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            *shared_processors,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        wrapper_class=structlog.stdlib.BoundLogger,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
+    _CONFIGURED = True
 
 
 def setup_logger(
@@ -50,119 +132,64 @@ def setup_logger(
     log_format: str | None = None,
     use_colors: bool = True,
     log_file: Path | None = None,
-) -> logging.Logger:
+) -> Logger:
+    """Return a configured structured logger.
+
+    The ``use_colors`` parameter is kept for backward compatibility; text output
+    auto-detects terminal color support.
     """
-    设置并返回一个配置好的logger
-
-    Args:
-        name: logger名称，通常使用 __name__
-        level: 日志级别，默认使用配置文件中的值
-        log_format: 日志格式，默认使用配置文件中的值
-        use_colors: 是否使用彩色输出（仅对终端有效）
-        log_file: 可选的日志文件路径
-
-    Returns:
-        配置好的logger对象
-    """
-    # 创建logger
-    logger = logging.getLogger(name)
-
-    # 避免重复添加handler
-    if logger.handlers:
-        return logger
-
-    # 设置日志级别
-    log_level = getattr(logging, (level or LOG_LEVEL).upper(), logging.INFO)
-    logger.setLevel(log_level)
-
-    # 创建格式化器
-    fmt = log_format or LOG_FORMAT
-    formatter: logging.Formatter
-    if use_colors and sys.stdout.isatty():
-        formatter = ColoredFormatter(fmt)
-    else:
-        formatter = logging.Formatter(fmt)
-
-    # 控制台处理器
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setLevel(log_level)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    # 文件处理器（如果指定）
-    if log_file:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setLevel(log_level)
-        # 文件中不使用颜色
-        file_handler.setFormatter(logging.Formatter(fmt))
-        logger.addHandler(file_handler)
-
-    # 防止日志传播到根logger
-    logger.propagate = False
-
-    return logger
+    del use_colors
+    configure_logging(
+        level=level,
+        log_format=log_format or _LOG_FORMAT,
+        log_file=log_file,
+    )
+    return cast(Logger, structlog.get_logger(name))
 
 
-def get_logger(name: str) -> logging.Logger:
-    """
-    获取logger的便捷函数
-
-    Args:
-        name: logger名称，通常使用 __name__
-
-    Returns:
-        logger对象
-    """
+def get_logger(name: str) -> Logger:
+    """Get a module logger."""
     return setup_logger(name)
 
 
-# 预定义的几个logger
-def get_main_logger() -> logging.Logger:
-    """获取主程序logger"""
+def get_main_logger() -> Logger:
+    """Get the main CLI logger."""
     return get_logger("PDFDownloader")
 
 
-def get_fetcher_logger() -> logging.Logger:
-    """获取文献获取器logger"""
+def get_fetcher_logger() -> Logger:
+    """Get the paper fetcher logger."""
     return get_logger("PaperFetcher")
 
 
-def get_manager_logger() -> logging.Logger:
-    """获取下载管理器logger"""
+def get_manager_logger() -> Logger:
+    """Get the download manager logger."""
     return get_logger("DownloadManager")
 
 
-def get_counter_logger() -> logging.Logger:
-    """获取计数器logger"""
+def get_counter_logger() -> Logger:
+    """Get the PMCID counter logger."""
     return get_logger("PMCIDCounter")
 
 
-# 日志装饰器
-def log_function_call(logger: logging.Logger | None = None) -> Callable:
-    """
-    装饰器：记录函数调用
+def log_function_call(logger: Logger | None = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Decorator that logs function entry, success, and failure."""
 
-    Args:
-        logger: 可选的logger对象，如果为None则使用函数所在模块的logger
-    """
-
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         import functools
 
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            nonlocal logger
-            if logger is None:
-                logger = get_logger(func.__module__)
-
-            logger.debug(f"调用函数 {func.__name__}")
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            active_logger = logger or get_logger(func.__module__)
+            active_logger.debug("function_call", function=func.__name__)
             try:
                 result = func(*args, **kwargs)
-                logger.debug(f"函数 {func.__name__} 执行成功")
+                active_logger.debug("function_success", function=func.__name__)
                 return result
-            except Exception as e:
-                logger.error(f"函数 {func.__name__} 执行失败: {e}", exc_info=True)
+            except Exception:
+                active_logger.error(
+                    "function_failed", function=func.__name__, exc_info=True
+                )
                 raise
 
         return wrapper
@@ -170,22 +197,25 @@ def log_function_call(logger: logging.Logger | None = None) -> Callable:
     return decorator
 
 
-# 日志上下文管理器
 class LogContext:
-    """
-    上下文管理器：用于临时更改日志级别
-    """
+    """Temporarily change the root log level."""
 
-    def __init__(self, logger: logging.Logger, level: str):
+    def __init__(self, logger: Logger, level: str):
         self.logger = logger
         self.new_level = getattr(logging, level.upper())
         self.old_level: int | None = None
 
-    def __enter__(self) -> "LogContext":
-        self.old_level = self.logger.level
-        self.logger.setLevel(self.new_level)
+    def __enter__(self) -> LogContext:
+        wrapped = logging.getLogger(self.logger.name)
+        self.old_level = wrapped.level
+        wrapped.setLevel(self.new_level)
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         if self.old_level is not None:
-            self.logger.setLevel(self.old_level)
+            logging.getLogger(self.logger.name).setLevel(self.old_level)

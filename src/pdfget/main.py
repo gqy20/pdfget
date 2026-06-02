@@ -3,7 +3,6 @@
 
 import argparse
 import json
-import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -20,7 +19,7 @@ from .config import (
 from .counter import PMCIDCounter
 from .fetcher import PaperFetcher
 from .formatter import StatsFormatter
-from .logger import get_main_logger
+from .logger import Logger, configure_logging, get_main_logger
 from .manager import UnifiedDownloadManager
 
 
@@ -90,11 +89,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-e", help="NCBI API 邮箱（提高请求限制）")
     parser.add_argument("-k", help="NCBI API 密钥（可选）")
     parser.add_argument("--delay", type=float, help="下载延迟时间（秒，默认 1.0）")
+    parser.add_argument(
+        "--log-format",
+        choices=["text", "json"],
+        default="text",
+        help="日志输出格式（默认: text，始终写入 stderr）",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="日志级别（默认使用配置文件 LOG_LEVEL）",
+    )
+    parser.add_argument("--quiet", action="store_true", help="仅输出错误日志")
     return parser
 
 
 def log_download_stats(
-    logger: logging.Logger, results: list[dict[str, Any]]
+    logger: Logger, results: list[dict[str, Any]]
 ) -> dict[str, int]:
     """Log download statistics and return the summary."""
     success_count = sum(1 for r in results if r.get("success"))
@@ -184,7 +195,7 @@ def get_primary_identifier_display(paper: dict[str, Any]) -> tuple[str, str]:
 
 
 def display_search_results(
-    logger: logging.Logger, papers: list[dict[str, Any]]
+    logger: Logger, papers: list[dict[str, Any]]
 ) -> None:
     """Render a compact search result list to the logger."""
     logger.info(f"\n搜索结果 ({len(papers)} 篇):")
@@ -228,7 +239,7 @@ def save_search_results(
 
 
 def emit_search_results(
-    logger: logging.Logger,
+    logger: Logger,
     query: str,
     papers: list[dict[str, Any]],
     output_dir: str,
@@ -248,7 +259,7 @@ def emit_search_results(
 
 
 def emit_download_results(
-    logger: logging.Logger,
+    logger: Logger,
     results: list[dict[str, Any]],
     output_dir: str,
     output_format: str | None,
@@ -298,9 +309,14 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
+    log_level = "DEBUG" if args.v else args.log_level
+    configure_logging(
+        level=log_level,
+        log_format=args.log_format,
+        quiet=args.quiet,
+        force=True,
+    )
     logger = get_main_logger()
-    if args.v:
-        logger.setLevel(logging.DEBUG)
 
     email = args.e or NCBI_EMAIL
     api_key = args.k or NCBI_API_KEY
