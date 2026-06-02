@@ -9,8 +9,8 @@ from typing import Any
 
 from .config import DOWNLOAD_BASE_DELAY, DOWNLOAD_RANDOM_DELAY
 from .downloader import PDFDownloader
-from .fetcher import PaperFetcher
 from .logger import get_logger
+from .protocols import DownloadContext
 
 
 class UnifiedDownloadManager:
@@ -18,7 +18,7 @@ class UnifiedDownloadManager:
 
     def __init__(
         self,
-        fetcher: PaperFetcher,
+        fetcher: DownloadContext,
         max_workers: int = 1,
         base_delay: float = DOWNLOAD_BASE_DELAY,
         random_delay_range: float = DOWNLOAD_RANDOM_DELAY,

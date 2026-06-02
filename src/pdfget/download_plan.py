@@ -6,9 +6,10 @@ import json
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, Protocol, TypedDict
+from typing import Literal, TypedDict
 
 from .paper_schema import PaperRecord, normalize_paper_record
+from .protocols import IdentifierResolver
 
 DownloadStrategy = Literal["pmc", "arxiv", "direct_pdf"]
 PlanStatus = Literal["ready", "skipped"]
@@ -49,14 +50,6 @@ class DownloadPlan(TypedDict):
     ready: int
     skipped: int
     entries: list[DownloadPlanEntry]
-
-
-class IdentifierResolver(Protocol):
-    """Resolve PMID/DOI values to PMCID values for download planning."""
-
-    def resolve_pmids(self, pmids: list[str]) -> Mapping[str, str]: ...
-
-    def resolve_dois(self, dois: list[str]) -> Mapping[str, str]: ...
 
 
 def choose_download_strategy(paper: PaperRecord) -> DownloadStrategy | None:

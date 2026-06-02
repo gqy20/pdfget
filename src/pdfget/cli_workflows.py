@@ -5,13 +5,50 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from .config import DOWNLOAD_BASE_DELAY, TIMEOUT
 from .download_plan import build_download_plan, ready_papers, save_download_plan
+from .download_service import DownloadManagerFactory
 from .input_planner import build_download_plan_from_unified_input
 from .logger import Logger
+from .protocols import DownloadContext, SearchProvider
 from .run_report import build_run_summary, load_failed_papers, save_run_summary
+
+
+class CliFetcher(SearchProvider, DownloadContext, Protocol):
+    """Fetcher capabilities required by CLI workflows."""
+
+
+class Counter(Protocol):
+    """PMCID counter instance used by search workflows."""
+
+    def count_pmcid(self, query: str, limit: int = 1000) -> dict[str, Any]: ...
+
+
+class CounterFactory(Protocol):
+    """Factory for PMCID counter instances."""
+
+    def __call__(
+        self,
+        *,
+        email: str | None = None,
+        api_key: str | None = None,
+        source: str = "pubmed",
+    ) -> Counter: ...
+
+
+class StatsFormatterProtocol(Protocol):
+    """Statistics formatter API used by CLI workflows."""
+
+    def format(self, stats: dict[str, Any], format_type: str | None = None) -> str: ...
+
+    def save_report(
+        self,
+        stats: dict[str, Any],
+        filename: str,
+        format_type: str | None = None,
+    ) -> None: ...
 
 
 def log_download_stats(
@@ -262,10 +299,10 @@ def run_search_workflow(
     args: Any,
     *,
     logger: Logger,
-    fetcher: Any,
-    download_manager_cls: Any,
-    counter_cls: Any,
-    stats_formatter: Any,
+    fetcher: CliFetcher,
+    download_manager_cls: DownloadManagerFactory,
+    counter_cls: CounterFactory,
+    stats_formatter: StatsFormatterProtocol,
 ) -> None:
     """Run search mode, optionally followed by download."""
     logger.info(f"\n搜索文献: {args.s} (数据源: {args.S})")
@@ -350,8 +387,8 @@ def run_unified_input_workflow(
     args: Any,
     *,
     logger: Logger,
-    fetcher: Any,
-    download_manager_cls: Any,
+    fetcher: CliFetcher,
+    download_manager_cls: DownloadManagerFactory,
 ) -> None:
     """Run CSV or direct identifier download mode."""
     logger.info(f"\n批量输入下载: {args.m}")
@@ -399,8 +436,8 @@ def run_resume_workflow(
     args: Any,
     *,
     logger: Logger,
-    fetcher: Any,
-    download_manager_cls: Any,
+    fetcher: CliFetcher,
+    download_manager_cls: DownloadManagerFactory,
 ) -> None:
     """Retry failed items from a run summary."""
     logger.info(f"\n重试失败下载: {args.resume}")

@@ -5,35 +5,42 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from .config import DOWNLOAD_BASE_DELAY
-from .download_plan import IdentifierResolver, ready_papers
+from .download_plan import ready_papers
 from .input_planner import build_download_plan_from_unified_input
+from .protocols import UnifiedInputContext
 
 
-class DownloadLogger(Protocol):
-    """Minimal logger surface used by unified input downloads."""
+class DownloadManager(Protocol):
+    """Batch downloader created by the download service."""
 
-    def info(self, message: str) -> None: ...
+    def download_batch(
+        self,
+        items: list[str] | list[dict[str, Any]],
+        timeout: int = 30,
+    ) -> list[dict[str, Any]]: ...
 
-    def error(self, message: str) -> None: ...
 
-    def warning(self, message: str) -> None: ...
+class DownloadManagerFactory(Protocol):
+    """Factory for creating a download manager."""
 
-
-class UnifiedInputFetcher(IdentifierResolver, Protocol):
-    """Fetcher capabilities needed by unified input download service."""
-
-    logger: DownloadLogger
+    def __call__(
+        self,
+        *,
+        fetcher: UnifiedInputContext,
+        max_workers: int,
+        base_delay: float,
+    ) -> DownloadManager: ...
 
 
 def download_from_unified_input(
-    fetcher: UnifiedInputFetcher,
+    fetcher: UnifiedInputContext,
     input_value: str,
     *,
     column: str | None = None,
     limit: int | None = None,
     max_workers: int = 1,
     base_delay: float | None = None,
-    download_manager_cls: Any | None = None,
+    download_manager_cls: DownloadManagerFactory | None = None,
 ) -> list[dict[str, Any]]:
     """Build a plan from unified input and execute downloads."""
     plan = build_download_plan_from_unified_input(
