@@ -23,14 +23,11 @@ from .config import (
     get_cache_dir,
 )
 from .doi_converter import DOIConverter
-from .download_plan import DownloadPlan
-from .download_service import download_from_unified_input
 from .downloader import PDFDownloader
 from .input_parser import (
     classify_identifiers,
     read_identifier_values_from_csv,
 )
-from .input_planner import build_download_plan_from_unified_input
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
@@ -325,53 +322,6 @@ class PaperFetcher(NCBIBaseModule):
 
         self.logger.info(f"结果已导出到: {output_path}")
         return str(output_path)
-
-    def download_from_unified_input(
-        self,
-        input_value: str,
-        column: str | None = None,
-        limit: int | None = None,
-        max_workers: int = 1,
-        base_delay: float | None = None,
-    ) -> list[dict]:
-        """
-        统一的输入处理入口
-
-        自动判断输入类型并调用相应的处理逻辑
-
-        Args:
-            input_value: 输入值（文件路径/标识符/逗号分隔列表）
-            column: CSV列名（可选，None时自动检测）
-            limit: 下载数量限制
-            max_workers: 并发线程数
-            base_delay: 基础延迟时间（秒，None时使用默认值）
-
-        Returns:
-            下载结果列表
-        """
-        return download_from_unified_input(
-            self,
-            input_value,
-            column=column,
-            limit=limit,
-            max_workers=max_workers,
-            base_delay=base_delay,
-        )
-
-    def build_download_plan_from_unified_input(
-        self,
-        input_value: str,
-        column: str | None = None,
-        limit: int | None = None,
-    ) -> DownloadPlan:
-        """Build a download plan from a CSV path or identifier string."""
-        return build_download_plan_from_unified_input(
-            input_value,
-            column=column,
-            limit=limit,
-            resolver=self,
-            logger=self.logger,
-        )
 
     def __enter__(self) -> "PaperFetcher":
         """支持上下文管理器"""

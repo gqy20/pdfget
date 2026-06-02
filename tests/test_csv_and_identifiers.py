@@ -14,6 +14,7 @@ from pdfget.input_parser import (
     detect_input_type,
     read_identifier_values_from_csv,
 )
+from src.pdfget.download_service import download_from_unified_input
 from src.pdfget.fetcher import PaperFetcher
 from tests.conftest import CSVTestMixin, create_temp_csv_file
 
@@ -268,7 +269,8 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         ]
 
         # 调用下载方法
-        results = self.fetcher.download_from_unified_input(
+        results = download_from_unified_input(
+            self.fetcher,
             str(csv_file_with_pmcids),
             column="PMCID",
             limit=None,
@@ -300,8 +302,11 @@ class TestCSVDowloadIntegration(CSVTestMixin):
 
         try:
             # 限制只下载前 2 个
-            self.fetcher.download_from_unified_input(
-                str(csv_file), column="ID", limit=2
+            download_from_unified_input(
+                self.fetcher,
+                str(csv_file),
+                column="ID",
+                limit=2,
             )
 
             # 验证只传递了前 2 个论文
@@ -320,7 +325,8 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
         mock_manager_class.return_value = mock_manager
 
-        self.fetcher.download_from_unified_input(
+        download_from_unified_input(
+            self.fetcher,
             "PMC123456",
             max_workers=4,
             base_delay=0.25,
@@ -349,7 +355,8 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
         mock_manager_class.return_value = mock_manager
 
-        self.fetcher.download_from_unified_input(
+        download_from_unified_input(
+            self.fetcher,
             "PMC111111,38238491,10.1000/test,2301.12345"
         )
 
@@ -392,7 +399,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         mock_manager.download_batch.return_value = []
         mock_manager_class.return_value = mock_manager
 
-        self.fetcher.download_from_unified_input(str(csv_file), column="ID")
+        download_from_unified_input(self.fetcher, str(csv_file), column="ID")
 
         papers = mock_manager.download_batch.call_args[0][0]
         assert [

@@ -11,6 +11,7 @@ import pytest
 
 from pdfget.input_parser import parse_identifier_string
 from pdfget.utils.identifier_utils import IdentifierUtils
+from src.pdfget.download_service import download_from_unified_input
 from src.pdfget.fetcher import PaperFetcher
 
 
@@ -66,7 +67,7 @@ PMC12345,Paper 4 PMCID"""
 
         try:
             # 执行下载（通过统一输入入口）
-            results = fetcher.download_from_unified_input(csv_path, column="ID")
+            results = download_from_unified_input(fetcher, csv_path, column="ID")
 
             # 验证下载管理器被调用
             mock_download.assert_called_once()
@@ -98,7 +99,7 @@ PMC12345,Paper 4 PMCID"""
         ]
 
         # 执行DOI下载
-        result = fetcher.download_from_unified_input("10.1000/test.doi")
+        result = download_from_unified_input(fetcher, "10.1000/test.doi")
 
         # 验证转换和下载被执行
         mock_batch_convert.assert_called_once()
@@ -144,7 +145,7 @@ PMC12345,Paper 4 PMCID"""
         mock_batch_convert.return_value = {}
 
         # 执行不存在的DOI下载（预期会失败并返回空结果）
-        result = fetcher.download_from_unified_input("10.1000/nonexistent.doi")
+        result = download_from_unified_input(fetcher, "10.1000/nonexistent.doi")
 
         # 验证结果为空列表（因为DOI转换失败，没有可下载的PMCID）
         assert result == []
@@ -173,7 +174,7 @@ PMC12345,Paper 4 PMCID"""
         # 注意：UnifiedDownloadManager通过fetcher内部使用
 
         # 执行下载（通过fetcher的统一接口）
-        result = fetcher.download_from_unified_input("10.1000/test.doi")
+        result = download_from_unified_input(fetcher, "10.1000/test.doi")
 
         # 验证下载管理器被调用
         mock_download.assert_called_once()
@@ -185,7 +186,7 @@ PMC12345,Paper 4 PMCID"""
     # 集成测试6: 错误处理和日志记录
     def test_doi_error_logging(self, fetcher):
         """测试: 无效 DOI 格式返回空结果且不崩溃"""
-        result = fetcher.download_from_unified_input("invalid.doi.format")
+        result = download_from_unified_input(fetcher, "invalid.doi.format")
         assert result == []
 
     # 集成测试7: 性能测试（大量DOI）
@@ -216,7 +217,7 @@ PMC12345,Paper 4 PMCID"""
         doi_string = ",".join(doi_list)
 
         # 执行批量下载
-        results = fetcher.download_from_unified_input(doi_string)
+        results = download_from_unified_input(fetcher, doi_string)
 
         # 验证转换和下载被执行
         mock_batch_convert.assert_called_once()

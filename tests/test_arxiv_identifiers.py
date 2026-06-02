@@ -4,12 +4,14 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from pdfget.download_service import download_from_unified_input
 from pdfget.fetcher import PaperFetcher
 from pdfget.input_parser import (
     classify_identifiers,
     detect_input_type,
     read_identifier_values_from_csv,
 )
+from pdfget.input_planner import build_download_plan_from_unified_input
 from pdfget.utils.identifier_utils import IdentifierUtils
 from tests.conftest import CSVTestMixin, create_temp_csv_file
 
@@ -63,14 +65,18 @@ class TestArxivCSVAndInput(CSVTestMixin):
             {"arxiv_id": "2301.12345", "success": True, "path": "/tmp/arxiv.pdf"}
         ]
 
-        results = self.fetcher.download_from_unified_input("2301.12345")
+        results = download_from_unified_input(self.fetcher, "2301.12345")
 
         assert results[0]["success"] is True
         papers = mock_manager.download_batch.call_args[0][0]
         assert papers[0]["arxiv_id"] == "2301.12345"
 
     def test_build_download_plan_from_unified_input_routes_arxiv(self):
-        plan = self.fetcher.build_download_plan_from_unified_input("2301.12345")
+        plan = build_download_plan_from_unified_input(
+            "2301.12345",
+            resolver=self.fetcher,
+            logger=self.fetcher.logger,
+        )
 
         assert plan["schema"] == "download_plan.v1"
         assert plan["ready"] == 1
@@ -89,7 +95,11 @@ class TestArxivCSVAndInput(CSVTestMixin):
             {"arxiv_id": "2301.12346v2", "success": True, "path": "/tmp/2301.12346v2.pdf"},
         ]
 
-        results = self.fetcher.download_from_unified_input(str(csv_file), column="ID")
+        results = download_from_unified_input(
+            self.fetcher,
+            str(csv_file),
+            column="ID",
+        )
 
         assert len(results) == 2
         papers = mock_manager.download_batch.call_args[0][0]
