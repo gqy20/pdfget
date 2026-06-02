@@ -14,6 +14,7 @@ from .input_planner import build_download_plan_from_unified_input
 from .logger import Logger
 from .protocols import DownloadContext, SearchProvider
 from .run_report import build_run_summary, load_failed_papers, save_run_summary
+from .schemas import DownloadPayload, DownloadResult, PmcidStats, SearchPayload
 
 
 class CliFetcher(SearchProvider, DownloadContext, Protocol):
@@ -23,7 +24,7 @@ class CliFetcher(SearchProvider, DownloadContext, Protocol):
 class Counter(Protocol):
     """PMCID counter instance used by search workflows."""
 
-    def count_pmcid(self, query: str, limit: int = 1000) -> dict[str, Any]: ...
+    def count_pmcid(self, query: str, limit: int = 1000) -> PmcidStats: ...
 
 
 class CounterFactory(Protocol):
@@ -41,18 +42,51 @@ class CounterFactory(Protocol):
 class StatsFormatterProtocol(Protocol):
     """Statistics formatter API used by CLI workflows."""
 
-    def format(self, stats: dict[str, Any], format_type: str | None = None) -> str: ...
+    def format(self, stats: PmcidStats, format_type: str | None = None) -> str: ...
 
     def save_report(
         self,
-        stats: dict[str, Any],
+        stats: PmcidStats,
         filename: str,
         format_type: str | None = None,
     ) -> None: ...
 
 
+class CommonWorkflowArgs(Protocol):
+    """CLI argument attributes shared by workflow modes."""
+
+    o: str
+    t: int
+    format: str | None
+    delay: float | None
+    dry_run: bool
+
+
+class SearchWorkflowArgs(CommonWorkflowArgs, Protocol):
+    """CLI argument attributes for search mode."""
+
+    s: str
+    S: str
+    l: int  # noqa: E741 - argparse attribute from the public -l option.
+    d: bool
+
+
+class UnifiedInputWorkflowArgs(CommonWorkflowArgs, Protocol):
+    """CLI argument attributes for unified input mode."""
+
+    m: str
+    c: str | None
+    l: int  # noqa: E741 - argparse attribute from the public -l option.
+
+
+class ResumeWorkflowArgs(CommonWorkflowArgs, Protocol):
+    """CLI argument attributes for resume mode."""
+
+    resume: str
+
+
 def log_download_stats(
-    logger: Logger, results: list[dict[str, Any]]
+    logger: Logger, results: list[DownloadResult]
 ) -> dict[str, int]:
     """Log download statistics and return the summary."""
     success_count = sum(1 for r in results if r.get("success"))
@@ -81,7 +115,7 @@ def save_json(path: Path, payload: dict[str, Any]) -> None:
         json.dump(payload, file, indent=2, ensure_ascii=False)
 
 
-def build_search_payload(query: str, papers: list[dict[str, Any]]) -> dict[str, Any]:
+def build_search_payload(query: str, papers: list[dict[str, Any]]) -> SearchPayload:
     """Build a schema-first payload for search output."""
     return {
         "schema": "paper_record.v1",
@@ -93,11 +127,11 @@ def build_search_payload(query: str, papers: list[dict[str, Any]]) -> dict[str, 
 
 
 def build_download_payload(
-    results: list[dict[str, Any]], *, source: str, input_value: str | None = None
-) -> dict[str, Any]:
+    results: list[DownloadResult], *, source: str, input_value: str | None = None
+) -> DownloadPayload:
     """Build a schema-first payload for download output."""
     success_count = sum(1 for result in results if result.get("success"))
-    payload = {
+    payload: DownloadPayload = {
         "schema": "download_result.v1",
         "timestamp": time.time(),
         "source": source,
@@ -225,7 +259,7 @@ def emit_search_results(
 
 def emit_download_results(
     logger: Logger,
-    results: list[dict[str, Any]],
+    results: list[DownloadResult],
     output_dir: str,
     output_format: str | None,
     *,
@@ -245,7 +279,7 @@ def emit_download_results(
 
 def emit_run_summary(
     logger: Logger,
-    results: list[dict[str, Any]],
+    results: list[DownloadResult],
     output_dir: str,
     *,
     papers: list[dict[str, Any]] | None = None,
@@ -269,7 +303,7 @@ def emit_run_summary(
     return summary_file
 
 
-def print_pmcid_stats(stats: dict) -> None:
+def print_pmcid_stats(stats: PmcidStats) -> None:
     """Print PMCID statistics in console mode."""
     print("\nPMCID统计结果:")
     print(f"   查询: {stats['query']}")
@@ -296,7 +330,7 @@ def print_pmcid_stats(stats: dict) -> None:
 
 
 def run_search_workflow(
-    args: Any,
+    args: SearchWorkflowArgs,
     *,
     logger: Logger,
     fetcher: CliFetcher,
@@ -384,7 +418,7 @@ def run_search_workflow(
 
 
 def run_unified_input_workflow(
-    args: Any,
+    args: UnifiedInputWorkflowArgs,
     *,
     logger: Logger,
     fetcher: CliFetcher,
@@ -433,7 +467,7 @@ def run_unified_input_workflow(
 
 
 def run_resume_workflow(
-    args: Any,
+    args: ResumeWorkflowArgs,
     *,
     logger: Logger,
     fetcher: CliFetcher,

@@ -5,14 +5,15 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from .paper_schema import PaperRecord, build_identifier, normalize_paper_record
+from .schemas import DownloadResult, RunSummary, RunSummaryEntry
 
-RUN_SUMMARY_SCHEMA = "run_summary.v1"
+RUN_SUMMARY_SCHEMA: Literal["run_summary.v1"] = "run_summary.v1"
 
 
-def _result_paper(result: dict[str, Any]) -> PaperRecord:
+def _result_paper(result: DownloadResult) -> PaperRecord:
     """Build a retryable paper record from a download result."""
     return normalize_paper_record(
         {
@@ -28,7 +29,7 @@ def _result_paper(result: dict[str, Any]) -> PaperRecord:
 
 
 def _entry_paper(
-    papers: list[dict[str, Any]] | None, result: dict[str, Any], index: int
+    papers: list[dict[str, Any]] | None, result: DownloadResult, index: int
 ) -> dict[str, Any] | PaperRecord:
     if papers is not None and index < len(papers):
         return papers[index]
@@ -36,7 +37,7 @@ def _entry_paper(
 
 
 def build_run_summary(
-    results: list[dict[str, Any]],
+    results: list[DownloadResult],
     *,
     papers: list[dict[str, Any]] | None = None,
     source: str,
@@ -44,9 +45,9 @@ def build_run_summary(
     input_value: str | None = None,
     previous_report: str | None = None,
     download_plan_path: str | None = None,
-) -> dict[str, Any]:
+) -> RunSummary:
     """Build a retryable summary for one download run."""
-    entries: list[dict[str, Any]] = []
+    entries: list[RunSummaryEntry] = []
     for index, result in enumerate(results):
         paper = _entry_paper(papers, result, index)
         identifier, identifier_type = build_identifier({**paper, **result})
@@ -66,7 +67,7 @@ def build_run_summary(
         )
 
     failed_count = sum(1 for entry in entries if entry["status"] == "failed")
-    payload: dict[str, Any] = {
+    payload: RunSummary = {
         "schema": RUN_SUMMARY_SCHEMA,
         "timestamp": time.time(),
         "source": source,
@@ -85,7 +86,7 @@ def build_run_summary(
     return payload
 
 
-def save_run_summary(output_dir: str, summary: dict[str, Any]) -> Path:
+def save_run_summary(output_dir: str, summary: RunSummary) -> Path:
     """Save the latest run summary and a timestamped copy."""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
