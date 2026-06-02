@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.pdfget.searcher import PaperSearcher
+from pdfget.searcher import PaperSearcher
 
 
 class TestPaperSearcher:
@@ -80,7 +80,7 @@ class TestPaperSearcher:
         # 应该解析年份过滤器
         assert "2020[pdat]" in result
 
-    @patch("src.pdfget.searcher.PaperSearcher._search_pubmed_api")
+    @patch("pdfget.searcher.PaperSearcher._search_pubmed_api")
     def test_search_pubmed_success(self, mock_search, searcher, sample_search_results):
         """
         测试: 成功搜索 PubMed
@@ -95,7 +95,7 @@ class TestPaperSearcher:
         assert result[0]["source"] == "pubmed"
         mock_search.assert_called_once()
 
-    @patch("src.pdfget.searcher.PaperSearcher._search_pubmed_api")
+    @patch("pdfget.searcher.PaperSearcher._search_pubmed_api")
     def test_search_pubmed_empty_result(self, mock_search, searcher):
         """测试: PubMed 搜索返回空结果"""
         mock_search.return_value = []
@@ -122,7 +122,7 @@ class TestPaperSearcher:
         # 应该保留 Europe PMC 字段
         assert "TITLE:" in result
 
-    @patch("src.pdfget.searcher.PaperSearcher._search_europepmc_api")
+    @patch("pdfget.searcher.PaperSearcher._search_europepmc_api")
     def test_search_europepmc_success(
         self, mock_search, searcher, sample_search_results
     ):
@@ -260,8 +260,8 @@ class TestPaperSearcher:
         assert result["abstract"] == "Test abstract"
         assert result["source"] == "pubmed"
 
-    @patch("src.pdfget.searcher.PaperSearcher.search_pubmed")
-    @patch("src.pdfget.searcher.PaperSearcher.search_europepmc")
+    @patch("pdfget.searcher.PaperSearcher.search_pubmed")
+    @patch("pdfget.searcher.PaperSearcher.search_europepmc")
     def test_search_all_sources_combine_results(
         self, mock_europe, mock_pubmed, searcher
     ):
@@ -283,9 +283,9 @@ class TestPaperSearcher:
         assert result[0]["pmid"] == "1"
         assert result[1]["pmid"] == "2"
 
-    @patch("src.pdfget.searcher.PaperSearcher.search_pubmed")
-    @patch("src.pdfget.searcher.PaperSearcher.search_europepmc")
-    @patch("src.pdfget.searcher.PaperSearcher.search_arxiv")
+    @patch("pdfget.searcher.PaperSearcher.search_pubmed")
+    @patch("pdfget.searcher.PaperSearcher.search_europepmc")
+    @patch("pdfget.searcher.PaperSearcher.search_arxiv")
     def test_search_all_sources_include_arxiv(
         self, mock_arxiv, mock_europe, mock_pubmed, searcher
     ):

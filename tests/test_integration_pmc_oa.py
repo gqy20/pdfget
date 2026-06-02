@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.pdfget.downloader import PDFDownloader
+from pdfget.downloader import PDFDownloader
 
 
 @pytest.mark.integration

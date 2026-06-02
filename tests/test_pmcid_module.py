@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.pdfget.pmcid import PMCIDRetriever
+from pdfget.pmcid import PMCIDRetriever
 
 
 class TestPMCIDRetriever:

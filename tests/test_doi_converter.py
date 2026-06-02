@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from src.pdfget.config import DOI_QUERY_TIMEOUT
+from pdfget.config import DOI_QUERY_TIMEOUT
 
 
 @pytest.mark.usefixtures("fast_sleep")
@@ -27,7 +27,7 @@ class TestDOIConverter:
     def converter(self, session):
         """创建 DOIConverter 实例"""
         # 这里会在实现后导入实际的 DOIConverter
-        from src.pdfget.doi_converter import DOIConverter
+        from pdfget.doi_converter import DOIConverter
 
         return DOIConverter(
             session=session, email="test@example.com", api_key="test_key"
@@ -192,7 +192,7 @@ class TestDOIConverter:
         assert results == expected_results
 
     # 测试用例7: CrossRef API作为备选方案
-    @patch("src.pdfget.doi_converter.DOIConverter._query_crossref_api")
+    @patch("pdfget.doi_converter.DOIConverter._query_crossref_api")
     def test_doi_to_pmcid_fallback_to_crossref(self, mock_crossref, converter, session):
         """
         测试: Europe PMC失败时回退到CrossRef API

@@ -35,7 +35,7 @@ class TestPMCOAService:
         - 确保输出目录被创建
         """
         # 这个测试会在我们实现 PMCOAService 类后启用
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         # 确保目录不存在
         assert not tmp_dir.exists()
@@ -63,7 +63,7 @@ class TestPMCOAService:
         - 解析XML响应
         - 返回Element对象
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         # 创建模拟的 session 和响应
         session = Mock(spec=requests.Session)
@@ -106,7 +106,7 @@ class TestPMCOAService:
         - 处理HTTP错误状态码
         - 返回 None
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         mock_response = Mock()
@@ -127,7 +127,7 @@ class TestPMCOAService:
         - 将FTP转换为HTTPS
         - 返回链接信息
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -160,7 +160,7 @@ class TestPMCOAService:
         - 解析XML中的tar.gz链接
         - 将FTP转换为HTTPS
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -192,7 +192,7 @@ class TestPMCOAService:
         - 识别OA service错误响应
         - 返回空列表
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -216,7 +216,7 @@ class TestPMCOAService:
         - 流式保存文件
         - 创建必要的目录
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -253,7 +253,7 @@ class TestPMCOAService:
         - 下载PDF
         - 使用安全的文件名
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -292,7 +292,7 @@ class TestPMCOAService:
         - 识别非开放获取
         - 不尝试下载
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService("/tmp", session)
@@ -323,7 +323,7 @@ class TestPMCOAService:
         import io
         import tarfile
 
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService(str(tmp_path), session)
@@ -355,7 +355,7 @@ class TestPMCOAService:
         import io
         import tarfile
 
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService(str(tmp_path), session)
@@ -383,7 +383,7 @@ class TestPMCOAService:
         import io
         import tarfile
 
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         session = Mock(spec=requests.Session)
         service = PMCOAService(str(tmp_path), session)
@@ -411,7 +411,7 @@ class TestPMCOAService:
 
         这个测试需要网络连接，可以用 -m "not integration" 跳过
         """
-        from src.pdfget.pmc_oa_service import PMCOAService
+        from pdfget.pmc_oa_service import PMCOAService
 
         # 使用真实的session（但这个测试可能因为网络问题失败）
         session = requests.Session()

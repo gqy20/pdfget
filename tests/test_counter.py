@@ -132,7 +132,7 @@ class TestPMCIDCounter:
     def test_count_pmcid_with_cache(self):
         """测试使用缓存的 PMCID 统计"""
         # 创建一个真实的PaperFetcher用于测试
-        from src.pdfget.fetcher import PaperFetcher
+        from pdfget.fetcher import PaperFetcher
 
         # 模拟缓存数据
         test_papers = [

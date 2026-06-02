@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from src.pdfget.retry import retry_with_backoff
+from pdfget.retry import retry_with_backoff
 
 
 @pytest.mark.usefixtures("fast_sleep")
@@ -25,7 +25,7 @@ class TestFixedGradientBackoff:
 
     def test_fixed_gradient_timing(self):
         """测试：使用固定的5个时间梯度"""
-        from src.pdfget.retry import _get_wait_time
+        from pdfget.retry import _get_wait_time
 
         # 测试前5次重试的等待时间
         expected_times = [5, 15, 30, 45, 60]
@@ -92,7 +92,7 @@ class TestFixedGradientBackoff:
 
     def test_jitter_added_to_delay(self):
         """测试：等待时间包含±10%的随机抖动"""
-        from src.pdfget.retry import _get_wait_time
+        from pdfget.retry import _get_wait_time
 
         retry_num = 1  # 第二次尝试，基础等待时间15秒
         wait_times = []
@@ -138,7 +138,7 @@ class TestFixedGradientBackoff:
 
     def test_wait_time_beyond_five_retries(self):
         """测试：超过5次重试后使用最大等待时间"""
-        from src.pdfget.retry import _get_wait_time
+        from pdfget.retry import _get_wait_time
 
         # 测试第5次及之后的重试
         wait_time_5 = _get_wait_time(4)  # 第5次重试
@@ -152,7 +152,7 @@ class TestFixedGradientBackoff:
 
     def test_logging_during_retry(self):
         """测试：重试过程中记录日志"""
-        with patch("src.pdfget.retry.get_logger") as mock_logger:
+        with patch("pdfget.retry.get_logger") as mock_logger:
             mock_log = Mock()
             mock_logger.return_value = mock_log
 

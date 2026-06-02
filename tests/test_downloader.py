@@ -8,7 +8,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from src.pdfget.downloader import PDFDownloader
+from pdfget.downloader import PDFDownloader
 
 
 class TestPDFDownloader:
@@ -112,7 +112,7 @@ class TestPDFDownloader:
         assert result["stage"] == "save_file"
         assert not Path(result["path"]).exists()
 
-    @patch("src.pdfget.downloader.PDFDownloader._save_pdf")
+    @patch("pdfget.downloader.PDFDownloader._save_pdf")
     def test_try_download_from_url_not_pdf(self, mock_save, downloader):
         """
         测试: URL 返回的不是 PDF
@@ -216,8 +216,8 @@ class TestPDFDownloader:
 
         assert result is None
 
-    @patch("src.pdfget.downloader.PDFDownloader.check_pdf_exists")
-    @patch("src.pdfget.downloader.PDFDownloader.get_pdf_path")
+    @patch("pdfget.downloader.PDFDownloader.check_pdf_exists")
+    @patch("pdfget.downloader.PDFDownloader.get_pdf_path")
     def test_download_if_not_exists_cached(
         self, mock_get_path, mock_exists, downloader
     ):
@@ -236,8 +236,8 @@ class TestPDFDownloader:
         assert result["source"] == "cache"
         assert "PDF 已存在" in result["message"]
 
-    @patch("src.pdfget.downloader.PDFDownloader.check_pdf_exists")
-    @patch("src.pdfget.downloader.PDFDownloader.download_pdf")
+    @patch("pdfget.downloader.PDFDownloader.check_pdf_exists")
+    @patch("pdfget.downloader.PDFDownloader.download_pdf")
     def test_download_if_not_exists_not_cached(
         self, mock_download, mock_exists, downloader
     ):

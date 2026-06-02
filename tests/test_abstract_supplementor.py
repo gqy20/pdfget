@@ -9,7 +9,7 @@ import pytest
 import requests
 import requests_mock
 
-from src.pdfget.abstract_supplementor import AbstractSupplementor
+from pdfget.abstract_supplementor import AbstractSupplementor
 
 
 @pytest.mark.usefixtures("fast_sleep")
@@ -187,16 +187,16 @@ class TestAbstractSupplementIntegration:
         """每个测试前的设置"""
         import tempfile
 
-        from src.pdfget.fetcher import PaperFetcher
+        from pdfget.fetcher import PaperFetcher
 
         # 使用临时目录避免缓存干扰
         self.temp_dir = tempfile.mkdtemp()
         self.fetcher = PaperFetcher(cache_dir=self.temp_dir)
 
-    @patch("src.pdfget.abstract_supplementor.requests.get")
+    @patch("pdfget.abstract_supplementor.requests.get")
     def test_europe_pmc_search_with_abstract_supplement(self, mock_xml):
         """测试：摘要补充功能"""
-        from src.pdfget.abstract_supplementor import AbstractSupplementor
+        from pdfget.abstract_supplementor import AbstractSupplementor
 
         supplementor = AbstractSupplementor()
 
@@ -249,7 +249,7 @@ class TestAbstractSupplementIntegration:
 
     def test_europe_pmc_search_with_existing_abstract(self):
         """测试：已有摘要时不再补充"""
-        from src.pdfget.abstract_supplementor import AbstractSupplementor
+        from pdfget.abstract_supplementor import AbstractSupplementor
 
         supplementor = AbstractSupplementor()
 

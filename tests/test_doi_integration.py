@@ -9,10 +9,10 @@ from unittest.mock import patch
 
 import pytest
 
+from pdfget.download_service import download_from_unified_input
+from pdfget.fetcher import PaperFetcher
 from pdfget.input_parser import parse_identifier_string
 from pdfget.utils.identifier_utils import IdentifierUtils
-from src.pdfget.download_service import download_from_unified_input
-from src.pdfget.fetcher import PaperFetcher
 
 
 @pytest.mark.usefixtures("fast_sleep")
@@ -25,9 +25,9 @@ class TestDOIIntegration:
         return PaperFetcher(cache_dir="test_cache", output_dir="test_output")
 
     # 集成测试1: CSV文件中包含DOI的完整流程
-    @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    @patch("pdfget.manager.UnifiedDownloadManager.download_batch")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_csv_with_dois_complete_flow(
         self, mock_process_pmids, mock_batch_convert, mock_download, fetcher
     ):
@@ -80,8 +80,8 @@ PMC12345,Paper 4 PMCID"""
             Path(csv_path).unlink()
 
     # 集成测试2: 单个DOI下载
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.manager.UnifiedDownloadManager.download_batch")
     def test_single_doi_download(self, mock_download, mock_batch_convert, fetcher):
         """
         测试: 单个DOI下载的完整流程
@@ -135,8 +135,8 @@ PMC12345,Paper 4 PMCID"""
         assert "PMC333333" in classified["pmcids"]
 
     # 集成测试4: DOI转换失败时的处理
-    @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.manager.UnifiedDownloadManager.download_batch")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
     def test_doi_conversion_failure_handling(self, mock_batch_convert, mock_download, fetcher):
         """
         测试: DOI转换失败时的处理（mock 避免真实网络请求）
@@ -154,8 +154,8 @@ PMC12345,Paper 4 PMCID"""
         mock_download.assert_not_called()
 
     # 集成测试5: 下载管理器集成测试
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.manager.UnifiedDownloadManager.download_batch")
     def test_download_manager_doi_handling(self, mock_download, mock_batch_convert):
         """
         测试: UnifiedDownloadManager与DOI处理的集成
@@ -190,8 +190,8 @@ PMC12345,Paper 4 PMCID"""
         assert result == []
 
     # 集成测试7: 性能测试（大量DOI）
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.manager.UnifiedDownloadManager.download_batch")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.manager.UnifiedDownloadManager.download_batch")
     def test_large_doi_batch_performance(
         self, mock_download, mock_batch_convert, fetcher
     ):

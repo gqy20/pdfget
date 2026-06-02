@@ -8,14 +8,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from pdfget.download_service import download_from_unified_input
+from pdfget.fetcher import PaperFetcher
 from pdfget.input_parser import (
     auto_detect_column,
     classify_identifiers,
     detect_input_type,
     read_identifier_values_from_csv,
 )
-from src.pdfget.download_service import download_from_unified_input
-from src.pdfget.fetcher import PaperFetcher
 from tests.conftest import CSVTestMixin, create_temp_csv_file
 
 
@@ -203,7 +203,7 @@ class TestPMIDConversion(CSVTestMixin):
         """每个测试前的设置"""
         self.fetcher = PaperFetcher(cache_dir="test_cache", output_dir="test_output")
 
-    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    @patch("pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_convert_pmids_to_pmcid_mapping(self, mock_process):
         """测试：PMID 批量转换为 PMID -> PMCID 映射"""
         # 模拟转换结果
@@ -224,7 +224,7 @@ class TestPMIDConversion(CSVTestMixin):
             "38238492": "PMC10851948",
         }
 
-    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    @patch("pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_convert_empty_pmids(self, mock_process):
         """测试：空 PMID 列表"""
         result = self.fetcher._convert_pmids_to_pmcid_mapping([])
@@ -241,7 +241,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         """每个测试前的设置"""
         self.fetcher = PaperFetcher()
 
-    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    @patch("pdfget.manager.UnifiedDownloadManager")
     def test_download_from_unified_input_pmcid_csv(
         self, mock_manager_class, csv_file_with_pmcids
     ):
@@ -286,7 +286,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         # 验证调用了 download_batch
         mock_manager.download_batch.assert_called_once()
 
-    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    @patch("pdfget.manager.UnifiedDownloadManager")
     def test_download_from_unified_input_pmcid_csv_with_limit(
         self, mock_manager_class, temp_output_dir
     ):
@@ -318,7 +318,7 @@ class TestCSVDowloadIntegration(CSVTestMixin):
         finally:
             csv_file.unlink()
 
-    @patch("src.pdfget.manager.UnifiedDownloadManager")
+    @patch("pdfget.manager.UnifiedDownloadManager")
     def test_direct_identifier_passes_base_delay(self, mock_manager_class):
         """测试：直接标识符输入会传递自定义下载延迟"""
         mock_manager = Mock()
@@ -338,9 +338,9 @@ class TestCSVDowloadIntegration(CSVTestMixin):
             base_delay=0.25,
         )
 
-    @patch("src.pdfget.manager.UnifiedDownloadManager")
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    @patch("pdfget.manager.UnifiedDownloadManager")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_direct_mixed_identifiers_preserve_input_order(
         self, mock_process_pmids, mock_convert_dois, mock_manager_class
     ):
@@ -370,9 +370,9 @@ class TestCSVDowloadIntegration(CSVTestMixin):
             "2301.12345",
         ]
 
-    @patch("src.pdfget.manager.UnifiedDownloadManager")
-    @patch("src.pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
-    @patch("src.pdfget.pmcid.PMCIDRetriever.process_papers")
+    @patch("pdfget.manager.UnifiedDownloadManager")
+    @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")
+    @patch("pdfget.pmcid.PMCIDRetriever.process_papers")
     def test_csv_mixed_identifiers_preserve_input_order(
         self,
         mock_process_pmids,
