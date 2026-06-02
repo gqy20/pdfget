@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from pdfget.download_plan import build_download_plan
 from pdfget.run_report import build_run_summary, load_failed_papers, save_run_summary
 
 
@@ -42,6 +43,7 @@ def test_build_run_summary_pairs_papers_and_results():
     assert summary["total"] == 2
     assert summary["success"] == 1
     assert summary["failed"] == 1
+    assert summary["skipped"] == 0
     assert summary["download_plan_path"] == "pdfs/download_plan.json"
     assert summary["results"][0]["status"] == "success"
     assert summary["results"][1]["identifier"] == "2401.00001"
@@ -52,6 +54,48 @@ def test_build_run_summary_pairs_papers_and_results():
     assert summary["results"][1]["retryable"] is True
     assert summary["results"][1]["retry_reason"] == "download_pdf"
     assert summary["results"][0]["retryable"] is False
+
+
+def test_build_run_summary_includes_skipped_plan_entries():
+    plan = build_download_plan(
+        [
+            {"pmcid": "PMC1", "source": "pubmed"},
+            {"pmcid": "PMC1", "source": "europe_pmc"},
+            {"title": "No route", "source": "pubmed"},
+            {"arxiv_id": "2401.00001", "source": "arxiv"},
+        ],
+        source="search",
+    )
+
+    summary = build_run_summary(
+        [
+            {"success": True, "path": "one.pdf", "pmcid": "PMC1"},
+            {
+                "success": False,
+                "error": "timeout",
+                "arxiv_id": "2401.00001",
+                "stage": "download_pdf",
+            },
+        ],
+        plan_entries=plan["entries"],
+        source="search",
+        output_dir="pdfs",
+    )
+
+    assert summary["total"] == 4
+    assert summary["success"] == 1
+    assert summary["failed"] == 1
+    assert summary["skipped"] == 2
+    assert [entry["status"] for entry in summary["results"]] == [
+        "success",
+        "skipped",
+        "skipped",
+        "failed",
+    ]
+    assert summary["results"][1]["error"] == "duplicate"
+    assert summary["results"][2]["error"] == "no_download_route"
+    assert summary["results"][1]["retryable"] is False
+    assert summary["results"][3]["retryable"] is True
 
 
 def test_save_run_summary_writes_latest_and_archived_copy(tmp_path):

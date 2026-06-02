@@ -54,7 +54,7 @@ class RunSummaryEntry(TypedDict):
     """One run summary entry."""
 
     index: int
-    status: Literal["success", "failed"]
+    status: Literal["success", "failed", "skipped"]
     stage: str
     identifier: str
     identifier_type: str
@@ -76,6 +76,7 @@ class RunSummary(TypedDict):
     total: int
     success: int
     failed: int
+    skipped: int
     results: list[RunSummaryEntry]
     input_value: NotRequired[str]
     previous_report: NotRequired[str]

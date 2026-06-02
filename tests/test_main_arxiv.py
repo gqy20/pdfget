@@ -353,6 +353,54 @@ def test_main_download_dry_run_writes_plan_without_downloading(monkeypatch, tmp_
     assert not (tmp_path / "run_summary.json").exists()
 
 
+def test_main_download_writes_summary_when_plan_has_only_skipped_entries(
+    monkeypatch, tmp_path
+):
+    fetcher = Mock()
+    fetcher.search_papers.return_value = [
+        {
+            "title": "Metadata Only Paper",
+            "authors": ["Author One"],
+            "journal": "Journal",
+            "year": "2024",
+        }
+    ]
+
+    download_manager_class = Mock()
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(main_module, "UnifiedDownloadManager", download_manager_class)
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "-s",
+            "metadata",
+            "-S",
+            "arxiv",
+            "-d",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    download_manager_class.assert_not_called()
+    summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
+    assert summary["total"] == 1
+    assert summary["success"] == 0
+    assert summary["failed"] == 0
+    assert summary["skipped"] == 1
+    assert summary["results"][0]["status"] == "skipped"
+    assert summary["results"][0]["error"] == "no_download_route"
+
+    download_payload = json.loads(
+        (tmp_path / "download_results.json").read_text(encoding="utf-8")
+    )
+    assert download_payload["total"] == 0
+
+
 def test_main_unified_input_arxiv_id(monkeypatch, tmp_path):
     fetcher = Mock()
     plan_builder = Mock(

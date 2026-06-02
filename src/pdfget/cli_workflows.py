@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -283,6 +284,7 @@ def emit_run_summary(
     output_dir: str,
     *,
     papers: list[dict[str, Any]] | None = None,
+    plan_entries: Sequence[Mapping[str, Any]] | None = None,
     source: str,
     input_value: str | None = None,
     previous_report: str | None = None,
@@ -292,6 +294,7 @@ def emit_run_summary(
     summary = build_run_summary(
         results,
         papers=papers,
+        plan_entries=plan_entries,
         source=source,
         output_dir=output_dir,
         input_value=input_value,
@@ -369,6 +372,7 @@ def run_search_workflow(
             return
         logger.info(f"\n开始下载 PDF，找到 {len(downloadable_papers)} 篇可下载文献")
 
+        results: list[DownloadResult] = []
         if downloadable_papers:
             download_manager = download_manager_cls(
                 fetcher=fetcher,
@@ -377,22 +381,26 @@ def run_search_workflow(
             )
             results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
             log_download_stats(logger, results)
-            emit_run_summary(
-                logger,
-                results,
-                args.o,
-                papers=downloadable_papers,
-                source="search",
-                input_value=args.s,
-                download_plan_path=str(plan_file),
-            )
-            emit_download_results(
-                logger,
-                results,
-                args.o,
-                args.format,
-                source="search",
-            )
+        else:
+            logger.info("没有可下载文献，已将跳过原因写入运行报告")
+
+        emit_run_summary(
+            logger,
+            results,
+            args.o,
+            papers=downloadable_papers,
+            plan_entries=plan["entries"],
+            source="search",
+            input_value=args.s,
+            download_plan_path=str(plan_file),
+        )
+        emit_download_results(
+            logger,
+            results,
+            args.o,
+            args.format,
+            source="search",
+        )
         return
 
     if args.S == "arxiv":
@@ -452,6 +460,7 @@ def run_unified_input_workflow(
         results,
         args.o,
         papers=downloadable_papers,
+        plan_entries=plan["entries"],
         source="unified_input",
         input_value=args.m,
         download_plan_path=str(plan_file),
@@ -500,6 +509,7 @@ def run_resume_workflow(
         results,
         args.o,
         papers=downloadable_papers,
+        plan_entries=plan["entries"],
         source="resume",
         previous_report=args.resume,
         download_plan_path=str(plan_file),

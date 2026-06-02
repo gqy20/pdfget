@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Literal
 
@@ -36,6 +37,73 @@ def _entry_paper(
     if papers is not None and index < len(papers):
         return papers[index]
     return _result_paper(result)
+
+
+def _build_download_entry(
+    *,
+    index: int,
+    paper: dict[str, Any] | PaperRecord,
+    result: DownloadResult,
+) -> RunSummaryEntry:
+    identifier, identifier_type = build_identifier({**paper, **result})
+    success = bool(result.get("success"))
+    retryable, retry_reason = classify_retryability(result, paper)
+    return {
+        "index": index,
+        "status": "success" if success else "failed",
+        "stage": result.get("stage") or "",
+        "identifier": identifier,
+        "identifier_type": identifier_type,
+        "paper": paper,
+        "result": result,
+        "path": result.get("path") or "",
+        "error": result.get("error") or "",
+        "retryable": retryable,
+        "retry_reason": retry_reason,
+    }
+
+
+def _build_skipped_entry(plan_entry: Mapping[str, Any]) -> RunSummaryEntry:
+    paper = plan_entry.get("paper") or {}
+    skip_reason = str(plan_entry.get("skip_reason") or "skipped")
+    identifier = str(plan_entry.get("identifier") or "")
+    identifier_type = str(plan_entry.get("identifier_type") or "")
+    if not identifier:
+        identifier, identifier_type = build_identifier(paper)
+
+    result: DownloadResult = {
+        "success": False,
+        "stage": "plan_skip",
+        "source": "download_plan",
+        "error": skip_reason,
+    }
+    return {
+        "index": int(plan_entry.get("index") or 0),
+        "status": "skipped",
+        "stage": "plan_skip",
+        "identifier": identifier,
+        "identifier_type": identifier_type,
+        "paper": paper,
+        "result": result,
+        "path": "",
+        "error": skip_reason,
+        "retryable": False,
+        "retry_reason": skip_reason,
+    }
+
+
+def _missing_download_result(plan_entry: Mapping[str, Any]) -> DownloadResult:
+    paper = plan_entry.get("paper") or {}
+    paper_mapping = paper if isinstance(paper, Mapping) else {}
+    return {
+        "success": False,
+        "stage": "missing_download_result",
+        "source": "run_summary",
+        "error": "Missing download result for ready plan entry",
+        "pmcid": str(paper_mapping.get("pmcid") or ""),
+        "doi": str(paper_mapping.get("doi") or ""),
+        "arxiv_id": str(paper_mapping.get("arxiv_id") or ""),
+    }
 
 
 def classify_retryability(
@@ -71,6 +139,7 @@ def build_run_summary(
     results: list[DownloadResult],
     *,
     papers: list[dict[str, Any]] | None = None,
+    plan_entries: Sequence[Mapping[str, Any]] | None = None,
     source: str,
     output_dir: str,
     input_value: str | None = None,
@@ -79,36 +148,47 @@ def build_run_summary(
 ) -> RunSummary:
     """Build a retryable summary for one download run."""
     entries: list[RunSummaryEntry] = []
-    for index, result in enumerate(results):
-        paper = _entry_paper(papers, result, index)
-        identifier, identifier_type = build_identifier({**paper, **result})
-        success = bool(result.get("success"))
-        retryable, retry_reason = classify_retryability(result, paper)
-        entries.append(
-            {
-                "index": index,
-                "status": "success" if success else "failed",
-                "stage": result.get("stage") or "",
-                "identifier": identifier,
-                "identifier_type": identifier_type,
-                "paper": paper,
-                "result": result,
-                "path": result.get("path") or "",
-                "error": result.get("error") or "",
-                "retryable": retryable,
-                "retry_reason": retry_reason,
-            }
-        )
+    if plan_entries is None:
+        for index, result in enumerate(results):
+            paper = _entry_paper(papers, result, index)
+            entries.append(
+                _build_download_entry(index=index, paper=paper, result=result)
+            )
+    else:
+        download_index = 0
+        for plan_entry in plan_entries:
+            if plan_entry.get("status") == "skipped":
+                entries.append(_build_skipped_entry(plan_entry))
+                continue
+
+            result_index = download_index
+            if result_index >= len(results):
+                result = _missing_download_result(plan_entry)
+            else:
+                result = results[result_index]
+                download_index += 1
+            paper = plan_entry.get("paper") or _entry_paper(
+                papers, result, result_index
+            )
+            entries.append(
+                _build_download_entry(
+                    index=int(plan_entry.get("index") or download_index),
+                    paper=paper,
+                    result=result,
+                )
+            )
 
     failed_count = sum(1 for entry in entries if entry["status"] == "failed")
+    skipped_count = sum(1 for entry in entries if entry["status"] == "skipped")
     payload: RunSummary = {
         "schema": RUN_SUMMARY_SCHEMA,
         "timestamp": time.time(),
         "source": source,
         "output_dir": output_dir,
         "total": len(entries),
-        "success": len(entries) - failed_count,
+        "success": sum(1 for entry in entries if entry["status"] == "success"),
         "failed": failed_count,
+        "skipped": skipped_count,
         "results": entries,
     }
     if input_value is not None:
