@@ -154,8 +154,14 @@ class TestPDFDownloader:
         result = downloader.download_pdf(pmcid, doi)
 
         assert result["success"] is True
+        assert result["source"] == "europe_pmc"
+        assert [attempt["source"] for attempt in result["attempts"]] == [
+            "pmc",
+            "europe_pmc",
+        ]
+        _, url_template = downloader.pdf_sources[0]
         downloader._try_download_from_url.assert_called_once_with(
-            downloader.pdf_sources[0].format(pmcid=pmcid), pmcid, doi
+            url_template.format(pmcid=pmcid), pmcid, doi
         )
 
     # 已删除 test_download_pdf_success_second_source，因为现在只有一个下载源
@@ -174,11 +180,32 @@ class TestPDFDownloader:
         result = downloader.download_pdf(pmcid, doi)
 
         assert result["success"] is False
-        assert "所有 1 个 PDF 源都失败" in result["error"]
+        assert "所有 2 个 PDF 源都失败" in result["error"]
         assert result["stage"] == "download_pdf"
+        assert [attempt["source"] for attempt in result["attempts"]] == [
+            "pmc",
+            "europe_pmc",
+        ]
         assert downloader._try_download_from_url.call_count == len(
             downloader.pdf_sources
         )
+
+    def test_download_pdf_respects_source_priority(self, session, tmp_dir):
+        downloader = PDFDownloader(
+            str(tmp_dir),
+            session,
+            source_priority=["europe_pmc"],
+        )
+        downloader.pmc_oa_service.process_pmcid = Mock()
+        downloader._try_download_from_url = Mock(
+            return_value={"success": True, "path": "/path/to/file.pdf"}
+        )
+
+        result = downloader.download_pdf("PMC123456", "10.1000/test")
+
+        assert result["success"] is True
+        assert [attempt["source"] for attempt in result["attempts"]] == ["europe_pmc"]
+        downloader.pmc_oa_service.process_pmcid.assert_not_called()
 
     def test_check_pdf_exists(self, downloader, tmp_dir):
         """
@@ -295,6 +322,28 @@ class TestPDFDownloader:
         assert result["success"] is True
         assert "pmcid" not in result
         assert result["pdf_url"] == "https://example.com/direct.pdf"
+
+    def test_download_paper_respects_arxiv_direct_priority(self, session, tmp_dir):
+        downloader = PDFDownloader(
+            str(tmp_dir),
+            session,
+            source_priority=["direct", "arxiv"],
+        )
+        downloader.download_arxiv_pdf = Mock()
+        downloader._try_download_from_url = Mock(
+            return_value={"success": True, "path": "/path/to/direct.pdf"}
+        )
+
+        result = downloader.download_paper(
+            {
+                "arxiv_id": "2401.00001",
+                "pdf_url": "https://example.com/direct.pdf",
+            }
+        )
+
+        assert result["success"] is True
+        assert result["source"] == "direct"
+        downloader.download_arxiv_pdf.assert_not_called()
 
     def test_list_downloaded_pdfs(self, downloader, tmp_dir):
         """

@@ -336,7 +336,23 @@ class TestCSVDowloadIntegration(CSVTestMixin):
             fetcher=self.fetcher,
             max_workers=4,
             base_delay=0.25,
+            source_priority=None,
         )
+
+    @patch("pdfget.manager.UnifiedDownloadManager")
+    def test_direct_identifier_passes_source_priority(self, mock_manager_class):
+        """测试：统一输入下载会传递下载来源优先级"""
+        mock_manager = Mock()
+        mock_manager.download_batch.return_value = []
+        mock_manager_class.return_value = mock_manager
+
+        download_from_unified_input(
+            self.fetcher,
+            "PMC123456",
+            source_priority=["europe_pmc"],
+        )
+
+        assert mock_manager_class.call_args.kwargs["source_priority"] == ["europe_pmc"]
 
     @patch("pdfget.manager.UnifiedDownloadManager")
     @patch("pdfget.doi_converter.DOIConverter.batch_doi_to_pmcid")

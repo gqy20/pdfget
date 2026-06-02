@@ -99,6 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-k", help="NCBI API 密钥（可选）")
     parser.add_argument("--delay", type=float, help="下载延迟时间（秒，默认 1.0）")
     parser.add_argument(
+        "--source-priority",
+        default="pmc,europe_pmc,arxiv,direct",
+        help="下载来源优先级，逗号分隔: pmc,europe_pmc,arxiv,direct",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="只生成搜索结果和下载计划，不实际下载",

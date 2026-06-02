@@ -155,7 +155,8 @@ class TestPMCOAIntegration:
         # 验证下载成功（真实网络测试，源可能因服务可用性而变化）
         if result["success"]:
             assert "path" in result
-            assert result["source"] in ("PMC OA Service", "Source 1")
+            assert result["source"] in ("PMC OA Service", "europe_pmc")
+            assert "attempts" in result
 
             # 验证文件存在
             pdf_path = tmp_path / result["path"]

@@ -76,6 +76,14 @@ def _build_skipped_entry(plan_entry: Mapping[str, Any]) -> RunSummaryEntry:
         "stage": "plan_skip",
         "source": "download_plan",
         "error": skip_reason,
+        "attempts": [
+            {
+                "source": "download_plan",
+                "success": False,
+                "stage": "plan_skip",
+                "error": skip_reason,
+            }
+        ],
     }
     return {
         "index": int(plan_entry.get("index") or 0),
@@ -103,6 +111,14 @@ def _missing_download_result(plan_entry: Mapping[str, Any]) -> DownloadResult:
         "pmcid": str(paper_mapping.get("pmcid") or ""),
         "doi": str(paper_mapping.get("doi") or ""),
         "arxiv_id": str(paper_mapping.get("arxiv_id") or ""),
+        "attempts": [
+            {
+                "source": "run_summary",
+                "success": False,
+                "stage": "missing_download_result",
+                "error": "Missing download result for ready plan entry",
+            }
+        ],
     }
 
 
@@ -133,6 +149,54 @@ def classify_retryability(
     if "failed" in error or "失败" in error:
         return True, "download_failed"
     return False, "unknown_failure"
+
+
+def _increment(counter: dict[str, int], key: str) -> None:
+    counter[key] = counter.get(key, 0) + 1
+
+
+def build_run_stats(entries: list[RunSummaryEntry]) -> dict[str, Any]:
+    """Build aggregate statistics for machine-readable run reports."""
+    by_status: dict[str, int] = {}
+    by_stage: dict[str, int] = {}
+    by_retry_reason: dict[str, int] = {}
+    by_skip_reason: dict[str, int] = {}
+    by_source: dict[str, int] = {}
+    attempts_by_source: dict[str, dict[str, int]] = {}
+
+    for entry in entries:
+        _increment(by_status, entry["status"])
+        if entry["stage"]:
+            _increment(by_stage, entry["stage"])
+        if entry["retry_reason"]:
+            _increment(by_retry_reason, entry["retry_reason"])
+        if entry["status"] == "skipped" and entry["error"]:
+            _increment(by_skip_reason, entry["error"])
+
+        result = entry["result"]
+        source = str(result.get("source") or "")
+        if source:
+            _increment(by_source, source)
+
+        for attempt in result.get("attempts", []):
+            attempt_source = str(attempt.get("source") or "unknown")
+            bucket = attempts_by_source.setdefault(
+                attempt_source, {"total": 0, "success": 0, "failed": 0}
+            )
+            bucket["total"] += 1
+            if attempt.get("success"):
+                bucket["success"] += 1
+            else:
+                bucket["failed"] += 1
+
+    return {
+        "by_status": by_status,
+        "by_stage": by_stage,
+        "by_retry_reason": by_retry_reason,
+        "by_skip_reason": by_skip_reason,
+        "by_source": by_source,
+        "attempts_by_source": attempts_by_source,
+    }
 
 
 def build_run_summary(
@@ -189,6 +253,7 @@ def build_run_summary(
         "success": sum(1 for entry in entries if entry["status"] == "success"),
         "failed": failed_count,
         "skipped": skipped_count,
+        "stats": build_run_stats(entries),
         "results": entries,
     }
     if input_value is not None:

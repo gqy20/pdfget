@@ -94,15 +94,16 @@ twine upload dist/*
 
 ### 扩展性设计
 - 检索、输入解析和下载之间通过 `download_plan.v1` 连接；下载管理器不再兼容裸 DOI 字符串列表，调用方需要先生成论文记录或使用 `download_from_unified_input()`
-- 运行报告使用 `run_summary.v1`，包含成功、失败和计划阶段跳过的记录；续跑只加载可重试失败项
+- 运行报告使用 `run_summary.v1`，包含成功、失败、计划阶段跳过、下载来源尝试明细和聚合统计；`--resume` 支持从 `run_summary.v1` 或 `download_plan.v1` 续跑
 - 搜索结果导出使用 `format_type` 参数，日志初始化由 `configure_logging()` / `setup_logger()` 负责，不保留旧参数别名
+- 下载来源优先级通过 `--source-priority` 或 Python API 的 `source_priority` 控制，支持 `pmc`、`europe_pmc`、`arxiv`、`direct`
 - 模块化架构支持添加新数据源
 - 下载源可在 `pdf_sources` 配置中扩展
 - 支持多种输出格式（console、json、markdown）
 
 ### 数据流
-1. 搜索流程：搜索 → 缓存 → 结果格式化
-2. 下载流程：搜索结果 → PMCID 获取 → PDF 下载 → 文件保存
+1. 搜索流程：搜索 → 跨源去重 → 缓存 → 结果格式化
+2. 下载流程：搜索结果 → 下载计划 → 来源优先级策略 → PDF 下载 → 尝试明细 → 文件保存
 3. CSV/标识符下载流程：输入解析 → 下载计划 → 并发下载
 4. 统计流程：搜索结果 → PMCID 批量查询 → 统计分析
 

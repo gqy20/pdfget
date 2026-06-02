@@ -295,6 +295,8 @@ def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
             "-l",
             "5",
             "-d",
+            "--source-priority",
+            "arxiv,direct",
             "-o",
             str(tmp_path),
         ],
@@ -306,6 +308,10 @@ def test_main_download_arxiv_includes_arxiv_papers(monkeypatch, tmp_path):
         "transformer", limit=5, source="arxiv", fetch_pmcid=False
     )
     download_manager.download_batch.assert_called_once()
+    assert main_module.UnifiedDownloadManager.call_args.kwargs["source_priority"] == [
+        "arxiv",
+        "direct",
+    ]
     papers = download_manager.download_batch.call_args.args[0]
     assert len(papers) == 1
     assert papers[0]["arxiv_id"] == "2401.00001"
@@ -780,3 +786,54 @@ def test_main_resume_retries_failed_report_entries(monkeypatch, tmp_path):
     summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
     assert summary["source"] == "resume"
     assert summary["previous_report"] == str(report_path)
+
+
+def test_main_resume_accepts_download_plan(monkeypatch, tmp_path):
+    plan = main_module.build_download_plan(
+        [
+            {"pmcid": "PMC1", "source": "pubmed"},
+            {"title": "No route", "source": "pubmed"},
+        ],
+        source="search",
+    )
+    plan_path = tmp_path / "download_plan.json"
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+
+    fetcher = Mock()
+    download_manager = Mock()
+    download_manager.download_batch.return_value = [
+        {
+            "success": True,
+            "path": str(tmp_path / "PMC1.pdf"),
+            "pmcid": "PMC1",
+        }
+    ]
+
+    monkeypatch.setattr(main_module, "PaperFetcher", Mock(return_value=fetcher))
+    monkeypatch.setattr(
+        main_module,
+        "UnifiedDownloadManager",
+        Mock(return_value=download_manager),
+    )
+    monkeypatch.setattr(main_module, "get_main_logger", lambda: _Logger())
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pdfget",
+            "--resume",
+            str(plan_path),
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    main_module.main()
+
+    download_manager.download_batch.assert_called_once()
+    retried_papers = download_manager.download_batch.call_args.args[0]
+    assert len(retried_papers) == 1
+    assert retried_papers[0]["pmcid"] == "PMC1"
+
+    summary = json.loads((tmp_path / "run_summary.json").read_text(encoding="utf-8"))
+    assert summary["input_value"] == "download_plan"
+    assert summary["skipped"] == 1

@@ -9,7 +9,13 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .config import DOWNLOAD_BASE_DELAY, TIMEOUT
-from .download_plan import build_download_plan, ready_papers, save_download_plan
+from .download_plan import (
+    DownloadPlan,
+    build_download_plan,
+    load_download_plan,
+    ready_papers,
+    save_download_plan,
+)
 from .download_service import DownloadManagerFactory
 from .input_planner import build_download_plan_from_unified_input
 from .logger import Logger
@@ -61,6 +67,7 @@ class CommonWorkflowArgs(Protocol):
     format: str | None
     delay: float | None
     dry_run: bool
+    source_priority: str
 
 
 class SearchWorkflowArgs(CommonWorkflowArgs, Protocol):
@@ -107,6 +114,16 @@ def log_download_stats(
         "pdf_count": pdf_count,
         "html_count": html_count,
     }
+
+
+def parse_source_priority(value: str) -> list[str]:
+    """Parse and validate a comma-separated download source priority string."""
+    allowed = {"pmc", "europe_pmc", "arxiv", "direct"}
+    sources = [source.strip() for source in value.split(",") if source.strip()]
+    unknown = [source for source in sources if source not in allowed]
+    if unknown:
+        raise ValueError(f"不支持的下载来源: {', '.join(unknown)}")
+    return sources or ["pmc", "europe_pmc", "arxiv", "direct"]
 
 
 def save_json(path: Path, payload: dict[str, Any]) -> None:
@@ -306,6 +323,24 @@ def emit_run_summary(
     return summary_file
 
 
+def load_resume_plan_or_papers(
+    resume_path: str,
+    *,
+    fetcher: CliFetcher,
+) -> tuple[DownloadPlan, str]:
+    """Load a resume source as a download plan, preserving old run-summary resume."""
+    with open(resume_path, encoding="utf-8") as file:
+        payload = json.load(file)
+
+    schema = payload.get("schema")
+    if schema == "download_plan.v1":
+        return load_download_plan(resume_path), "download_plan"
+    if schema == "run_summary.v1":
+        papers = load_failed_papers(resume_path)
+        return build_download_plan(papers, source="resume", resolver=fetcher), "run_summary"
+    raise ValueError(f"不支持的续跑文件 schema: {schema}")
+
+
 def print_pmcid_stats(stats: PmcidStats) -> None:
     """Print PMCID statistics in console mode."""
     print("\nPMCID统计结果:")
@@ -378,6 +413,7 @@ def run_search_workflow(
                 fetcher=fetcher,
                 max_workers=args.t,
                 base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
+                source_priority=parse_source_priority(args.source_priority),
             )
             results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
             log_download_stats(logger, results)
@@ -451,6 +487,7 @@ def run_unified_input_workflow(
         fetcher=fetcher,
         max_workers=args.t,
         base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
+        source_priority=parse_source_priority(args.source_priority),
     )
     results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
 
@@ -484,23 +521,22 @@ def run_resume_workflow(
 ) -> None:
     """Retry failed items from a run summary."""
     logger.info(f"\n重试失败下载: {args.resume}")
-    papers = load_failed_papers(args.resume)
-    if not papers:
-        logger.info("运行报告中没有可重试的失败项")
-        return
-
-    plan = build_download_plan(papers, source="resume", resolver=fetcher)
+    plan, resume_source = load_resume_plan_or_papers(args.resume, fetcher=fetcher)
     log_download_plan(logger, plan)
     plan_file = emit_download_plan(logger, plan, args.o)
     downloadable_papers = ready_papers(plan)
+    if not downloadable_papers:
+        logger.info("续跑文件中没有可下载或可重试的项目")
+        return
     if args.dry_run:
         logger.info("\nDry run 完成，未执行下载")
         return
-    logger.info(f"准备重试 {len(downloadable_papers)} 个失败项")
+    logger.info(f"准备续跑 {len(downloadable_papers)} 个项目")
     download_manager = download_manager_cls(
         fetcher=fetcher,
         max_workers=args.t,
         base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
+        source_priority=parse_source_priority(args.source_priority),
     )
     results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
     log_download_stats(logger, results)
@@ -511,6 +547,7 @@ def run_resume_workflow(
         papers=downloadable_papers,
         plan_entries=plan["entries"],
         source="resume",
+        input_value=resume_source,
         previous_report=args.resume,
         download_plan_path=str(plan_file),
     )

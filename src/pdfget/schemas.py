@@ -36,6 +36,7 @@ class DownloadResult(TypedDict, total=False):
     content_type: str
     content_length: int
     skipped_existing: bool
+    attempts: list[dict[str, Any]]
 
 
 class DownloadPayload(TypedDict):
@@ -77,6 +78,7 @@ class RunSummary(TypedDict):
     success: int
     failed: int
     skipped: int
+    stats: dict[str, Any]
     results: list[RunSummaryEntry]
     input_value: NotRequired[str]
     previous_report: NotRequired[str]

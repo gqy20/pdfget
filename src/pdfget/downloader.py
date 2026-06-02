@@ -21,7 +21,12 @@ class PDFDownloader:
 
     DOWNLOAD_CHUNK_SIZE = 8192
 
-    def __init__(self, output_dir: str, session: requests.Session):
+    def __init__(
+        self,
+        output_dir: str,
+        session: requests.Session,
+        source_priority: list[str] | None = None,
+    ):
         """
         初始化 PDF 下载器
 
@@ -32,6 +37,12 @@ class PDFDownloader:
         self.logger = get_logger(__name__)
         self.output_dir = Path(output_dir)
         self.session = session
+        self.source_priority = source_priority or [
+            "pmc",
+            "europe_pmc",
+            "arxiv",
+            "direct",
+        ]
 
         # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +54,7 @@ class PDFDownloader:
 
         # PDF 下载源（Europe PMC是最可靠的开放获取源）
         self.pdf_sources = [
-            "https://europepmc.org/articles/{pmcid}?pdf=render",
+            ("europe_pmc", "https://europepmc.org/articles/{pmcid}?pdf=render"),
         ]
 
     def _build_result(
@@ -63,6 +74,7 @@ class PDFDownloader:
         content_type: str = "",
         content_length: int | None = None,
         skipped_existing: bool = False,
+        attempts: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Build a stable download result shape while preserving optional fields."""
         result: dict[str, Any] = {
@@ -90,7 +102,35 @@ class PDFDownloader:
             result["content_length"] = content_length
         if skipped_existing:
             result["skipped_existing"] = True
+        if attempts is not None:
+            result["attempts"] = attempts
         return result
+
+    def _attempt_from_result(
+        self,
+        source: str,
+        result: dict[str, Any],
+        *,
+        url: str = "",
+    ) -> dict[str, Any]:
+        """Build one compact source-attempt record from a download result."""
+        attempt: dict[str, Any] = {
+            "source": source,
+            "success": bool(result.get("success")),
+            "stage": str(result.get("stage") or ""),
+            "error": str(result.get("error") or ""),
+        }
+        if url:
+            attempt["url"] = url
+        if result.get("content_type"):
+            attempt["content_type"] = result["content_type"]
+        if result.get("path"):
+            attempt["path"] = result["path"]
+        return attempt
+
+    def _allowed_sources(self, candidates: list[str]) -> list[str]:
+        """Return candidates ordered by configured source priority."""
+        return [source for source in self.source_priority if source in candidates]
 
     def _get_safe_filename(self, pmcid: str, doi: str) -> str:
         """生成安全的文件名（委托给共享函数）"""
@@ -286,55 +326,77 @@ class PDFDownloader:
         if not pmcid.startswith("PMC"):
             pmcid = f"PMC{pmcid}"
 
-        # 首先尝试 PMC OA Service（最可靠）
-        self.logger.info("尝试 PMC OA Service")
-        if self.pmc_oa_service.process_pmcid(pmcid, doi):
-            # 检查是否成功下载了PDF文件
-            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
-            pdf_path = self.output_dir / pdf_name
+        attempts: list[dict[str, Any]] = []
+        for source in self._allowed_sources(["pmc", "europe_pmc"]):
+            if source == "pmc":
+                self.logger.info("尝试 PMC OA Service")
+                if self.pmc_oa_service.process_pmcid(pmcid, doi):
+                    pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+                    pdf_path = self.output_dir / pdf_name
 
-            # 如果直接PDF不存在，检查是否有从tar.gz提取的PDF
-            if not pdf_path.exists():
-                # 查找可能被提取的PDF文件
-                pdf_files = list(self.output_dir.glob(f"{pmcid}*/**/*.pdf"))
-                if pdf_files:
-                    pdf_path = pdf_files[0]
-                    # 重命名为标准格式
-                    new_path = self.output_dir / pdf_name
-                    pdf_path.rename(new_path)
-                    pdf_path = new_path
+                    if not pdf_path.exists():
+                        pdf_files = list(self.output_dir.glob(f"{pmcid}*/**/*.pdf"))
+                        if pdf_files:
+                            pdf_path = pdf_files[0]
+                            new_path = self.output_dir / pdf_name
+                            pdf_path.rename(new_path)
+                            pdf_path = new_path
 
-            if pdf_path.exists():
-                self.logger.info(f"PDF 下载成功（PMC OA Service）: {pdf_path}")
-                return self._build_result(
-                    success=True,
-                    stage="download_pdf",
-                    source="PMC OA Service",
-                    path=str(pdf_path),
-                    pmcid=pmcid,
-                    doi=doi,
-                    content_length=pdf_path.stat().st_size,
-                )
-            else:
-                self.logger.warning("PMC OA Service 处理成功但未找到PDF文件")
-        else:
-            self.logger.info("PMC OA Service 失败，尝试其他源")
+                    if pdf_path.exists():
+                        self.logger.info(f"PDF 下载成功（PMC OA Service）: {pdf_path}")
+                        result = self._build_result(
+                            success=True,
+                            stage="download_pdf",
+                            source="PMC OA Service",
+                            path=str(pdf_path),
+                            pmcid=pmcid,
+                            doi=doi,
+                            content_length=pdf_path.stat().st_size,
+                        )
+                        attempts.append(self._attempt_from_result("pmc", result))
+                        result["attempts"] = attempts
+                        return result
+                    error = "PMC OA Service 处理成功但未找到PDF文件"
+                    self.logger.warning(error)
+                    attempts.append(
+                        {
+                            "source": "pmc",
+                            "success": False,
+                            "stage": "download_pdf",
+                            "error": error,
+                        }
+                    )
+                else:
+                    error = "PMC OA Service 失败"
+                    self.logger.info(f"{error}，尝试其他源")
+                    attempts.append(
+                        {
+                            "source": "pmc",
+                            "success": False,
+                            "stage": "download_pdf",
+                            "error": error,
+                        }
+                    )
+                continue
 
-        # 尝试其他下载源
-        for i, url_template in enumerate(self.pdf_sources):
-            url = url_template.format(pmcid=pmcid)
-            self.logger.info(f"尝试源 {i + 1}/{len(self.pdf_sources)}: {url}")
+            for i, (source_name, url_template) in enumerate(self.pdf_sources):
+                if source_name != source:
+                    continue
+                url = url_template.format(pmcid=pmcid)
+                self.logger.info(f"尝试源 {i + 1}/{len(self.pdf_sources)}: {url}")
 
-            result = self._try_download_from_url(url, pmcid, doi)
-            if result["success"]:
-                self.logger.info(f"PDF 下载成功（源 {i + 1}）")
-                result["source"] = f"Source {i + 1}"
-                return result
-            else:
-                self.logger.debug(f"源 {i + 1} 失败: {result.get('error', '未知错误')}")
+                result = self._try_download_from_url(url, pmcid, doi)
+                attempts.append(self._attempt_from_result(source_name, result, url=url))
+                if result["success"]:
+                    self.logger.info(f"PDF 下载成功（{source_name}）")
+                    result["source"] = source_name
+                    result["attempts"] = attempts
+                    return result
+                else:
+                    self.logger.debug(f"{source_name} 失败: {result.get('error', '未知错误')}")
 
         # 所有源都失败
-        error_msg = f"所有 {len(self.pdf_sources)} 个 PDF 源都失败"
+        error_msg = f"所有 {len(attempts)} 个 PDF 源都失败"
         self.logger.error(error_msg)
         return self._build_result(
             success=False,
@@ -343,6 +405,7 @@ class PDFDownloader:
             error=error_msg,
             pmcid=pmcid,
             doi=doi,
+            attempts=attempts,
         )
 
     def check_pdf_exists(self, pmcid: str, doi: str) -> bool:
@@ -398,6 +461,14 @@ class PDFDownloader:
                 doi=doi,
                 message="PDF 已存在，无需重新下载",
                 skipped_existing=True,
+                attempts=[
+                    {
+                        "source": "cache",
+                        "success": True,
+                        "stage": "cache_hit",
+                        "path": file_path or "",
+                    }
+                ],
             )
 
         return self.download_pdf(pmcid, doi)
@@ -532,6 +603,7 @@ class PDFDownloader:
         result = self._try_download_from_url(url, normalized_arxiv_id, "")
         result["arxiv_id"] = normalized_arxiv_id
         result["source"] = "arxiv"
+        result["attempts"] = [self._attempt_from_result("arxiv", result, url=url)]
         return result
 
     def download_paper(self, paper: dict[str, Any]) -> dict[str, Any]:
@@ -542,21 +614,34 @@ class PDFDownloader:
         arxiv_id = record.get("arxiv_id", "")
         pdf_url = record.get("pdf_url", "")
 
-        if pmcid:
-            return self.download_if_not_exists(pmcid, doi)
-        if arxiv_id:
-            return self.download_arxiv_pdf(arxiv_id)
-        if pdf_url:
-            result = self._try_download_from_url(
-                pdf_url,
-                record.get("identifier") or record.get("title", "paper"),
-                doi,
-            )
-            result["pdf_url"] = pdf_url
-            return result
+        for source in self.source_priority:
+            if source in {"pmc", "europe_pmc"} and pmcid:
+                return self.download_if_not_exists(pmcid, doi)
+            if source == "arxiv" and arxiv_id:
+                return self.download_arxiv_pdf(arxiv_id)
+            if source == "direct" and pdf_url:
+                result = self._try_download_from_url(
+                    pdf_url,
+                    record.get("identifier") or record.get("title", "paper"),
+                    doi,
+                )
+                result["pdf_url"] = pdf_url
+                result["source"] = "direct"
+                result["attempts"] = [
+                    self._attempt_from_result("direct", result, url=pdf_url)
+                ]
+                return result
         return self._build_result(
             success=False,
             stage="resolve_identifier",
             source="resolver",
             error="No downloadable identifier found",
+            attempts=[
+                {
+                    "source": "resolver",
+                    "success": False,
+                    "stage": "resolve_identifier",
+                    "error": "No downloadable identifier found",
+                }
+            ],
         )

@@ -98,7 +98,29 @@ def test_create_thread_downloader_uses_parent_output_dir():
     with patch("pdfget.manager.PDFDownloader") as created:
         manager._create_thread_downloader()
 
-    created.assert_called_once_with("pdfs", fetcher.session)
+    created.assert_called_once_with("pdfs", fetcher.session, source_priority=None)
+
+
+def test_create_thread_downloader_passes_source_priority():
+    fetcher = Mock()
+    fetcher.output_dir = "pdfs"
+    fetcher.session = Mock()
+
+    manager = UnifiedDownloadManager(
+        fetcher=fetcher,
+        max_workers=1,
+        base_delay=0,
+        source_priority=["europe_pmc"],
+    )
+
+    with patch("pdfget.manager.PDFDownloader") as created:
+        manager._create_thread_downloader()
+
+    created.assert_called_once_with(
+        "pdfs",
+        fetcher.session,
+        source_priority=["europe_pmc"],
+    )
 
 
 @pytest.mark.usefixtures("fast_sleep")

@@ -96,6 +96,44 @@ def test_build_run_summary_includes_skipped_plan_entries():
     assert summary["results"][2]["error"] == "no_download_route"
     assert summary["results"][1]["retryable"] is False
     assert summary["results"][3]["retryable"] is True
+    assert summary["stats"]["by_status"] == {
+        "success": 1,
+        "skipped": 2,
+        "failed": 1,
+    }
+    assert summary["stats"]["by_skip_reason"] == {
+        "duplicate": 1,
+        "no_download_route": 1,
+    }
+
+
+def test_build_run_summary_aggregates_attempt_stats():
+    summary = build_run_summary(
+        [
+            {
+                "success": False,
+                "error": "timeout",
+                "pmcid": "PMC1",
+                "stage": "download_pdf",
+                "source": "pmc",
+                "attempts": [
+                    {"source": "pmc", "success": False, "stage": "download_pdf"},
+                    {"source": "europe_pmc", "success": False, "stage": "download_pdf"},
+                ],
+            }
+        ],
+        source="input",
+        output_dir="pdfs",
+    )
+
+    assert summary["stats"]["by_source"] == {"pmc": 1}
+    assert summary["stats"]["by_stage"] == {"download_pdf": 1}
+    assert summary["stats"]["attempts_by_source"]["pmc"] == {
+        "total": 1,
+        "success": 0,
+        "failed": 1,
+    }
+    assert summary["stats"]["attempts_by_source"]["europe_pmc"]["failed"] == 1
 
 
 def test_save_run_summary_writes_latest_and_archived_copy(tmp_path):

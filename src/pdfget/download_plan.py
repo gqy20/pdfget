@@ -6,7 +6,7 @@ import json
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 
 from .paper_schema import PaperRecord, normalize_paper_record
 from .protocols import IdentifierResolver
@@ -222,3 +222,14 @@ def save_download_plan(output_dir: str, plan: DownloadPlan) -> Path:
             json.dump(plan, file, indent=2, ensure_ascii=False)
 
     return latest_path
+
+
+def load_download_plan(plan_path: str | Path) -> DownloadPlan:
+    """Load a download plan from disk."""
+    path = Path(plan_path)
+    with open(path, encoding="utf-8") as file:
+        payload = json.load(file)
+
+    if payload.get("schema") != "download_plan.v1":
+        raise ValueError(f"不支持的下载计划 schema: {payload.get('schema')}")
+    return cast(DownloadPlan, payload)

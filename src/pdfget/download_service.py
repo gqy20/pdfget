@@ -30,6 +30,7 @@ class DownloadManagerFactory(Protocol):
         fetcher: UnifiedInputContext,
         max_workers: int,
         base_delay: float,
+        source_priority: list[str] | None = None,
     ) -> DownloadManager: ...
 
 
@@ -41,6 +42,7 @@ def download_from_unified_input(
     limit: int | None = None,
     max_workers: int = 1,
     base_delay: float | None = None,
+    source_priority: list[str] | None = None,
     download_manager_cls: DownloadManagerFactory | None = None,
 ) -> list[DownloadResult]:
     """Build a plan from unified input and execute downloads."""
@@ -67,5 +69,6 @@ def download_from_unified_input(
         fetcher=fetcher,
         max_workers=max_workers,
         base_delay=base_delay if base_delay is not None else DOWNLOAD_BASE_DELAY,
+        source_priority=source_priority,
     )
     return cast(list[DownloadResult], download_manager.download_batch(papers))

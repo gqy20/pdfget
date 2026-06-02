@@ -22,12 +22,14 @@ class UnifiedDownloadManager:
         max_workers: int = 1,
         base_delay: float = DOWNLOAD_BASE_DELAY,
         random_delay_range: float = DOWNLOAD_RANDOM_DELAY,
+        source_priority: list[str] | None = None,
     ):
         self.logger = get_logger(__name__)
         self.fetcher = fetcher
         self.max_workers = max_workers
         self.base_delay = base_delay
         self.random_delay_range = random_delay_range
+        self.source_priority = source_priority
 
         self._lock = threading.Lock()
         self._completed = 0
@@ -68,7 +70,11 @@ class UnifiedDownloadManager:
 
     def _create_thread_downloader(self) -> PDFDownloader:
         """Create an isolated downloader instance for each worker thread."""
-        return PDFDownloader(str(self.fetcher.output_dir), self.fetcher.session)
+        return PDFDownloader(
+            str(self.fetcher.output_dir),
+            self.fetcher.session,
+            source_priority=self.source_priority,
+        )
 
     def _get_thread_downloader(self) -> PDFDownloader:
         """Return a downloader instance reused within the current worker thread."""
@@ -105,6 +111,15 @@ class UnifiedDownloadManager:
                 "success": False,
                 "error": str(exc),
                 "stage": "worker_error",
+                "source": "worker",
+                "attempts": [
+                    {
+                        "source": "worker",
+                        "success": False,
+                        "stage": "worker_error",
+                        "error": str(exc),
+                    }
+                ],
             }
 
     def _download_concurrent(self, papers: list[dict], timeout: int = 30) -> list[dict]:
@@ -136,6 +151,15 @@ class UnifiedDownloadManager:
                             "success": False,
                             "error": str(exc),
                             "stage": "worker_error",
+                            "source": "worker",
+                            "attempts": [
+                                {
+                                    "source": "worker",
+                                    "success": False,
+                                    "stage": "worker_error",
+                                    "error": str(exc),
+                                }
+                            ],
                         }
                     )
 
@@ -149,6 +173,15 @@ class UnifiedDownloadManager:
                 "success": False,
                 "error": "Not found",
                 "stage": "worker_error",
+                "source": "worker",
+                "attempts": [
+                    {
+                        "source": "worker",
+                        "success": False,
+                        "stage": "worker_error",
+                        "error": "Not found",
+                    }
+                ],
             }
             for paper, result in zip(papers, ordered_results, strict=True)
         ]

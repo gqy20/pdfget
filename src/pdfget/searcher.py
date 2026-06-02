@@ -15,6 +15,7 @@ import requests
 
 from .base.ncbi_base import NCBIBaseModule
 from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL
+from .download_plan import build_dedupe_key
 from .paper_schema import PaperRecord, normalize_paper_record
 
 
@@ -341,16 +342,27 @@ class PaperSearcher(NCBIBaseModule):
         if include_arxiv:
             all_papers.extend(self.search_arxiv(query, limit))
 
-        seen_pmids: set[str] = set()
+        seen_keys: dict[str, dict[str, Any]] = {}
         unique_papers: list[dict[str, Any]] = []
         for paper in all_papers:
-            pmid = paper.get("pmid", "")
-            if pmid:
-                if pmid not in seen_pmids:
-                    seen_pmids.add(pmid)
-                    unique_papers.append(paper)
-            else:
+            normalized = normalize_paper_record(paper, str(paper.get("source") or ""))
+            dedupe_key = build_dedupe_key(normalized)
+            if not dedupe_key:
                 unique_papers.append(paper)
+                continue
+
+            if dedupe_key not in seen_keys:
+                merged_sources = [str(paper.get("source") or "")]
+                paper["merged_sources"] = [source for source in merged_sources if source]
+                seen_keys[dedupe_key] = paper
+                unique_papers.append(paper)
+                continue
+
+            existing = seen_keys[dedupe_key]
+            merged_sources = existing.setdefault("merged_sources", [])
+            source = str(paper.get("source") or "")
+            if source and source not in merged_sources:
+                merged_sources.append(source)
         return unique_papers[:limit]
 
     def search_papers(

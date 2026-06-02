@@ -235,12 +235,18 @@ pdfget -m pmcids.csv -d --delay 0.5
 
 ### 失败续跑
 
-每次下载都会在输出目录生成 `download_plan.json`、`run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息和可重试的论文记录。
-`run_summary.json` 同时包含下载计划中被跳过的记录，例如重复项、缺少下载路由或无法解析的标识符；`--resume` 默认只重试报告中标记为可重试的失败项。
+每次下载都会在输出目录生成 `download_plan.json`、`run_summary.json` 和带时间戳的归档副本。报告包含每条记录的输入、下载结果、错误信息、每个下载来源的尝试明细和可重试的论文记录。
+`run_summary.json` 同时包含下载计划中被跳过的记录，例如重复项、缺少下载路由或无法解析的标识符，并提供按状态、阶段、跳过原因、重试原因和下载来源汇总的 `stats`。`--resume` 可以接收 `run_summary.json` 或 `download_plan.json`；前者默认只重试报告中标记为可重试的失败项，后者会按计划继续执行并依赖已有文件检查跳过已完成 PDF。
 
 ```bash
 # 重试上一次失败的下载项
 pdfget --resume data/pdfs/run_summary.json -o data/pdfs -t 3
+
+# 从下载计划继续执行
+pdfget --resume data/pdfs/download_plan.json -o data/pdfs -t 3
+
+# 调整下载来源优先级
+pdfget -m identifiers.csv -d --source-priority europe_pmc,pmc,arxiv,direct
 ```
 
 ### Python API

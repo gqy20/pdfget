@@ -205,6 +205,41 @@ class TestPaperSearcher:
         assert len(results) == 3
         assert [paper["pmid"] for paper in results] == ["1", "2", "3"]
 
+    def test_search_all_sources_deduplicates_by_normalized_key(self, searcher):
+        with (
+            patch.object(
+                searcher,
+                "search_pubmed",
+                return_value=[
+                    {
+                        "pmid": "1",
+                        "doi": "10.1000/example",
+                        "title": "Shared DOI",
+                        "source": "pubmed",
+                    },
+                    {"title": "A  Shared   Title", "source": "pubmed"},
+                ],
+            ),
+            patch.object(
+                searcher,
+                "search_europepmc",
+                return_value=[
+                    {
+                        "pmid": "2",
+                        "doi": "10.1000/example",
+                        "title": "Shared DOI duplicate",
+                        "source": "europe_pmc",
+                    },
+                    {"title": "a shared title", "source": "europe_pmc"},
+                ],
+            ),
+        ):
+            results = searcher.search_all_sources("test query", limit=10)
+
+        assert len(results) == 2
+        assert results[0]["merged_sources"] == ["pubmed", "europe_pmc"]
+        assert results[1]["merged_sources"] == ["pubmed", "europe_pmc"]
+
     def test_search_papers_default_source(self, searcher):
         """
         测试: 使用默认源搜索
