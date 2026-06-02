@@ -7,7 +7,7 @@
 - 搜索结果：`paper_record.v1`
 - 下载计划：`download_plan.v1`
 - 下载结果：`download_result.v1`
-- 运行报告：`run_summary.v1`
+- 运行报告：`run_summary.v2`
 
 ## paper_record.v1
 
@@ -164,7 +164,7 @@
 | `doi` | string | 关联 DOI |
 | `arxiv_id` | string | 关联 arXiv ID |
 
-## run_summary.v1
+## run_summary.v2
 
 每次下载都会在输出目录保存运行报告：
 
@@ -177,7 +177,7 @@
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `schema` | string | 固定为 `run_summary.v1` |
+| `schema` | string | 固定为 `run_summary.v2` |
 | `timestamp` | number | 生成时间戳 |
 | `source` | string | 下载入口，例如 `search` / `unified_input` / `resume` |
 | `output_dir` | string | 本次运行输出目录 |
@@ -187,6 +187,8 @@
 | `total` | number | 条目总数 |
 | `success` | number | 成功条目数 |
 | `failed` | number | 失败条目数 |
+| `skipped` | number | 下载计划阶段跳过的条目数 |
+| `stats` | object | 按状态、阶段、失败分类、重试原因、跳过原因和下载来源聚合的统计 |
 | `results` | object[] | 单条运行条目 |
 
 单条 `results[]` 条目：
@@ -194,7 +196,7 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `index` | number | 本次运行中的顺序 |
-| `status` | string | `success` 或 `failed` |
+| `status` | string | `success`、`failed` 或 `skipped` |
 | `stage` | string | 失败阶段，成功时可能为空 |
 | `identifier` | string | 推荐主标识 |
 | `identifier_type` | string | 主标识类型 |
@@ -202,6 +204,10 @@
 | `result` | object | 原始下载结果，遵循 `download_result.v1` 单条结果约定 |
 | `path` | string | 本地文件路径 |
 | `error` | string | 失败原因 |
+| `retryable` | bool | 是否默认参与 `--resume` 续跑 |
+| `retry_reason` | string | 可重试或不可重试的短原因 |
+| `failure_category` | string | 标准化失败分类，成功时为空 |
+| `retry_advice` | string | 面向用户的处理建议，成功时为空 |
 
 标准失败阶段：
 
@@ -213,12 +219,40 @@
 | `save_file` | PDF 文件保存失败或响应体为空 |
 | `worker_error` | 并发 worker 执行时捕获到未预期异常 |
 
+标准失败分类：
+
+| 分类 | 说明 |
+|------|------|
+| `network` | 网络、超时、连接或临时 HTTP 错误 |
+| `not_found` | 下载源未找到对应 PDF |
+| `access_denied` | 远端拒绝访问或需要权限 |
+| `invalid_pdf` | 响应内容不是 PDF |
+| `source_exhausted` | 所有可用下载源均已尝试但未成功 |
+| `metadata_missing` | 缺少 PMCID、arXiv ID 或 PDF URL 等可下载标识符 |
+| `storage_error` | 文件保存失败、响应体为空或输出目录不可写 |
+| `worker_error` | 并发任务执行异常 |
+| `plan_skip` | 下载计划阶段跳过，例如重复或无下载路径 |
+| `unknown` | 无法明确归类的失败 |
+
+`stats` 常见聚合字段：
+
+| 字段 | 说明 |
+|------|------|
+| `by_status` | 按 `success` / `failed` / `skipped` 汇总 |
+| `by_stage` | 按失败阶段汇总 |
+| `by_failure_category` | 按标准失败分类汇总 |
+| `by_retry_reason` | 按重试原因汇总 |
+| `by_skip_reason` | 按计划跳过原因汇总 |
+| `by_source` | 按最终下载来源汇总 |
+| `attempts_by_source` | 按下载尝试来源汇总成功和失败次数 |
+| `retryable_failures` | 默认可由 `--resume` 重试的失败条目数 |
+
 `--resume` 行为：
 
-- 只读取 `run_summary.v1` 中 `status=failed` 的条目
+- 只读取 `run_summary.v2` 中 `status=failed` 且 `retryable=true` 的条目
 - 优先使用条目中的 `paper` 字段重试
 - 不可下载的失败项会被跳过
-- 新运行会生成新的 `run_summary.v1`，并在 `previous_report` 中记录来源报告
+- 新运行会生成新的 `run_summary.v2`，并在 `previous_report` 中记录来源报告
 
 ## 兼容性约定
 

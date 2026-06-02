@@ -15,6 +15,19 @@ RUN_SUMMARY_SCHEMA: Literal["run_summary.v2"] = "run_summary.v2"
 RETRYABLE_STAGES = {"download_pdf", "save_file", "worker_error"}
 NON_RETRYABLE_STAGES = {"resolve_identifier", "validate_response", "cache_hit"}
 
+FAILURE_ADVICE = {
+    "network": "网络或远端服务暂时不可用，建议稍后续跑或降低并发后重试。",
+    "not_found": "下载源未找到对应 PDF，建议检查标识符或尝试其他来源。",
+    "access_denied": "远端拒绝访问或需要权限，建议手动访问来源页面确认开放状态。",
+    "invalid_pdf": "返回内容不是 PDF，建议检查链接是否指向论文页面而不是文件。",
+    "source_exhausted": "已尝试所有可用下载源，建议调整来源优先级或补充 DOI/PMCID/arXiv 信息。",
+    "metadata_missing": "缺少可下载标识符，建议补充 PMCID、arXiv ID 或 PDF URL。",
+    "storage_error": "文件保存失败，建议检查输出目录权限和磁盘空间后重试。",
+    "worker_error": "下载任务执行异常，建议续跑并查看日志定位具体异常。",
+    "plan_skip": "该条目在下载计划阶段被跳过，不会参与续跑。",
+    "unknown": "失败原因无法明确分类，建议查看 attempts 和日志后决定是否手动处理。",
+}
+
 
 def _result_paper(result: DownloadResult) -> PaperRecord:
     """Build a retryable paper record from a download result."""
@@ -47,7 +60,9 @@ def _build_download_entry(
 ) -> RunSummaryEntry:
     identifier, identifier_type = build_identifier({**paper, **result})
     success = bool(result.get("success"))
-    retryable, retry_reason = classify_retryability(result, paper)
+    failure_category, retryable, retry_reason, retry_advice = diagnose_failure(
+        result, paper
+    )
     return {
         "index": index,
         "status": "success" if success else "failed",
@@ -60,6 +75,8 @@ def _build_download_entry(
         "error": result.get("error") or "",
         "retryable": retryable,
         "retry_reason": retry_reason,
+        "failure_category": failure_category,
+        "retry_advice": retry_advice,
     }
 
 
@@ -97,6 +114,8 @@ def _build_skipped_entry(plan_entry: Mapping[str, Any]) -> RunSummaryEntry:
         "error": skip_reason,
         "retryable": False,
         "retry_reason": skip_reason,
+        "failure_category": "plan_skip",
+        "retry_advice": FAILURE_ADVICE["plan_skip"],
     }
 
 
@@ -127,28 +146,80 @@ def classify_retryability(
     paper: dict[str, Any] | PaperRecord,
 ) -> tuple[bool, str]:
     """Return whether a failed result should be retried by default."""
+    _, retryable, retry_reason, _ = diagnose_failure(result, paper)
+    return retryable, retry_reason
+
+
+def diagnose_failure(
+    result: DownloadResult,
+    paper: dict[str, Any] | PaperRecord,
+) -> tuple[str, bool, str, str]:
+    """Classify a failed result and return category, retry flag, reason, and advice."""
     if result.get("success"):
-        return False, ""
+        return "", False, "", ""
 
     normalized = normalize_paper_record(paper, str(paper.get("source") or "resume"))
     if not normalized["is_downloadable"]:
-        return False, "not_downloadable"
+        return (
+            "metadata_missing",
+            False,
+            "not_downloadable",
+            FAILURE_ADVICE["metadata_missing"],
+        )
 
     stage = str(result.get("stage") or "")
     error = str(result.get("error") or "").lower()
     if stage in NON_RETRYABLE_STAGES:
-        return False, stage
+        if stage == "resolve_identifier":
+            return (
+                "metadata_missing",
+                False,
+                "missing_identifier",
+                FAILURE_ADVICE["metadata_missing"],
+            )
+        if stage == "validate_response":
+            return "invalid_pdf", False, "invalid_pdf", FAILURE_ADVICE["invalid_pdf"]
+        return "unknown", False, stage, FAILURE_ADVICE["unknown"]
     if "no downloadable identifier" in error or "no identifier" in error:
-        return False, "missing_identifier"
+        return (
+            "metadata_missing",
+            False,
+            "missing_identifier",
+            FAILURE_ADVICE["metadata_missing"],
+        )
     if "不是 pdf 文件" in error or "not pdf" in error:
-        return False, "not_pdf"
+        return "invalid_pdf", False, "not_pdf", FAILURE_ADVICE["invalid_pdf"]
+    if _matches_any(error, ("401", "403", "forbidden", "unauthorized", "access denied", "权限")):
+        return (
+            "access_denied",
+            False,
+            "access_denied",
+            FAILURE_ADVICE["access_denied"],
+        )
+    if _matches_any(error, ("404", "not found", "未找到", "不存在")):
+        return "not_found", False, "not_found", FAILURE_ADVICE["not_found"]
+    if stage == "save_file":
+        return "storage_error", True, "save_file", FAILURE_ADVICE["storage_error"]
+    if stage == "worker_error":
+        return "worker_error", True, "worker_error", FAILURE_ADVICE["worker_error"]
+    if _matches_any(error, ("timeout", "超时", "connection", "network", "429", "502", "503", "504")):
+        return "network", True, "network", FAILURE_ADVICE["network"]
+    if "所有" in error and "源都失败" in error:
+        return (
+            "source_exhausted",
+            True,
+            "source_exhausted",
+            FAILURE_ADVICE["source_exhausted"],
+        )
     if stage in RETRYABLE_STAGES:
-        return True, stage
-    if "timeout" in error or "超时" in error:
-        return True, "timeout"
+        return "network", True, stage, FAILURE_ADVICE["network"]
     if "failed" in error or "失败" in error:
-        return True, "download_failed"
-    return False, "unknown_failure"
+        return "network", True, "download_failed", FAILURE_ADVICE["network"]
+    return "unknown", False, "unknown_failure", FAILURE_ADVICE["unknown"]
+
+
+def _matches_any(value: str, needles: tuple[str, ...]) -> bool:
+    return any(needle in value for needle in needles)
 
 
 def _increment(counter: dict[str, int], key: str) -> None:
@@ -160,9 +231,11 @@ def build_run_stats(entries: list[RunSummaryEntry]) -> dict[str, Any]:
     by_status: dict[str, int] = {}
     by_stage: dict[str, int] = {}
     by_retry_reason: dict[str, int] = {}
+    by_failure_category: dict[str, int] = {}
     by_skip_reason: dict[str, int] = {}
     by_source: dict[str, int] = {}
     attempts_by_source: dict[str, dict[str, int]] = {}
+    retryable_failures = 0
 
     for entry in entries:
         _increment(by_status, entry["status"])
@@ -170,6 +243,10 @@ def build_run_stats(entries: list[RunSummaryEntry]) -> dict[str, Any]:
             _increment(by_stage, entry["stage"])
         if entry["retry_reason"]:
             _increment(by_retry_reason, entry["retry_reason"])
+        if entry["failure_category"]:
+            _increment(by_failure_category, entry["failure_category"])
+        if entry["status"] == "failed" and entry["retryable"]:
+            retryable_failures += 1
         if entry["status"] == "skipped" and entry["error"]:
             _increment(by_skip_reason, entry["error"])
 
@@ -193,9 +270,11 @@ def build_run_stats(entries: list[RunSummaryEntry]) -> dict[str, Any]:
         "by_status": by_status,
         "by_stage": by_stage,
         "by_retry_reason": by_retry_reason,
+        "by_failure_category": by_failure_category,
         "by_skip_reason": by_skip_reason,
         "by_source": by_source,
         "attempts_by_source": attempts_by_source,
+        "retryable_failures": retryable_failures,
     }
 
 

@@ -94,7 +94,7 @@ twine upload dist/*
 
 ### 扩展性设计
 - 检索、输入解析和下载之间通过 `download_plan.v1` 连接；下载管理器不再兼容裸 DOI 字符串列表，调用方需要先生成论文记录或使用 `download_from_unified_input()`
-- 运行报告使用 `run_summary.v2`，包含成功、失败、计划阶段跳过、下载来源尝试明细和聚合统计；`--resume` 支持从 `run_summary.v2` 或 `download_plan.v1` 续跑
+- 运行报告使用 `run_summary.v2`，包含成功、失败、计划阶段跳过、失败诊断、下载来源尝试明细和聚合统计；`--resume` 支持从 `run_summary.v2` 或 `download_plan.v1` 续跑
 - 搜索结果导出使用 `format_type` 参数，日志初始化由 `configure_logging()` / `get_logger()` 负责，不保留旧参数别名
 - 下载来源优先级通过 `--source-priority` 或 Python API 的 `source_priority` 控制，支持 `pmc`、`europe_pmc`、`arxiv`、`direct`
 - 模块化架构支持添加新数据源

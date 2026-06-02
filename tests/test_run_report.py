@@ -52,7 +52,9 @@ def test_build_run_summary_pairs_papers_and_results():
     assert summary["results"][1]["paper"]["title"] == "Paper Two"
     assert summary["results"][1]["error"] == "timeout"
     assert summary["results"][1]["retryable"] is True
-    assert summary["results"][1]["retry_reason"] == "download_pdf"
+    assert summary["results"][1]["retry_reason"] == "network"
+    assert summary["results"][1]["failure_category"] == "network"
+    assert "续跑" in summary["results"][1]["retry_advice"]
     assert summary["results"][0]["retryable"] is False
 
 
@@ -96,11 +98,18 @@ def test_build_run_summary_includes_skipped_plan_entries():
     assert summary["results"][2]["error"] == "no_download_route"
     assert summary["results"][1]["retryable"] is False
     assert summary["results"][3]["retryable"] is True
+    assert summary["results"][1]["failure_category"] == "plan_skip"
+    assert summary["results"][3]["failure_category"] == "network"
     assert summary["stats"]["by_status"] == {
         "success": 1,
         "skipped": 2,
         "failed": 1,
     }
+    assert summary["stats"]["by_failure_category"] == {
+        "plan_skip": 2,
+        "network": 1,
+    }
+    assert summary["stats"]["retryable_failures"] == 1
     assert summary["stats"]["by_skip_reason"] == {
         "duplicate": 1,
         "no_download_route": 1,
@@ -128,6 +137,8 @@ def test_build_run_summary_aggregates_attempt_stats():
 
     assert summary["stats"]["by_source"] == {"pmc": 1}
     assert summary["stats"]["by_stage"] == {"download_pdf": 1}
+    assert summary["stats"]["by_failure_category"] == {"network": 1}
+    assert summary["stats"]["retryable_failures"] == 1
     assert summary["stats"]["attempts_by_source"]["pmc"] == {
         "total": 1,
         "success": 0,
@@ -183,6 +194,63 @@ def test_load_failed_papers_returns_only_retryable_failures(tmp_path):
 
     assert len(papers) == 1
     assert papers[0]["arxiv_id"] == "2401.00001"
+
+
+def test_build_run_summary_classifies_common_failure_modes():
+    summary = build_run_summary(
+        [
+            {
+                "success": False,
+                "error": "No downloadable identifier found",
+                "stage": "resolve_identifier",
+            },
+            {
+                "success": False,
+                "error": "不是 PDF 文件",
+                "pdf_url": "https://example.com/html",
+                "stage": "validate_response",
+            },
+            {
+                "success": False,
+                "error": "下载失败: 403 Forbidden",
+                "pdf_url": "https://example.com/locked.pdf",
+                "stage": "download_pdf",
+            },
+            {
+                "success": False,
+                "error": "下载失败: 404 Not Found",
+                "pdf_url": "https://example.com/missing.pdf",
+                "stage": "download_pdf",
+            },
+            {
+                "success": False,
+                "error": "Permission denied",
+                "pmcid": "PMC1",
+                "stage": "save_file",
+            },
+        ],
+        source="input",
+        output_dir="pdfs",
+    )
+
+    categories = [
+        entry["failure_category"] for entry in summary["results"]
+    ]
+    assert categories == [
+        "metadata_missing",
+        "invalid_pdf",
+        "access_denied",
+        "not_found",
+        "storage_error",
+    ]
+    assert summary["stats"]["by_failure_category"] == {
+        "metadata_missing": 1,
+        "invalid_pdf": 1,
+        "access_denied": 1,
+        "not_found": 1,
+        "storage_error": 1,
+    }
+    assert summary["stats"]["retryable_failures"] == 1
 
 
 def test_load_failed_papers_rejects_legacy_v1_reports(tmp_path):

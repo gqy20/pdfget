@@ -64,6 +64,8 @@ class RunSummaryEntry(TypedDict):
     error: str
     retryable: bool
     retry_reason: str
+    failure_category: str
+    retry_advice: str
 
 
 class RunSummary(TypedDict):

@@ -317,7 +317,21 @@ def emit_run_summary(
     )
     summary_file = save_run_summary(output_dir, summary)
     logger.info(f"\n运行报告已保存到: {summary_file}")
+    log_failure_diagnostics(logger, summary["stats"])
     return summary_file
+
+
+def log_failure_diagnostics(logger: Logger, stats: dict[str, Any]) -> None:
+    """Log a compact failed-download diagnostic summary."""
+    by_failure_category = stats.get("by_failure_category") or {}
+    if not by_failure_category:
+        return
+
+    retryable_failures = int(stats.get("retryable_failures") or 0)
+    logger.info("\n失败诊断:")
+    for category, count in sorted(by_failure_category.items()):
+        logger.info(f"   {category}: {count}")
+    logger.info(f"   可重试失败: {retryable_failures}")
 
 
 def load_resume_plan_or_papers(
