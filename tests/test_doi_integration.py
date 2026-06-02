@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from pdfget.input_parser import parse_identifier_string
 from pdfget.utils.identifier_utils import IdentifierUtils
 from src.pdfget.fetcher import PaperFetcher
 
@@ -115,7 +116,7 @@ PMC12345,Paper 4 PMCID"""
         mixed_input = "10.1000/doi.test,38238491,PMC333333"
 
         # 解析标识符字符串并分类
-        identifiers = fetcher._parse_identifier_string(mixed_input)
+        identifiers = parse_identifier_string(mixed_input)
         classified = {"pmcids": [], "pmids": [], "dois": []}
 
         for identifier in identifiers:

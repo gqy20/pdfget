@@ -26,12 +26,18 @@ from .config import (
 from .doi_converter import DOIConverter
 from .download_plan import DownloadPlan, build_download_plan, ready_papers
 from .downloader import PDFDownloader
-from .paper_schema import normalize_paper_record
+from .input_parser import (
+    auto_detect_column,
+    build_papers_from_identifiers,
+    classify_identifiers,
+    detect_input_type,
+    parse_identifier_string,
+    read_identifier_values_from_csv,
+)
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
 from .utils.error_handling import handle_ncbi_errors
-from .utils.identifier_utils import IdentifierUtils
 
 
 class PaperFetcher(NCBIBaseModule):
@@ -208,83 +214,16 @@ class PaperFetcher(NCBIBaseModule):
     def _read_identifiers_from_csv(
         self, csv_path: str, id_column: str = "ID"
     ) -> dict[str, list[str]]:
-        """
-        从 CSV 文件读取混合类型的标识符列表
-
-        Args:
-            csv_path: CSV 文件路径
-            id_column: 标识符列名
-
-        Returns:
-            字典，包含分类后的标识符:
-            {
-                'pmcids': [PMCID列表],
-                'pmids': [PMID列表],
-                'dois': [DOI列表],
-                'arxiv_ids': [arXiv ID 列表]
-            }
-        """
-        identifiers: dict[str, list[str]] = {
-            "pmcids": [],
-            "pmids": [],
-            "dois": [],
-            "arxiv_ids": [],
-        }
-
-        for identifier in self._read_identifier_values_from_csv(csv_path, id_column):
-            id_type = IdentifierUtils.detect_identifier_type(identifier)
-            if id_type == "pmcid":
-                normalized_pmcid = IdentifierUtils.format_pmcid(identifier)
-                if normalized_pmcid:
-                    identifiers["pmcids"].append(normalized_pmcid)
-            elif id_type == "pmid":
-                identifiers["pmids"].append(identifier)
-            elif id_type == "doi":
-                identifiers["dois"].append(identifier)
-            elif id_type == "arxiv":
-                normalized_arxiv_id = IdentifierUtils.normalize_arxiv_id(identifier)
-                if normalized_arxiv_id:
-                    identifiers["arxiv_ids"].append(normalized_arxiv_id)
-
+        """Read and classify identifiers from a CSV file."""
+        identifiers = classify_identifiers(
+            read_identifier_values_from_csv(csv_path, id_column)
+        )
         self.logger.info(
             f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
             f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}, "
             f"arXiv={len(identifiers['arxiv_ids'])}"
         )
-
         return identifiers
-
-    def _read_identifier_values_from_csv(
-        self, csv_path: str, id_column: str = "ID"
-    ) -> list[str]:
-        """Read raw identifier values from a CSV column while preserving row order."""
-        import csv
-        import os
-
-        if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
-
-        values: list[str] = []
-        with open(csv_path, encoding="utf-8") as f:
-            csv_reader = csv.reader(f)
-            header = next(csv_reader, None)
-            if header is None:
-                return values
-
-            id_col_index = 0
-            for i, col in enumerate(header):
-                if col.strip().lower() == id_column.lower():
-                    id_col_index = i
-                    break
-
-            for row in csv_reader:
-                if not row or id_col_index >= len(row):
-                    continue
-                identifier = row[id_col_index].strip()
-                if identifier:
-                    values.append(identifier)
-
-        return values
 
     def _convert_pmids_to_pmcid_mapping(self, pmids: list[str]) -> dict[str, str]:
         """Convert PMIDs to a PMID -> PMCID mapping while preserving lookup identity."""
@@ -329,68 +268,6 @@ class PaperFetcher(NCBIBaseModule):
             f"DOI 转换完成: {len(mapping)}/{len(dois)} ({success_rate:.1f}%)"
         )
         return mapping
-
-    def _build_papers_from_identifiers_in_order(
-        self, identifiers: list[str]
-    ) -> list[dict]:
-        """Build paper records in the same order as user input."""
-        papers: list[dict] = []
-        for identifier in identifiers:
-            id_type = IdentifierUtils.detect_identifier_type(identifier)
-            if id_type == "pmcid":
-                normalized_pmcid = IdentifierUtils.format_pmcid(identifier)
-                if normalized_pmcid:
-                    papers.append(
-                        normalize_paper_record(
-                            {
-                                "pmcid": normalized_pmcid,
-                                "title": f"PMCID: {normalized_pmcid}",
-                                "source": "direct_pmcid",
-                            },
-                            "direct_pmcid",
-                            matched_by="pmcid",
-                        )
-                    )
-            elif id_type == "pmid":
-                papers.append(
-                    normalize_paper_record(
-                        {
-                            "pmid": identifier,
-                            "title": f"PMID: {identifier}",
-                            "source": "mixed_identifiers",
-                        },
-                        "mixed_identifiers",
-                        matched_by="pmid",
-                    )
-                )
-            elif id_type == "doi":
-                papers.append(
-                    normalize_paper_record(
-                        {
-                            "doi": identifier,
-                            "title": f"DOI: {identifier}",
-                            "source": "mixed_identifiers",
-                        },
-                        "mixed_identifiers",
-                        matched_by="doi",
-                    )
-                )
-            elif id_type == "arxiv":
-                normalized_arxiv_id = IdentifierUtils.normalize_arxiv_id(identifier)
-                if normalized_arxiv_id:
-                    papers.append(
-                        normalize_paper_record(
-                            {
-                                "arxiv_id": normalized_arxiv_id,
-                                "title": f"arXiv: {normalized_arxiv_id}",
-                                "source": "direct_arxiv",
-                            },
-                            "direct_arxiv",
-                            matched_by="arxiv_id",
-                        )
-                    )
-
-        return papers
 
     def resolve_pmids(self, pmids: list[str]) -> dict[str, str]:
         """Resolve PMIDs to PMCIDs for download planning."""
@@ -452,102 +329,6 @@ class PaperFetcher(NCBIBaseModule):
         self.logger.info(f"结果已导出到: {output_path}")
         return str(output_path)
 
-    def _detect_input_type(self, input_str: str) -> str:
-        """
-        检测输入类型
-
-        Args:
-            input_str: 输入字符串
-
-        Returns:
-            'csv_file': CSV文件路径
-            'single': 单个标识符
-            'multiple': 多个标识符（逗号分隔）
-            'invalid': 无效输入
-        """
-        import os
-
-        # 检查空输入
-        if not input_str or not input_str.strip():
-            return "invalid"
-
-        input_str = input_str.strip()
-
-        # 检查是否是文件路径
-        if os.path.exists(input_str):
-            return "csv_file"
-
-        # 检查是否包含逗号（多个标识符）
-        if "," in input_str:
-            return "multiple"
-
-        # 单个标识符
-        return "single"
-
-    def _auto_detect_column(self, csv_path: str) -> str | None:
-        """
-        自动检测CSV列名
-
-        优先级: ID > PMCID > doi > pmid > 第一列
-
-        Args:
-            csv_path: CSV文件路径
-
-        Returns:
-            检测到的列名，如果文件为空返回None
-        """
-        import csv
-
-        priority_columns = ["ID", "PMCID", "doi", "pmid"]
-
-        try:
-            with open(csv_path, encoding="utf-8") as f:
-                csv_reader = csv.reader(f)
-                header = next(csv_reader, None)
-
-                if header is None or not header:
-                    return None
-
-                # 大小写不敏感的列名映射
-                header_map = {col.upper(): col for col in header}
-
-                # 按优先级查找
-                for priority_col in priority_columns:
-                    if priority_col.upper() in header_map:
-                        return header_map[priority_col.upper()]
-
-                # 都没找到，返回第一列
-                return header[0] if header else None
-
-        except Exception as e:
-            self.logger.error(f"自动检测列名失败: {e}")
-            return None
-
-    def _parse_identifier_string(self, id_str: str) -> list[str]:
-        """
-        解析标识符字符串
-
-        支持：
-        - 单个: "PMC123456"
-        - 多个: "PMC123456,38238491,10.1038/xxx"
-
-        Args:
-            id_str: 标识符字符串
-
-        Returns:
-            标识符列表
-        """
-        if not id_str or not id_str.strip():
-            return []
-
-        # 按逗号分隔
-        identifiers = [s.strip() for s in id_str.split(",")]
-
-        # 过滤掉空字符串
-        identifiers = [s for s in identifiers if s]
-
-        return identifiers
-
     def download_from_unified_input(
         self,
         input_value: str,
@@ -598,7 +379,7 @@ class PaperFetcher(NCBIBaseModule):
     ) -> DownloadPlan:
         """Build a download plan from a CSV path or identifier string."""
         # 检测输入类型
-        input_type = self._detect_input_type(input_value)
+        input_type = detect_input_type(input_value)
 
         if input_type == "invalid":
             raise ValueError(f"无效的输入: {input_value}")
@@ -609,28 +390,32 @@ class PaperFetcher(NCBIBaseModule):
 
             # 如果未指定列名，自动检测
             if column is None:
-                detected_column = self._auto_detect_column(input_value)
+                try:
+                    detected_column = auto_detect_column(input_value)
+                except Exception as exc:
+                    self.logger.error(f"自动检测列名失败: {exc}")
+                    detected_column = None
                 if detected_column:
                     self.logger.info(f"自动检测到列名: {detected_column}")
                     column = detected_column
                 else:
                     raise ValueError(f"无法自动检测CSV列名: {input_value}")
 
-            identifiers = self._read_identifier_values_from_csv(input_value, column)
-            papers = self._build_papers_from_identifiers_in_order(identifiers)
+            identifiers = read_identifier_values_from_csv(input_value, column)
+            papers = build_papers_from_identifiers(identifiers)
             if limit is not None and limit > 0:
                 papers = papers[:limit]
             return build_download_plan(papers, source="unified_input", resolver=self)
 
         elif input_type in ["single", "multiple"]:
             # 直接输入的标识符
-            identifiers = self._parse_identifier_string(input_value)
+            identifiers = parse_identifier_string(input_value)
 
             if not identifiers:
                 raise ValueError(f"未找到有效的标识符: {input_value}")
 
             self.logger.info(f"检测到 {len(identifiers)} 个标识符")
-            papers = self._build_papers_from_identifiers_in_order(identifiers)
+            papers = build_papers_from_identifiers(identifiers)
 
             # 应用限制
             if limit:

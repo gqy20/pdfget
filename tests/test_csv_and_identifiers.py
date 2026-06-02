@@ -8,6 +8,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from pdfget.input_parser import (
+    auto_detect_column,
+    classify_identifiers,
+    detect_input_type,
+    read_identifier_values_from_csv,
+)
 from src.pdfget.fetcher import PaperFetcher
 from tests.conftest import CSVTestMixin, create_temp_csv_file
 
@@ -25,7 +31,7 @@ class TestCSVIdentifierReading(CSVTestMixin):
         csv_data = [["ID"], ["PMC10851947"], ["PMC10851948"], ["PMC10851949"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmcid_only.csv")
 
-        result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
+        result = classify_identifiers(read_identifier_values_from_csv(str(csv_file), "ID"))
 
         assert len(result["pmcids"]) == 3
         assert len(result["pmids"]) == 0
@@ -38,7 +44,7 @@ class TestCSVIdentifierReading(CSVTestMixin):
         csv_data = [["ID"], ["38238491"], ["38238492"], ["38238493"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmid_only.csv")
 
-        result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
+        result = classify_identifiers(read_identifier_values_from_csv(str(csv_file), "ID"))
 
         assert len(result["pmids"]) == 3
         assert len(result["pmcids"]) == 0
@@ -52,7 +58,7 @@ class TestCSVIdentifierReading(CSVTestMixin):
         csv_data = [["ID"], [identifiers[0]], [identifiers[1]], [identifiers[2]]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "doi_only.csv")
 
-        result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
+        result = classify_identifiers(read_identifier_values_from_csv(str(csv_file), "ID"))
 
         assert len(result["dois"]) == 3
         assert len(result["pmcids"]) == 0
@@ -60,8 +66,8 @@ class TestCSVIdentifierReading(CSVTestMixin):
 
     def test_read_mixed_identifiers_csv(self, csv_file_with_mixed_ids):
         """测试：读取混合标识符的 CSV（使用fixture）"""
-        result = self.fetcher._read_identifiers_from_csv(
-            str(csv_file_with_mixed_ids), id_column="ID"
+        result = classify_identifiers(
+            read_identifier_values_from_csv(str(csv_file_with_mixed_ids), "ID")
         )
 
         assert len(result["pmcids"]) == 2
@@ -84,7 +90,7 @@ class TestCSVIdentifierReading(CSVTestMixin):
             csv_data, temp_output_dir, "with_empty_lines.csv"
         )
 
-        result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
+        result = classify_identifiers(read_identifier_values_from_csv(str(csv_file), "ID"))
 
         # 应该跳过空行
         assert len(result["pmcids"]) == 1
@@ -100,42 +106,42 @@ class TestInputTypeDetection(CSVTestMixin):
 
     def test_detect_csv_file(self, csv_file_with_pmcids):
         """测试：识别CSV文件路径"""
-        result = self.fetcher._detect_input_type(str(csv_file_with_pmcids))
+        result = detect_input_type(str(csv_file_with_pmcids))
         assert result == "csv_file"
 
     def test_detect_single_pmcid(self):
         """测试：识别单个PMCID"""
-        result = self.fetcher._detect_input_type("PMC123456")
+        result = detect_input_type("PMC123456")
         assert result == "single"
 
     def test_detect_single_pmid(self):
         """测试：识别单个PMID"""
-        result = self.fetcher._detect_input_type("38238491")
+        result = detect_input_type("38238491")
         assert result == "single"
 
     def test_detect_single_doi(self):
         """测试：识别单个DOI"""
-        result = self.fetcher._detect_input_type("10.1038/s41586-024-07146-0")
+        result = detect_input_type("10.1038/s41586-024-07146-0")
         assert result == "single"
 
     def test_detect_multiple_identifiers(self):
         """测试：识别逗号分隔的多个标识符"""
-        result = self.fetcher._detect_input_type("PMC123456,38238491,10.1038/xxx")
+        result = detect_input_type("PMC123456,38238491,10.1038/xxx")
         assert result == "multiple"
 
     def test_detect_multiple_with_spaces(self):
         """测试：识别带空格的多个标识符"""
-        result = self.fetcher._detect_input_type("PMC123456, 38238491, 10.1038/xxx")
+        result = detect_input_type("PMC123456, 38238491, 10.1038/xxx")
         assert result == "multiple"
 
     def test_detect_empty_string(self):
         """测试：空字符串返回invalid"""
-        result = self.fetcher._detect_input_type("")
+        result = detect_input_type("")
         assert result == "invalid"
 
     def test_detect_whitespace_only(self):
         """测试：只有空白字符返回invalid"""
-        result = self.fetcher._detect_input_type("   ")
+        result = detect_input_type("   ")
         assert result == "invalid"
 
 
@@ -151,7 +157,7 @@ class TestColumnAutoDetection(CSVTestMixin):
         csv_data = [["ID", "Title", "PMCID"], ["PMC123456", "Test", "PMC123456"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "id_priority.csv")
 
-        result = self.fetcher._auto_detect_column(str(csv_file))
+        result = auto_detect_column(str(csv_file))
         assert result == "ID"
 
     def test_auto_detect_pmcid_column(self, temp_output_dir):
@@ -159,7 +165,7 @@ class TestColumnAutoDetection(CSVTestMixin):
         csv_data = [["PMCID", "Title"], ["PMC123456", "Test"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmcid_column.csv")
 
-        result = self.fetcher._auto_detect_column(str(csv_file))
+        result = auto_detect_column(str(csv_file))
         assert result == "PMCID"
 
     def test_auto_detect_doi_column(self, temp_output_dir):
@@ -167,7 +173,7 @@ class TestColumnAutoDetection(CSVTestMixin):
         csv_data = [["doi", "Title"], ["10.1038/xxx", "Test"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "doi_column.csv")
 
-        result = self.fetcher._auto_detect_column(str(csv_file))
+        result = auto_detect_column(str(csv_file))
         assert result == "doi"
 
     def test_auto_detect_pmid_column(self, temp_output_dir):
@@ -175,7 +181,7 @@ class TestColumnAutoDetection(CSVTestMixin):
         csv_data = [["pmid", "Title"], ["38238491", "Test"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "pmid_column.csv")
 
-        result = self.fetcher._auto_detect_column(str(csv_file))
+        result = auto_detect_column(str(csv_file))
         assert result == "pmid"
 
     def test_case_insensitive_detection(self, temp_output_dir):
@@ -185,7 +191,7 @@ class TestColumnAutoDetection(CSVTestMixin):
             csv_data, temp_output_dir, "case_insensitive.csv"
         )
 
-        result = self.fetcher._auto_detect_column(str(csv_file))
+        result = auto_detect_column(str(csv_file))
         assert result.upper() == "ID"
 
 

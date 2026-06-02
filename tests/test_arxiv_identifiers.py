@@ -5,6 +5,11 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pdfget.fetcher import PaperFetcher
+from pdfget.input_parser import (
+    classify_identifiers,
+    detect_input_type,
+    read_identifier_values_from_csv,
+)
 from pdfget.utils.identifier_utils import IdentifierUtils
 from tests.conftest import CSVTestMixin, create_temp_csv_file
 
@@ -41,14 +46,14 @@ class TestArxivCSVAndInput(CSVTestMixin):
         csv_data = [["ID"], ["2301.12345"], ["arXiv:2301.12346v2"]]
         csv_file = create_temp_csv_file(csv_data, temp_output_dir, "arxiv_only.csv")
 
-        result = self.fetcher._read_identifiers_from_csv(str(csv_file), id_column="ID")
+        result = classify_identifiers(read_identifier_values_from_csv(str(csv_file), "ID"))
 
         assert len(result["arxiv_ids"]) == 2
         assert "2301.12345" in result["arxiv_ids"]
         assert "2301.12346v2" in result["arxiv_ids"]
 
     def test_detect_single_arxiv(self):
-        assert self.fetcher._detect_input_type("2301.12345") == "single"
+        assert detect_input_type("2301.12345") == "single"
 
     @patch("pdfget.manager.UnifiedDownloadManager")
     def test_download_from_unified_input_routes_arxiv(self, mock_manager_class):
