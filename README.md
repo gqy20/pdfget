@@ -276,7 +276,7 @@ results = download_from_unified_input(
 )
 ```
 
-下载链路使用 `download_plan.v1` 作为边界协议。`UnifiedDownloadManager.download_batch()` 只接收计划产出的论文记录，不再接收裸 DOI 字符串列表；如果要处理 CSV、PMCID、PMID、DOI 或 arXiv 混合输入，请先使用 `build_download_plan_from_unified_input()` 或直接调用 `download_from_unified_input()`。搜索结果导出使用 `format_type="json" | "csv" | "tsv"` 参数。
+下载链路使用 `download_plan.v1` 作为边界协议。`UnifiedDownloadManager.download_batch()` 只接收计划产出的论文记录，不再接收裸 DOI 字符串列表；如果要处理 CSV、PMCID、PMID、DOI 或 arXiv 混合输入，请先使用 `build_download_plan_from_unified_input()` 或直接调用 `download_from_unified_input()`。搜索/统计输出可通过 `--format console|json|markdown` 控制，或调用 `StatsFormatter.format(stats, format_type=...)` 时使用 `format_type="console" | "json" | "markdown"`。
 
 ### PMC 过滤技巧
 

@@ -58,14 +58,26 @@ twine upload dist/*
 ### 核心模块结构
 - **PaperFetcher** (`fetcher.py`) - 搜索、元数据补全、PMID/DOI 解析协调器
 - **PaperSearcher** (`searcher.py`) - 文献搜索，支持 PubMed、Europe PMC 和 arXiv
+- **input_parser** (`input_parser.py`) - CSV/标识符输入解析（列名、混分隔、单值）
 - **input_planner** (`input_planner.py`) - 将 CSV/标识符输入转换为下载计划
-- **download_plan** (`download_plan.py`) - 搜索结果、直接输入、续跑和下载器之间的统一计划协议
+- **download_plan** (`download_plan.py`) - 搜索结果、直接输入、续跑和下载器之间的统一计划协议 (`download_plan.v1`)
 - **download_service** (`download_service.py`) - Python API 的统一输入下载 façade
-- **PDFDownloader** (`downloader.py`) - 单篇 PDF 下载，从 PMC OA Service、Europe PMC、arXiv 等来源下载
+- **PDFDownloader** (`downloader.py`) - 单篇 PDF 下载，从 PMC OA Service、Europe PMC、arXiv 等来源下载；归一化结果与失败分类
+- **pmc_oa_service** (`pmc_oa_service.py`) - PMC Open Access Web Service 的封装
 - **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器，只按下载计划中的论文记录执行下载
 - **PMCIDRetriever** (`pmcid.py`) - 批量 PMCID 获取，使用 ESummary API 优化
 - **Counter** (`counter.py`) - PMCID 统计分析，显示 PMC 比例
-- **Formatter** (`formatter.py`) - 结果格式化输出
+- **Formatter** (`formatter.py`) - 结果格式化输出（`format_type="console"|"json"|"markdown"`）
+- **doi_converter** (`doi_converter.py`) - DOI ↔ PMCID 转换
+- **filename** (`filename.py`) - PDF 文件名生成
+- **retry** (`retry.py`) - 通用重试/退避工具
+- **run_report** (`run_report.py`) - `run_summary.v2` 运行报告与失败诊断
+- **schemas** (`schemas.py`) - CLI / 运行报告的字段与序列化定义
+- **protocols** (`protocols.py`) - 服务边界 Protocol
+- **cli_workflows** (`cli_workflows.py`) - CLI 业务流编排（与 `main.py` 解耦）
+- **abstract_supplementor** (`abstract_supplementor.py`) - 通过 XML 补充缺失摘要（Europe PMC）
+- **paper_schema** (`paper_schema.py`) - `paper_record.v1` 标准化字段
+- **base/utils** (`base/`, `utils/`) - 基础抽象与工具子包
 
 ### 配置管理
 - 全局配置在 `config.py` 中管理

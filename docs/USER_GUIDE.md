@@ -183,7 +183,7 @@ pdfget -s '"gene expression" AND (cancer OR tumor) NOT review' -l 20
 
 ### 核心参数
 
-#### 输入参数（二选一）
+#### 输入参数（三选一）
 
 **`-s QUERY`** - 搜索文献
 ```bash
@@ -194,6 +194,15 @@ pdfget -s "machine learning cancer" -l 50
 - CSV文件路径：`pdfget -m data.csv`
 - 单个标识符：`pdfget -m "PMC123456"`
 - 逗号分隔列表：`pdfget -m "PMC123,38238491"`
+
+**`--resume REPORT_OR_PLAN`** - 从运行报告或下载计划续跑：
+```bash
+# 重试 run_summary.json 中的失败项（默认只重试 retryable=true）
+pdfget --resume data/pdfs/run_summary.json -o data/pdfs -t 3
+
+# 从下载计划继续执行（依赖已有文件检查跳过已完成 PDF）
+pdfget --resume data/pdfs/download_plan.json -o data/pdfs -t 3
+```
 
 #### 输出控制
 
@@ -219,10 +228,14 @@ pdfget -s "cancer" -l 100 -d
 pdfget -s "machine learning" -l 50
 ```
 
-**`-S SOURCE`** - 数据源选择（pubmed/europe_pmc/both，默认pubmed）
+**`-S SOURCE`** - 数据源选择（pubmed / europe_pmc / arxiv / both / all，默认 pubmed）
 ```bash
 pdfget -s "cancer" -S europe_pmc -l 30
 pdfget -s "cancer" -S both -l 50
+# 联合检索 PubMed + Europe PMC + arXiv
+pdfget -s "large language model" -S all -l 30
+# 直接从 arXiv 搜索
+pdfget -s "vision transformer" -S arxiv -l 20
 ```
 
 **`-t NUM`** - 并发线程数（默认3）
@@ -248,6 +261,32 @@ pdfget -s "cancer" -l 100 --format markdown
 **`-v`** - 详细输出
 ```bash
 pdfget -s "cancer" -l 100 -v
+```
+
+**`--dry-run`** - 只生成搜索结果和下载计划，不实际下载
+```bash
+pdfget -s "vision transformer" -S all -l 30 -d --dry-run
+```
+
+**`--source-priority`** - 下载来源优先级，逗号分隔，支持 `pmc,europe_pmc,arxiv,direct`，默认 `pmc,europe_pmc,arxiv,direct`
+```bash
+pdfget -m identifiers.csv -d --source-priority europe_pmc,pmc,arxiv,direct
+pdfget -m pmcids.csv -d --source-priority pmc
+```
+
+**`--log-format`** - 日志输出格式，`text` 或 `json`，日志始终写入 `stderr`（默认 `text`）
+```bash
+pdfget -s "cancer" -l 50 --log-format json
+```
+
+**`--log-level`** - 日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL，默认使用配置文件 LOG_LEVEL）
+```bash
+pdfget -s "cancer" -l 50 --log-level DEBUG
+```
+
+**`--quiet`** - 仅输出错误日志
+```bash
+pdfget -s "cancer" -l 50 --quiet
 ```
 
 ### 输出目录

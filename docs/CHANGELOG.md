@@ -5,6 +5,38 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+- 新增下载计划协议 `download_plan.v1` 持久化与带时间戳的归档副本（`download_plan.json` / `download_plan_*.json`），便于 `--resume`、`--dry-run` 复盘。
+- 新增运行报告 `run_summary.v2`：覆盖成功 / 失败 / 计划阶段跳过，并提供按状态、阶段、失败分类、重试原因、跳过原因、下载来源汇总的 `stats`（含 `attempts_by_source`、`retryable_failures`）。
+- 新增失败诊断字段：`stage`、`failure_category`、`retryable`、`retry_reason`、`retry_advice`；标准失败阶段 `resolve_identifier` / `download_pdf` / `validate_response` / `save_file` / `worker_error`。
+- 新增 CLI 参数：`--resume`（接受 `run_summary.json` 或 `download_plan.json`）、`--source-priority pmc,europe_pmc,arxiv,direct`、`--dry-run`、`--log-format text|json`、`--log-level`、`--quiet`。
+- 新增 Python 顶层 API：`build_download_plan_from_unified_input()`、`download_from_unified_input()`；新增 `pdfget.protocols` 服务边界 Protocol、`pdfget.schemas` 字段定义。
+- 新增 `run_summary.v2` 的标准化失败分类：`network` / `not_found` / `access_denied` / `invalid_pdf` / `source_exhausted` / `metadata_missing` / `storage_error` / `worker_error` / `plan_skip` / `unknown`。
+- 新增 CSV 列名自动检测优先级（`ID` > `PMCID` > `doi` > `pmid` > 第一列）与重复标识符合并输出。
+- 补齐 `tests/test_run_report.py`、`tests/test_main_arxiv.py`、`tests/test_config_paths.py`、`tests/test_logger.py`、`tests/test_download_plan.py` 等回归测试。
+
+### Changed
+- 检索、输入解析与下载链路统一通过 `download_plan.v1` 串接；`UnifiedDownloadManager.download_batch()` 不再接受裸 DOI 字符串列表，调用方需先产生论文记录或使用 `download_from_unified_input()`。
+- CLI 工作流从入口 `main.py` 拆分到 `cli_workflows.py`，入口更聚焦参数解析与日志装配。
+- `PaperFetcher` 不再承担统一输入计划，统一输入计划由 `input_planner.build_download_plan_from_unified_input()` 与 `download_service.download_from_unified_input()` 负责。
+- 日志初始化统一由 `configure_logging()` / `get_logger()` 负责，旧参数别名（`log_level=`、`quiet=` 在 `print_log` 类上的兼容字段）已被清理。
+- 下载来源优先级可通过 `--source-priority` 或 Python API 的 `source_priority` 控制，替代原来的内部硬编码顺序。
+
+### Removed
+- 移除 `PDFDownloader` 中已被 `run_report.v2` 替代的旧统计/返回处理方法（`b9303e9`）。
+- 移除 `PaperFetcher` 中已迁出至 `download_service` 的统一输入方法（`8b43aed`）。
+- 移除 `PMCIDRetriever` 中旧兼容路径（`b9303e9`、`d27d416`）。
+- 移除 `logger.py` 中为旧配置/别名保留的兜底分支（`b9303e9`、`d27d416`）。
+- 移除若干 ruff/类型检查遗留：冗余 `try/except ImportError`、`pytest-mock` 弃用导入、未使用的私有 helper（`fe44424`、`9e48811`、`c98a54c`）。
+
+### Fixed
+- 修复 tar.gz 响应体未解压直接落盘为 PDF 的问题（Issue #1，`9e48811`）；统一 PDF 文件名生成逻辑。
+- 修复集成测试因 PMC OA 偶发 404 而失败的问题（`dec7a5c`），允许 fallback source。
+- 修复 `test_pmc_oa_service.py`、`pdfget` 测试中按规范化的导入排序（`ce7538c`、`2f62ad5`）。
+- 简化发布说明生成（`e0f5da8`），移除冗余 changelog 拼接。
+
 ## [0.1.5] - 2026-04-01
 
 ### Added
