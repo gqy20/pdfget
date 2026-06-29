@@ -81,48 +81,6 @@ class IdentifierUtils:
         return None
 
     @staticmethod
-    def validate_pmcid(pmcid: str) -> bool:
-        """
-        验证PMCID格式
-
-        Args:
-            pmcid: PMCID字符串
-
-        Returns:
-            是否为有效的PMCID
-        """
-        if not pmcid:
-            return False
-
-        pmcid = pmcid.strip()
-
-        # 检查PMC前缀
-        if pmcid.lower().startswith("pmc"):
-            pmcid = pmcid[3:]
-
-        # 验证是否为1-8位数字
-        return pmcid.isdigit() and 1 <= len(pmcid) <= 8
-
-    @staticmethod
-    def validate_pmid(pmid: str) -> bool:
-        """
-        验证PMID格式
-
-        Args:
-            pmid: PMID字符串
-
-        Returns:
-            是否为有效的PMID
-        """
-        if not pmid:
-            return False
-
-        pmid = pmid.strip()
-
-        # PMID应为6-10位数字
-        return pmid.isdigit() and 6 <= len(pmid) <= 10
-
-    @staticmethod
     def validate_doi(doi: str) -> bool:
         """
         验证DOI格式
@@ -145,84 +103,6 @@ class IdentifierUtils:
         # 简单的DOI格式验证
         doi_pattern = r"^10\.\d+/.+$"
         return bool(re.match(doi_pattern, doi))
-
-    @staticmethod
-    def clean_identifier_string(identifier: str) -> str:
-        """
-        清理标识符字符串
-
-        Args:
-            identifier: 原始标识符字符串
-
-        Returns:
-            清理后的标识符字符串
-        """
-        if not identifier:
-            return ""
-
-        # 去除首尾空白字符和换行符
-        return identifier.strip()
-
-    @staticmethod
-    def parse_identifier_list(identifiers: str) -> list[str]:
-        """
-        解析标识符列表
-
-        Args:
-            identifiers: 逗号分隔的标识符字符串
-
-        Returns:
-            标识符列表
-        """
-        if not identifiers:
-            return []
-
-        # 分割并清理每个标识符
-        result = []
-        for identifier in identifiers.split(","):
-            cleaned = IdentifierUtils.clean_identifier_string(identifier)
-            if cleaned:
-                result.append(cleaned)
-
-        return result
-
-    @staticmethod
-    def classify_identifiers(identifiers: list[str]) -> dict[str, list[str]]:
-        """
-        分类标识符
-
-        Args:
-            identifiers: 标识符列表
-
-        Returns:
-            分类后的标识符字典
-        """
-        classified: dict[str, list[str]] = {
-            "pmcid": [],
-            "pmid": [],
-            "doi": [],
-            "arxiv": [],
-            "unknown": [],
-        }
-
-        for identifier in identifiers:
-            id_type = IdentifierUtils.detect_identifier_type(identifier)
-            classified[id_type].append(identifier)
-
-        return classified
-
-    @staticmethod
-    def extract_pmcid_number(pmcid: str) -> str | None:
-        """
-        从PMCID中提取数字部分
-
-        Args:
-            pmcid: PMCID字符串
-
-        Returns:
-            数字部分，或None（如果无效）
-        """
-        return IdentifierUtils.normalize_pmcid(pmcid)
 
     @staticmethod
     def format_pmcid(pmcid: str, with_prefix: bool = True) -> str:
@@ -250,49 +130,6 @@ class IdentifierUtils:
         if with_prefix and not pmcid.startswith("PMC"):
             return f"PMC{pmcid}"
 
-        return pmcid
-
-    @staticmethod
-    def is_pmcid_with_prefix(pmcid: str) -> bool:
-        """
-        检查PMCID是否包含前缀
-
-        Args:
-            pmcid: PMCID字符串
-
-        Returns:
-            是否包含PMC前缀
-        """
-        return pmcid.lower().startswith("pmc") if pmcid else False
-
-    @staticmethod
-    def remove_pmcid_prefix(pmcid: str) -> str:
-        """
-        移除PMCID前缀
-
-        Args:
-            pmcid: PMCID字符串
-
-        Returns:
-            不含前缀的PMCID
-        """
-        if pmcid and IdentifierUtils.is_pmcid_with_prefix(pmcid):
-            return pmcid[3:]
-        return pmcid
-
-    @staticmethod
-    def add_pmcid_prefix(pmcid: str) -> str:
-        """
-        添加PMCID前缀
-
-        Args:
-            pmcid: PMCID字符串
-
-        Returns:
-            带PMC前缀的PMCID
-        """
-        if pmcid and not IdentifierUtils.is_pmcid_with_prefix(pmcid):
-            return f"PMC{pmcid}"
         return pmcid
 
     @staticmethod

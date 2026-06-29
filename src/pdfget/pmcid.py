@@ -80,30 +80,6 @@ class PMCIDRetriever(NCBIBaseModule):
 
         return _fetch()
 
-    def _fetch_single_with_retry(
-        self, url: str, params: dict[str, Any]
-    ) -> requests.Response:
-        """
-        带重试的单个获取请求
-
-        Args:
-            url: 请求URL
-            params: 请求参数
-
-        Returns:
-            响应对象
-        """
-        # 单个请求的重试使用配置机制
-        single_retry = retry_with_backoff(use_config=True)
-
-        @single_retry
-        def _fetch() -> requests.Response:
-            return self.session.get(
-                url, params=params, timeout=self.config["timeouts"]["request"]
-            )
-
-        return _fetch()
-
     def _format_pmcid(self, pmcid: str) -> str:
         """
         标准化 PMCID 格式，确保包含 PMC 前缀
@@ -221,65 +197,12 @@ class PMCIDRetriever(NCBIBaseModule):
                 self.logger.error(f"第 {batch_num} 批请求失败: {str(e)}")
             except Exception as e:
                 self.logger.error(f"第 {batch_num} 批处理出错: {str(e)}")
-                self.logger.debug(f"错误详情: {type(e).__name__}: {e}")
-                import traceback
-
-                self.logger.debug(traceback.format_exc())
+                self.logger.debug(f"错误详情: {type(e).__name__}: {e}", exc_info=True)
 
         self.logger.info(
             f"批量获取完成：{len(pmid_to_pmcid)}/{len(pmids)} 个 PMIDs 有 PMCID"
         )
         return pmid_to_pmcid
-
-    def _fetch_pmcid_individual(self, pmid: str) -> str | None:
-        """
-        逐个获取 PMCID（作为批量获取的备选方案）
-
-        Args:
-            pmid: 单个 PMID
-
-        Returns:
-            PMCID 或 None
-        """
-        try:
-            url = f"{self.base_url}esummary.fcgi"
-            params = {
-                "db": "pubmed",
-                "id": pmid,
-                "retmode": "json",
-            }
-
-            if self.email:
-                params["email"] = self.email
-            if self.api_key:
-                params["api_key"] = self.api_key
-
-            self._rate_limit()
-
-            # 使用重试机制
-            response = self._fetch_single_with_retry(url, params)
-            response.raise_for_status()
-
-            data = response.json()
-
-            if "result" in data and pmid in data["result"]:
-                article = data["result"][pmid]
-                articleids = article.get("articleids", [])
-
-                if isinstance(articleids, list):
-                    for article_id in articleids:
-                        if (
-                            isinstance(article_id, dict)
-                            and article_id.get("idtype") == "pmc"
-                        ):
-                            pmcid = article_id.get("value", "")
-                            return self._format_pmcid(pmcid)
-
-            return None
-
-        except Exception as e:
-            self.logger.debug(f"获取 PMID {pmid} 的 PMCID 失败: {str(e)}")
-            return None
 
     def process_papers(
         self, papers: list[dict[str, Any]], use_fallback: bool | None = None

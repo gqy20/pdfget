@@ -5,6 +5,7 @@ PDF 下载模块
 """
 
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ import requests
 from .filename import make_pdf_filename
 from .logger import get_logger
 from .paper_schema import normalize_paper_record
+from .pmc_oa_service import PMCOAService
 from .retry import retry_with_backoff
 
 
@@ -48,8 +50,6 @@ class PDFDownloader:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # PMC OA Service 实例
-        from .pmc_oa_service import PMCOAService
-
         self.pmc_oa_service = PMCOAService(str(self.output_dir), session)
 
         # PDF 下载源（Europe PMC是最可靠的开放获取源）
@@ -492,8 +492,6 @@ class PDFDownloader:
         Returns:
             删除的文件数量
         """
-        import time
-
         current_time = time.time()
         max_age_seconds = max_age_days * 24 * 3600
         deleted_count = 0

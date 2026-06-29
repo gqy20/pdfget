@@ -121,29 +121,6 @@ class TestIdentifierUtils:
         result = IdentifierUtils.normalize_pmcid("invalid")
         assert result is None
 
-    def test_validate_pmcid_valid(self):
-        """测试有效PMCID验证"""
-        assert IdentifierUtils.validate_pmcid("PMC123456")
-        assert IdentifierUtils.validate_pmcid("123456")
-        assert IdentifierUtils.validate_pmcid("PMC789012")
-
-    def test_validate_pmcid_invalid(self):
-        """测试无效PMCID验证"""
-        assert not IdentifierUtils.validate_pmcid("invalid")
-        assert not IdentifierUtils.validate_pmcid("PMC")  # 没有数字
-        assert not IdentifierUtils.validate_pmcid("123456789012")  # 太长
-
-    def test_validate_pmid_valid(self):
-        """测试有效PMID验证"""
-        assert IdentifierUtils.validate_pmid("12345678")
-        assert IdentifierUtils.validate_pmid("1234567890")
-
-    def test_validate_pmid_invalid(self):
-        """测试无效PMID验证"""
-        assert not IdentifierUtils.validate_pmid("invalid")
-        assert not IdentifierUtils.validate_pmid("12345")  # 太短
-        assert not IdentifierUtils.validate_pmid("123456789012")  # 太长
-
     def test_validate_doi_valid(self):
         """测试有效DOI验证"""
         assert IdentifierUtils.validate_doi("10.1038/nature12373")
@@ -154,45 +131,3 @@ class TestIdentifierUtils:
         assert not IdentifierUtils.validate_doi("invalid")
         assert not IdentifierUtils.validate_doi("10.1038")  # 缺少内容
         assert not IdentifierUtils.validate_doi("xyz.1038/nature12373")  # 错误前缀
-
-    def test_clean_identifier_string(self):
-        """测试标识符字符串清理"""
-        assert IdentifierUtils.clean_identifier_string(" PMC123456 ") == "PMC123456"
-        assert (
-            IdentifierUtils.clean_identifier_string(" 10.1038/xyz\n") == "10.1038/xyz"
-        )
-        assert IdentifierUtils.clean_identifier_string("\tPMID12345\n") == "PMID12345"
-
-    def test_parse_identifier_list(self):
-        """测试标识符列表解析"""
-        result = IdentifierUtils.parse_identifier_list("PMC123,456,10.1038/xyz")
-        expected = ["PMC123", "456", "10.1038/xyz"]
-        assert result == expected
-
-    def test_parse_identifier_list_with_spaces(self):
-        """测试带空格的标识符列表解析"""
-        result = IdentifierUtils.parse_identifier_list(" PMC123 , 456 , 10.1038/xyz ")
-        expected = ["PMC123", "456", "10.1038/xyz"]
-        assert result == expected
-
-    def test_parse_identifier_list_empty(self):
-        """测试空标识符列表解析"""
-        result = IdentifierUtils.parse_identifier_list("")
-        assert result == []
-
-        result = IdentifierUtils.parse_identifier_list("  ,  , ")
-        assert result == []
-
-    def test_classify_identifiers(self):
-        """测试标识符分类"""
-        identifiers = ["PMC123", "456789", "10.1038/xyz", "2401.12345", "invalid"]
-        result = IdentifierUtils.classify_identifiers(identifiers)
-
-        expected = {
-            "pmcid": ["PMC123"],
-            "pmid": ["456789"],
-            "doi": ["10.1038/xyz"],
-            "arxiv": ["2401.12345"],
-            "unknown": ["invalid"],
-        }
-        assert result == expected

@@ -36,11 +36,11 @@ def handle_ncbi_errors(
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | Any:
             # 获取日志器
-            func_logger = logger
-            if func_logger is None and args and hasattr(args[0], "logger"):
+            if logger is not None:
+                func_logger = logger
+            elif args and hasattr(args[0], "logger"):
                 func_logger = args[0].logger
-            elif func_logger is None:
-                # 如果没有提供日志器，使用模块级日志器
+            else:
                 func_logger = logging.getLogger(func.__module__)
 
             try:

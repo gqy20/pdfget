@@ -5,17 +5,12 @@ from __future__ import annotations
 
 import logging
 import sys
-from collections.abc import Callable
 from pathlib import Path
-from types import TracebackType
-from typing import Any, ParamSpec, TypeVar, cast
+from typing import Any, cast
 
 import structlog
 
 from .config import LOG_LEVEL
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 Logger = structlog.stdlib.BoundLogger
 
@@ -135,67 +130,3 @@ def get_logger(name: str) -> Logger:
 def get_main_logger() -> Logger:
     """Get the main CLI logger."""
     return get_logger("PDFDownloader")
-
-
-def get_fetcher_logger() -> Logger:
-    """Get the paper fetcher logger."""
-    return get_logger("PaperFetcher")
-
-
-def get_manager_logger() -> Logger:
-    """Get the download manager logger."""
-    return get_logger("DownloadManager")
-
-
-def get_counter_logger() -> Logger:
-    """Get the PMCID counter logger."""
-    return get_logger("PMCIDCounter")
-
-
-def log_function_call(logger: Logger | None = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Decorator that logs function entry, success, and failure."""
-
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        import functools
-
-        @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            active_logger = logger or get_logger(func.__module__)
-            active_logger.debug("function_call", function=func.__name__)
-            try:
-                result = func(*args, **kwargs)
-                active_logger.debug("function_success", function=func.__name__)
-                return result
-            except Exception:
-                active_logger.error(
-                    "function_failed", function=func.__name__, exc_info=True
-                )
-                raise
-
-        return wrapper
-
-    return decorator
-
-
-class LogContext:
-    """Temporarily change the root log level."""
-
-    def __init__(self, logger: Logger, level: str):
-        self.logger = logger
-        self.new_level = getattr(logging, level.upper())
-        self.old_level: int | None = None
-
-    def __enter__(self) -> LogContext:
-        wrapped = logging.getLogger(self.logger.name)
-        self.old_level = wrapped.level
-        wrapped.setLevel(self.new_level)
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        if self.old_level is not None:
-            logging.getLogger(self.logger.name).setLevel(self.old_level)

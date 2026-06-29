@@ -95,7 +95,7 @@ def _should_retry(exception: Exception, status_codes: tuple[int, ...]) -> bool:
     # 只对网络相关异常和指定状态码重试
     if isinstance(exception, requests.HTTPError):
         # 对于HTTPError，如果有response且状态码在列表中，则重试
-        if hasattr(exception, "response") and exception.response is not None:
+        if exception.response is not None:
             return exception.response.status_code in status_codes
         # 如果没有response，也尝试重试（可能是其他HTTP相关错误）
         return True

@@ -20,10 +20,6 @@ from .config import (
 )
 from .doi_converter import DOIConverter
 from .downloader import PDFDownloader
-from .input_parser import (
-    classify_identifiers,
-    read_identifier_values_from_csv,
-)
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
@@ -182,7 +178,9 @@ class PaperFetcher(NCBIBaseModule):
             "search_cache_size_bytes": search_cache["size_bytes"],
             "search_cache_size_mb": search_cache["size_mb"],
             "search_cache_dir": search_cache["directory"],
-            "pdf_cache": PDFDownloader(str(self.output_dir), self.session).get_cache_info(),
+            "pdf_cache": PDFDownloader(
+                str(self.output_dir), self.session
+            ).get_cache_info(),
         }
 
     def clear_cache(self, search_cache: bool = True, pdf_cache: bool = False) -> None:
@@ -201,20 +199,6 @@ class PaperFetcher(NCBIBaseModule):
                 str(self.output_dir), self.session
             ).cleanup_old_pdfs(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
-
-    def _read_identifiers_from_csv(
-        self, csv_path: str, id_column: str = "ID"
-    ) -> dict[str, list[str]]:
-        """Read and classify identifiers from a CSV file."""
-        identifiers = classify_identifiers(
-            read_identifier_values_from_csv(csv_path, id_column)
-        )
-        self.logger.info(
-            f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
-            f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}, "
-            f"arXiv={len(identifiers['arxiv_ids'])}"
-        )
-        return identifiers
 
     def _convert_pmids_to_pmcid_mapping(self, pmids: list[str]) -> dict[str, str]:
         """Convert PMIDs to a PMID -> PMCID mapping while preserving lookup identity."""

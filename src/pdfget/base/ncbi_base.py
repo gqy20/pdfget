@@ -61,21 +61,3 @@ class NCBIBaseModule:
     def _rate_limit(self) -> None:
         """处理NCBI API请求频率限制"""
         self.rate_limiter.wait_for_rate_limit()
-
-    def _build_ncbi_params(self, **kwargs: Any) -> dict[str, Any]:
-        """构建NCBI API请求参数
-
-        Args:
-            **kwargs: API参数
-
-        Returns:
-            包含邮箱和API密钥的参数字典
-        """
-        params = kwargs.copy()
-
-        if self.email:
-            params["email"] = self.email
-        if self.api_key:
-            params["api_key"] = self.api_key
-
-        return params
