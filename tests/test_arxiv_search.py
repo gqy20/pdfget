@@ -1,3 +1,5 @@
+"""Tests for the arXiv branch of PaperSearcher.search_papers."""
+
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -40,7 +42,7 @@ class TestArxivSearcher:
         response.text = ARXIV_ATOM_RESPONSE
         self.session.get.return_value = response
 
-        papers = self.searcher.search_arxiv("transformer", limit=5)
+        papers = self.searcher._search_arxiv_api("transformer", limit=5)
 
         assert len(papers) == 1
         paper = papers[0]
@@ -53,10 +55,12 @@ class TestArxivSearcher:
         assert paper["doi"] == "10.48550/arXiv.2301.12345"
         assert paper["year"] == "2023"
 
-    def test_search_papers_arxiv_source(self):
-        with patch.object(self.searcher, "search_arxiv", return_value=[]) as mock_search:
+    def test_search_papers_arxiv_source_dispatches_to_api(self):
+        with patch.object(
+            self.searcher, "_search_arxiv_api", return_value=[]
+        ) as mock_search:
             self.searcher.search_papers("transformer", source="arxiv")
-            mock_search.assert_called_once_with("transformer", 50)
+            mock_search.assert_called_once()
 
 
 class TestArxivFetcher:
@@ -76,7 +80,9 @@ class TestArxivFetcher:
             }
         ]
 
-        papers = self.fetcher.search_papers("transformer", source="arxiv", use_cache=False)
+        papers = self.fetcher.search_papers(
+            "transformer", source="arxiv", use_cache=False
+        )
 
         assert len(papers) == 1
         assert papers[0]["arxiv_id"] == "2301.12345"

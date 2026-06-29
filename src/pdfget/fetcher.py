@@ -19,7 +19,6 @@ from .config import (
     get_cache_dir,
 )
 from .doi_converter import DOIConverter
-from .downloader import PDFDownloader
 from .pmcid import PMCIDRetriever
 from .searcher import PaperSearcher
 from .utils.cache_manager import CacheManager
@@ -171,6 +170,8 @@ class PaperFetcher(NCBIBaseModule):
 
     def get_cache_info(self) -> dict:
         """获取缓存信息"""
+        from .storage import LocalPDFStore
+
         search_cache = self.cache_manager.get_cache_info()
 
         return {
@@ -178,9 +179,7 @@ class PaperFetcher(NCBIBaseModule):
             "search_cache_size_bytes": search_cache["size_bytes"],
             "search_cache_size_mb": search_cache["size_mb"],
             "search_cache_dir": search_cache["directory"],
-            "pdf_cache": PDFDownloader(
-                str(self.output_dir), self.session
-            ).get_cache_info(),
+            "pdf_cache": LocalPDFStore(self.output_dir).cache_info(),
         }
 
     def clear_cache(self, search_cache: bool = True, pdf_cache: bool = False) -> None:
@@ -195,9 +194,9 @@ class PaperFetcher(NCBIBaseModule):
             self.cache_manager.clear()
 
         if pdf_cache:
-            deleted_count = PDFDownloader(
-                str(self.output_dir), self.session
-            ).cleanup_old_pdfs(max_age_days=0)
+            from .storage import LocalPDFStore
+
+            deleted_count = LocalPDFStore(self.output_dir).cleanup_older_than(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
 
     def _convert_pmids_to_pmcid_mapping(self, pmids: list[str]) -> dict[str, str]:

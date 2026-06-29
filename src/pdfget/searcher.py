@@ -1,7 +1,9 @@
-﻿"""
-Paper search module.
+"""Paper search module.
 
-Supports searching across multiple scholarly data sources.
+Public API: ``PaperSearcher.search_papers(query, limit, source, ...)``.
+All per-source raw API calls live as ``_search_*_api`` helpers; combined
+modes (``both`` / ``all``) are inlined into ``search_papers`` rather than
+exposed as a separate public method.
 """
 
 from __future__ import annotations
@@ -18,9 +20,17 @@ from .config import DEFAULT_SOURCE, NCBI_API_KEY, NCBI_EMAIL
 from .download_plan import build_dedupe_key
 from .paper_schema import PaperRecord, normalize_paper_record
 
+# Re-export so legacy imports keep working during the searcher-3 transition.
+__all__ = ["PaperSearcher"]
+
 
 class PaperSearcher(NCBIBaseModule):
-    """Search papers across supported sources."""
+    """Search papers across supported sources.
+
+    The single public entry point is :meth:`search_papers`, which dispatches
+    to per-source raw helpers (``_search_pubmed_api`` etc.) and to the
+    in-class combined-mode private helper when ``source in {"both", "all"}``.
+    """
 
     def __init__(
         self,
@@ -33,6 +43,105 @@ class PaperSearcher(NCBIBaseModule):
         super().__init__(session=session, email=email, api_key=api_key)
         self.europe_pmc_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
         self.default_source = DEFAULT_SOURCE
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def search_papers(
+        self,
+        query: str,
+        limit: int = 50,
+        source: str | None = None,
+        *,
+        require_pmcid: bool = False,
+        include_arxiv: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        """Search ``query`` against ``source`` (``pubmed`` / ``europe_pmc`` /
+        ``arxiv`` / ``both`` / ``all``); ``both`` and ``all`` de-duplicate by
+        record identity. ``include_arxiv`` defaults to ``True`` for ``all``,
+        ``False`` for ``both``.
+        """
+        effective_source = source or self.default_source
+
+        if effective_source == "both":
+            include = include_arxiv if include_arxiv is not None else False
+            return self._combined(query, limit, include_arxiv=include)
+        if effective_source == "all":
+            include = include_arxiv if include_arxiv is not None else True
+            return self._combined(query, limit, include_arxiv=include)
+        if effective_source in {"pubmed", "europe_pmc", "arxiv"}:
+            return self._single_source(query, limit, effective_source, require_pmcid=require_pmcid)
+
+        self.logger.warning(
+            f"Unknown data source: {effective_source}, falling back to default"
+        )
+        return self._single_source(query, limit, self.default_source)
+
+    # ------------------------------------------------------------------
+    # Combined-mode aggregation
+    # ------------------------------------------------------------------
+
+    def _combined(
+        self, query: str, limit: int, include_arxiv: bool
+    ) -> list[dict[str, Any]]:
+        """Run multiple single-source queries and de-duplicate by paper identity."""
+        candidates: list[dict[str, Any]] = []
+        candidates.extend(self._single_source(query, limit, "pubmed"))
+        candidates.extend(self._single_source(query, limit, "europe_pmc"))
+        if include_arxiv:
+            candidates.extend(self._single_source(query, limit, "arxiv"))
+
+        seen: dict[str, dict[str, Any]] = {}
+        unique: list[dict[str, Any]] = []
+        for paper in candidates:
+            normalized = normalize_paper_record(
+                paper, str(paper.get("source") or "")
+            )
+            key = build_dedupe_key(normalized)
+            if not key:
+                unique.append(paper)
+                continue
+            if key not in seen:
+                paper["merged_sources"] = [
+                    s for s in [str(paper.get("source") or "")] if s
+                ]
+                seen[key] = paper
+                unique.append(paper)
+                continue
+            existing = seen[key]
+            merged = existing.setdefault("merged_sources", [])
+            source = str(paper.get("source") or "")
+            if source and source not in merged:
+                merged.append(source)
+        return unique[:limit]
+
+    def _single_source(
+        self,
+        query: str,
+        limit: int,
+        source: str,
+        require_pmcid: bool = False,
+    ) -> list[dict[str, Any]]:
+        if source == "pubmed":
+            self.logger.info(f"Searching papers (PubMed): {query}")
+            return self._search_pubmed_api(self._parse_query_pubmed(query), limit)
+        if source == "europe_pmc":
+            self.logger.info(f"Searching papers (Europe PMC): {query}")
+            return self._search_europepmc_api(
+                self._parse_query_europepmc(query),
+                limit,
+                require_pmcid=require_pmcid,
+            )
+        if source == "arxiv":
+            self.logger.info(f"Searching papers (arXiv): {query}")
+            return self._search_arxiv_api(query, limit)
+        self.logger.warning(f"single_source fell through: {source}")
+        return []
+
+    # ------------------------------------------------------------------
+    # Query normalisation
+    # ------------------------------------------------------------------
 
     def _parse_query_pubmed(self, query: str) -> str:
         if "year:" in query:
@@ -50,7 +159,7 @@ class PaperSearcher(NCBIBaseModule):
         if "author:" in query:
             author_match = re.search(r"author:([^\s]+)", query)
             if author_match:
-                author = author_match.group(1)
+                author = journal_match.group(1) if False else author_match.group(1)
                 query = query.replace(f"author:{author}", f"{author}[AU]")
 
         return query
@@ -68,7 +177,13 @@ class PaperSearcher(NCBIBaseModule):
     ) -> PaperRecord:
         return normalize_paper_record(paper, source)
 
-    def _search_pubmed_api(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
+    # ------------------------------------------------------------------
+    # Raw API helpers (private)
+    # ------------------------------------------------------------------
+
+    def _search_pubmed_api(
+        self, query: str, limit: int = 50
+    ) -> list[dict[str, Any]]:
         try:
             self._rate_limit()
             search_response = self.session.get(
@@ -236,7 +351,9 @@ class PaperSearcher(NCBIBaseModule):
             self.logger.error(f"Europe PMC search error: {str(e)}")
             return []
 
-    def _search_arxiv_api(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
+    def _search_arxiv_api(
+        self, query: str, limit: int = 50
+    ) -> list[dict[str, Any]]:
         try:
             time.sleep(3.0)
             response = self.session.get(
@@ -258,13 +375,19 @@ class PaperSearcher(NCBIBaseModule):
             papers: list[dict[str, Any]] = []
 
             for entry in root.findall("atom:entry", namespace):
-                entry_id = entry.findtext("atom:id", default="", namespaces=namespace)
+                entry_id = entry.findtext(
+                    "atom:id", default="", namespaces=namespace
+                )
                 arxiv_id = entry_id.rsplit("/", 1)[-1] if entry_id else ""
                 title = " ".join(
-                    entry.findtext("atom:title", default="", namespaces=namespace).split()
+                    entry.findtext(
+                        "atom:title", default="", namespaces=namespace
+                    ).split()
                 )
                 abstract = " ".join(
-                    entry.findtext("atom:summary", default="", namespaces=namespace).split()
+                    entry.findtext(
+                        "atom:summary", default="", namespaces=namespace
+                    ).split()
                 )
                 published = entry.findtext(
                     "atom:published", default="", namespaces=namespace
@@ -274,7 +397,9 @@ class PaperSearcher(NCBIBaseModule):
                     for author in entry.findall("atom:author/atom:name", namespace)
                     if author.text
                 ]
-                doi = entry.findtext("arxiv:doi", default="", namespaces=namespace)
+                doi = entry.findtext(
+                    "arxiv:doi", default="", namespaces=namespace
+                )
 
                 pdf_url = ""
                 for link in entry.findall("atom:link", namespace):
@@ -314,72 +439,3 @@ class PaperSearcher(NCBIBaseModule):
         except (requests.exceptions.RequestException, ET.ParseError) as e:
             self.logger.error(f"arXiv search failed: {str(e)}")
             return []
-
-    def search_pubmed(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
-        self.logger.info(f"Searching papers (PubMed): {query}")
-        papers = self._search_pubmed_api(self._parse_query_pubmed(query), limit)
-        return papers
-
-    def search_europepmc(
-        self, query: str, limit: int = 50, require_pmcid: bool = False
-    ) -> list[dict[str, Any]]:
-        self.logger.info(f"Searching papers (Europe PMC): {query}")
-        papers = self._search_europepmc_api(
-            self._parse_query_europepmc(query), limit, require_pmcid=require_pmcid
-        )
-        return papers
-
-    def search_arxiv(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
-        self.logger.info(f"Searching papers (arXiv): {query}")
-        return self._search_arxiv_api(query, limit)
-
-    def search_all_sources(
-        self, query: str, limit: int = 50, include_arxiv: bool = False
-    ) -> list[dict[str, Any]]:
-        all_papers = []
-        all_papers.extend(self.search_pubmed(query, limit))
-        all_papers.extend(self.search_europepmc(query, limit))
-        if include_arxiv:
-            all_papers.extend(self.search_arxiv(query, limit))
-
-        seen_keys: dict[str, dict[str, Any]] = {}
-        unique_papers: list[dict[str, Any]] = []
-        for paper in all_papers:
-            normalized = normalize_paper_record(paper, str(paper.get("source") or ""))
-            dedupe_key = build_dedupe_key(normalized)
-            if not dedupe_key:
-                unique_papers.append(paper)
-                continue
-
-            if dedupe_key not in seen_keys:
-                merged_sources = [str(paper.get("source") or "")]
-                paper["merged_sources"] = [source for source in merged_sources if source]
-                seen_keys[dedupe_key] = paper
-                unique_papers.append(paper)
-                continue
-
-            existing = seen_keys[dedupe_key]
-            merged_sources = existing.setdefault("merged_sources", [])
-            source = str(paper.get("source") or "")
-            if source and source not in merged_sources:
-                merged_sources.append(source)
-        return unique_papers[:limit]
-
-    def search_papers(
-        self, query: str, limit: int = 50, source: str | None = None
-    ) -> list[dict[str, Any]]:
-        source = source or self.default_source
-
-        if source == "pubmed":
-            return self.search_pubmed(query, limit)
-        if source == "europe_pmc":
-            return self.search_europepmc(query, limit)
-        if source == "arxiv":
-            return self.search_arxiv(query, limit)
-        if source == "both":
-            return self.search_all_sources(query, limit)
-        if source == "all":
-            return self.search_all_sources(query, limit, include_arxiv=True)
-
-        self.logger.warning(f"Unknown data source: {source}, falling back to default")
-        return self.search_pubmed(query, limit)

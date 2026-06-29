@@ -16,7 +16,7 @@ from .download_plan import (
     ready_papers,
     save_download_plan,
 )
-from .download_service import DownloadManagerFactory
+from .download_service import DownloadManagerFactory, execute_download_plan
 from .input_planner import build_download_plan_from_unified_input
 from .logger import Logger
 from .protocols import DownloadContext, SearchProvider
@@ -490,18 +490,21 @@ def run_unified_input_workflow(
     )
     log_download_plan(logger, plan)
     plan_file = emit_download_plan(logger, plan, args.o)
-    downloadable_papers = ready_papers(plan)
     if args.dry_run:
         logger.info("\nDry run 完成，未执行下载")
         return
-    download_manager = download_manager_cls(
+    downloadable_papers = ready_papers(plan)
+    if not downloadable_papers:
+        logger.info("\n没有可下载的标识符")
+        return
+    results = execute_download_plan(
+        plan,
         fetcher=fetcher,
         max_workers=args.t,
         base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
         source_priority=parse_source_priority(args.source_priority),
+        download_manager_cls=download_manager_cls,
     )
-    results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
-
     log_download_stats(logger, results)
     emit_run_summary(
         logger,
@@ -535,21 +538,22 @@ def run_resume_workflow(
     plan, resume_source = load_resume_plan_or_papers(args.resume, fetcher=fetcher)
     log_download_plan(logger, plan)
     plan_file = emit_download_plan(logger, plan, args.o)
+    if args.dry_run:
+        logger.info("\nDry run 完成，未执行下载")
+        return
     downloadable_papers = ready_papers(plan)
     if not downloadable_papers:
         logger.info("续跑文件中没有可下载或可重试的项目")
         return
-    if args.dry_run:
-        logger.info("\nDry run 完成，未执行下载")
-        return
     logger.info(f"准备续跑 {len(downloadable_papers)} 个项目")
-    download_manager = download_manager_cls(
+    results = execute_download_plan(
+        plan,
         fetcher=fetcher,
         max_workers=args.t,
         base_delay=args.delay if args.delay is not None else DOWNLOAD_BASE_DELAY,
         source_priority=parse_source_priority(args.source_priority),
+        download_manager_cls=download_manager_cls,
     )
-    results = download_manager.download_batch(downloadable_papers, timeout=TIMEOUT)
     log_download_stats(logger, results)
     emit_run_summary(
         logger,

@@ -1,3 +1,5 @@
+"""Tests for the arXiv branch of PDFDownloader.download_paper."""
+
 import sys
 from pathlib import Path
 from unittest.mock import Mock
@@ -8,26 +10,11 @@ from pdfget.downloader import PDFDownloader
 
 
 class TestArxivDownloader:
-    def test_download_arxiv_pdf_success(self, tmp_path):
-        session = Mock()
-        downloader = PDFDownloader(str(tmp_path / "pdfs"), session)
-        downloader._try_download_from_url = Mock(
-            return_value={"success": True, "path": "/path/to/arxiv.pdf"}
-        )
-
-        result = downloader.download_arxiv_pdf("2301.12345v2")
-
-        assert result["success"] is True
-        downloader._try_download_from_url.assert_called_once_with(
-            "https://arxiv.org/pdf/2301.12345v2.pdf",
-            "2301.12345v2",
-            "",
-        )
-
     def test_download_paper_routes_arxiv(self, tmp_path):
+        """``download_paper`` should dispatch arXiv records through ``_via_arxiv``."""
         session = Mock()
         downloader = PDFDownloader(str(tmp_path / "pdfs"), session)
-        downloader.download_arxiv_pdf = Mock(
+        downloader._via_arxiv = Mock(
             return_value={"success": True, "path": "/path/to/arxiv.pdf"}
         )
 
@@ -35,4 +22,20 @@ class TestArxivDownloader:
         result = downloader.download_paper(paper)
 
         assert result["success"] is True
-        downloader.download_arxiv_pdf.assert_called_once_with("2301.12345")
+        downloader._via_arxiv.assert_called_once()
+        assert downloader._via_arxiv.call_args.args[0]["arxiv_id"] == "2301.12345"
+
+    def test_via_arxiv_strips_prefix(self, tmp_path):
+        session = Mock()
+        downloader = PDFDownloader(str(tmp_path / "pdfs"), session)
+        downloader._try_download_from_url = Mock(
+            return_value={"success": True, "path": "/p.pdf"}
+        )
+
+        result = downloader._via_arxiv({"arxiv_id": "arxiv:2301.12345"})
+
+        assert result["arxiv_id"] == "2301.12345"
+        assert result["source"] == "arxiv"
+        downloader._try_download_from_url.assert_called_once_with(
+            "https://arxiv.org/pdf/2301.12345.pdf", "2301.12345", ""
+        )
