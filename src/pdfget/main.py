@@ -34,55 +34,95 @@ __all__ = [
 def build_parser() -> argparse.ArgumentParser:
     """Create the CLI argument parser."""
     parser = argparse.ArgumentParser(
-        description="PDF文献下载器",
+        prog="pdfget",
+        description=(
+            "PDFGet: 智能文献搜索与并发 PDF 下载（PubMed / Europe PMC / arXiv）。\n"
+            "支持 CSV 与混合标识符输入；下载/搜索结果按 JSON schema 输出，\n"
+            "适合作为 Agent / 自动化脚本的底层工具（schemas: paper_record.v1 /\n"
+            "download_plan.v1 / download_result.v1 / run_summary.v2）"
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
   # 统计 PubMed / Europe PMC 文献的 PMCID 情况
-  python -m pdfget -s "machine learning cancer" -l 5000
+  pdfget -s "machine learning cancer" -l 5000
 
   # 搜索 arXiv 文献
-  python -m pdfget -s "graph neural networks" -S arxiv -l 20
+  pdfget -s "graph neural networks" -S arxiv -l 20
 
   # 搜索并下载前 N 篇文献
-  python -m pdfget -s "deep learning" -l 20 -d
-  python -m pdfget -s "vision transformer" -S arxiv -l 20 -d
+  pdfget -s "deep learning" -l 20 -d
+  pdfget -s "vision transformer" -S arxiv -l 20 -d
 
   # 并发下载（多线程）
-  python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
+  pdfget -s "cancer immunotherapy" -l 20 -d -t 5
 
   # 从 CSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
-  python -m pdfget -m identifiers.csv -t 5
-  python -m pdfget -m pmcids.csv -c PMCID -l 100
+  pdfget -m identifiers.csv -t 5
+  pdfget -m pmcids.csv -c PMCID -l 100
 
   # 下载单个标识符
-  python -m pdfget -m "PMC10851947"
-  python -m pdfget -m "10.1016/j.cell.2020.01.021"
-  python -m pdfget -m "2301.12345"
+  pdfget -m "PMC10851947"
+  pdfget -m "10.1016/j.cell.2020.01.021"
+  pdfget -m "2301.12345"
 
   # 下载多个标识符（逗号分隔）
-  python -m pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
+  pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
+
+  # 仅生成下载计划与运行报告，不下载
+  pdfget -s "vision transformer" -S all -l 30 -d --dry-run
+  pdfget --resume data/pdfs/run_summary.json -t 3
         """,
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-s", help="搜索文献")
+    group.add_argument(
+        "-s",
+        metavar="QUERY",
+        help=(
+            "搜索文献。要提高下载成功率，搜词加 'pubmed pmc[sb]' 过滤器"
+            "（例如: \"cancer AND pubmed pmc[sb]\"）"
+        ),
+    )
     group.add_argument(
         "-m",
-        help="批量输入（CSV文件/单个标识符/逗号分隔列表），支持混合 PMCID/PMID/DOI/arXiv ID",
+        metavar="INPUT",
+        help=(
+            "批量输入：CSV 路径、单值标识符或逗号分隔列表，自动识别"
+            " PMCID/PMID/DOI/arXiv ID（含新式 YYMM.NNNNN 与旧式 cs.LG/0703001）"
+        ),
     )
-    group.add_argument("--resume", help="从 run_summary.json 或 download_plan.json 续跑")
+    group.add_argument(
+        "--resume",
+        metavar="REPORT_OR_PLAN",
+        help=(
+            "续跑：传 run_summary.json 仅重试 retryable 失败项；"
+            "传 download_plan.json 按计划继续并跳过已有 PDF"
+        ),
+    )
 
     parser.add_argument(
         "-c",
-        help="CSV 列名（默认自动检测: ID > PMCID > doi > pmid > 第一列）",
+        metavar="COLUMN",
+        help=(
+            "CSV 列名（不区分大小写；默认自动检测: ID > PMCID > doi > pmid > 第一列；"
+            "示例表头: pmcid,pmid,doi,arxiv_id）"
+        ),
     )
-    parser.add_argument("-o", default=DEFAULT_OUTPUT_DIR, help="输出目录")
     parser.add_argument(
-        "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
+        "-o", metavar="DIR", default=DEFAULT_OUTPUT_DIR, help="输出目录"
+    )
+    parser.add_argument(
+        "-l",
+        metavar="N",
+        type=int,
+        default=DEFAULT_SEARCH_LIMIT,
+        help=f"要处理的文献数量（默认: {DEFAULT_SEARCH_LIMIT}）",
     )
     parser.add_argument("-d", action="store_true", help="下载 PDF")
-    parser.add_argument("-t", type=int, default=3, help="并发线程数（默认 3）")
+    parser.add_argument(
+        "-t", metavar="N", type=int, default=3, help="并发线程数（默认: 3）"
+    )
     parser.add_argument("-v", action="store_true", help="详细输出")
     parser.add_argument(
         "-S",
@@ -93,20 +133,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--format",
         choices=["console", "json", "markdown"],
-        help="统计输出格式",
+        help=(
+            "统计输出格式（默认: console）。json 模式下日志走 stderr，"
+            "stdout 仅输出 JSON payload，便于 Agent/脚本消费"
+        ),
     )
-    parser.add_argument("-e", help="NCBI API 邮箱（提高请求限制）")
-    parser.add_argument("-k", help="NCBI API 密钥（可选）")
-    parser.add_argument("--delay", type=float, help="下载延迟时间（秒，默认 1.0）")
+    parser.add_argument("-e", metavar="EMAIL", help="NCBI API 邮箱（提高请求限制）")
+    parser.add_argument("-k", metavar="KEY", help="NCBI API 密钥（可选）")
+    parser.add_argument(
+        "--delay",
+        metavar="SECONDS",
+        type=float,
+        help="下载延迟时间（秒，默认: 1.0）",
+    )
     parser.add_argument(
         "--source-priority",
+        metavar="LIST",
         default="pmc,europe_pmc,arxiv,direct",
-        help="下载来源优先级，逗号分隔: pmc,europe_pmc,arxiv,direct",
+        help="下载来源优先级，逗号分隔（默认: pmc,europe_pmc,arxiv,direct）",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="只生成搜索结果和下载计划，不实际下载",
+        help="只生成搜索结果、下载计划与运行报告（不实际下载）",
     )
     parser.add_argument(
         "--log-format",
