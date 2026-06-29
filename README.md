@@ -4,7 +4,7 @@
 
 智能文献搜索与批量下载工具，支持高级检索和并发下载。
 
-## 0.1.6 (Unreleased) 更新
+## 0.1.6 更新
 
 - **统一公开入口**：`PDFDownloader` 只暴露 `download_paper(record)`、`PaperSearcher` 只暴露 `search_papers(query, limit, source)`，所有内部支撑（按源分派、文件 IO、原始 API 调用）一律下划线化。
 - **`LocalPDFStore`**：新增独立模块 `src/pdfget/storage.py`，把本地 PDF 存档职责（路径解析、存在性、流式写入、列表、清理、统计）从 `PDFDownloader` 中分离。

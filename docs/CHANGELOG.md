@@ -5,7 +5,7 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.1.6] - 2026-06-29
 
 ### Added
 - 新增下载计划协议 `download_plan.v1` 持久化与带时间戳的归档副本（`download_plan.json` / `download_plan_*.json`），便于 `--resume`、`--dry-run` 复盘。
