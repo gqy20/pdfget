@@ -23,9 +23,17 @@
 - `PaperFetcher` 不再承担统一输入计划，统一输入计划由 `input_planner.build_download_plan_from_unified_input()` 与 `download_service.download_from_unified_input()` 负责。
 - 日志初始化统一由 `configure_logging()` / `get_logger()` 负责，旧参数别名（`log_level=`、`quiet=` 在 `print_log` 类上的兼容字段）已被清理。
 - 下载来源优先级可通过 `--source-priority` 或 Python API 的 `source_priority` 控制，替代原来的内部硬编码顺序。
+- **公开入口收口**：`PDFDownloader` 公开方法从 9 个收敛到 1 个 `download_paper(record)`，内部支撑（`_via_pmcid` / `_via_arxiv` / `_via_direct` / `_try_pmc_oa` / `_try_download_from_url` / `_save_pdf_stream`）全部下划线化。`PaperSearcher` 公开方法从 5 个收敛到 1 个 `search_papers(query, limit, source)`，内部按源 raw API 调用（`_search_{pubmed,europepmc,arxiv}_api`）下划线化，combined 模式（`both` / `all`）内联到 `search_papers` 内部实现。
+- **`download_service` 拆 façade**：新增 `execute_download_plan(plan, *, fetcher, max_workers, base_delay, source_priority, download_manager_cls)` 纯函数；`download_from_unified_input()` 退化为 `build_download_plan_from_unified_input` + `execute_download_plan` 的组合；CLI 的 `run_unified_input_workflow` / `run_resume_workflow` 直接复用 `execute_download_plan`，不再"复制粘贴 façade 逻辑"。
+
+### Added
+- **`LocalPDFStore`**（`src/pdfget/storage.py`）：本地 PDF 存档抽象，公开方法 6 个 `path_for / has / open_writer / list_records / cleanup_older_than / cache_info`；`PDFDownloader.__init__` 注入持有它，所有文件 IO 通过它完成；`PaperFetcher.get_cache_info` / `clear_cache` 改为直接走 `LocalPDFStore`，不再"临时构造 `PDFDownloader` 取一个方法"。
+- 测试套重组：按"单一公开入口"重写 `tests/test_searcher.py / test_downloader.py / test_arxiv_downloader.py / test_arxiv_search.py / test_integration_pmc_oa.py`；新增 `tests/test_storage.py`（9 项覆盖 LocalPDFStore 6 个方法）；新增公共表面哨兵测试 `test_only_one_public_download_entry` / `test_only_one_public_search_entry`，盯死未来添加新 public 方法的回归。
 
 ### Removed
 - 移除 `PDFDownloader` 中已被 `run_report.v2` 替代的旧统计/返回处理方法（`b9303e9`）。
+- 移除 `PDFDownloader` 公开方法：`download_pdf` / `download_if_not_exists` / `download_arxiv_pdf` / `list_downloaded_pdfs` / `cleanup_old_pdfs` / `get_cache_info` / `check_pdf_exists` / `get_pdf_path`——共 8 个收口到下划线内部 + `LocalPDFStore`。
+- 移除 `PaperSearcher` 公开方法：`search_pubmed` / `search_europepmc` / `search_arxiv` / `search_all_sources`——共 4 个收口到 `search_papers` 与内部下划线方法。
 - 移除 `PaperFetcher` 中已迁出至 `download_service` 的统一输入方法（`8b43aed`）。
 - 移除 `PMCIDRetriever` 中旧兼容路径（`b9303e9`、`d27d416`）。
 - 移除 `logger.py` 中为旧配置/别名保留的兜底分支（`b9303e9`、`d27d416`）。

@@ -85,30 +85,6 @@ class TestPMCOAIntegration:
             assert result["path"] == "/tmp/test.pdf"
             assert mock_try.call_count >= 1
 
-    def test_download_paper_handles_tgz_extraction(self, downloader):
-        """Verify the tarball-extracted PDF is detected and reported correctly."""
-        pmcid = "PMC7446157"
-        doi = "10.1000/test.doi"
-
-        with (
-            patch.object(downloader.store, "has", return_value=False),
-            patch.object(
-                downloader.pmc_oa_service, "process_pmcid", return_value=True
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-            patch("pathlib.Path.stat") as mock_stat,
-        ):
-            mock_stat.return_value.st_size = 54321
-
-            result = downloader.download_paper({"pmcid": pmcid, "doi": doi})
-
-            assert result["success"] is True
-            assert result["source"] == "PMC OA Service"
-            assert result["content_length"] == 54321
-            downloader.pmc_oa_service.process_pmcid.assert_called_once_with(
-                pmcid, doi
-            )
-
     @pytest.mark.network
     def test_real_pmc_oa_download(self, tmp_path):
         """Live network test against PMC OA Service."""

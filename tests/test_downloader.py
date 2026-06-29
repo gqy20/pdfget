@@ -246,38 +246,5 @@ class TestPDFDownloader:
         )
 
 
-class TestPDFDownloaderStorePassthrough:
-    """Sanity check: the former public storage methods are reachable via store."""
-
-    @pytest.fixture
-    def session(self):
-        return Mock()
-
-    @pytest.fixture
-    def downloader(self, session, tmp_path):
-        return PDFDownloader(str(tmp_path / "pdfs"), session)
-
-    def test_list_records_via_store(self, downloader, tmp_path):
-        (tmp_path / "pdfs" / "PMC1.pdf").write_bytes(b"x")
-        assert "PMC1.pdf" in downloader.store.list_records()
-
-    def test_cleanup_older_than_via_store(self, downloader):
-        import os
-        import time
-
-        out = downloader.store.output_dir
-        out.mkdir(parents=True, exist_ok=True)
-        old = out / "old.pdf"
-        old.write_bytes(b"x")
-        os.utime(old, (time.time() - 60 * 24 * 3600,) * 2)
-        deleted = downloader.store.cleanup_older_than(max_age_days=30)
-        assert deleted == 1
-
-    def test_cache_info_via_store(self, downloader):
-        info = downloader.store.cache_info()
-        assert info["file_count"] == 0
-        assert "output_dir" in info
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

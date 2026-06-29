@@ -4,6 +4,14 @@
 
 智能文献搜索与批量下载工具，支持高级检索和并发下载。
 
+## 0.1.6 (Unreleased) 更新
+
+- **统一公开入口**：`PDFDownloader` 只暴露 `download_paper(record)`、`PaperSearcher` 只暴露 `search_papers(query, limit, source)`，所有内部支撑（按源分派、文件 IO、原始 API 调用）一律下划线化。
+- **`LocalPDFStore`**：新增独立模块 `src/pdfget/storage.py`，把本地 PDF 存档职责（路径解析、存在性、流式写入、列表、清理、统计）从 `PDFDownloader` 中分离。
+- **`execute_download_plan`**：`download_service.py` 拆出"输入 plan → 实际下载"纯函数 `execute_download_plan`，CLI workflow 不再复制 façade 逻辑，统一通过它驱动 `UnifiedDownloadManager`。
+- **Python API 增加一个可注入钩子**：低层 `LocalPDFStore` 可被外部脚本直接调用（路径、写入、列表、清理、`cache_info()`），便于把 PDF 存档接入更大的工作流。
+- **测试套重组**：按"单一公开入口"重写 `test_searcher.py / test_downloader.py / test_arxiv_* / test_integration_pmc_oa.py`；新增 `test_storage.py`；新增公共表面哨兵测试，盯死未来添加新 public 方法的回归。
+
 ## 0.1.5 更新
 
 - 新增完整的 arXiv 搜索与下载链路，支持 `-S arxiv` 搜索、直接下载 arXiv PDF，以及通过 `-m "2301.12345"` 这类输入直接触发下载。
@@ -259,14 +267,26 @@ from pdfget import (
     build_download_plan_from_unified_input,
     download_from_unified_input,
 )
+from pdfget.storage import LocalPDFStore
 
 fetcher = PaperFetcher(output_dir="data/pdfs")
 
+# 组合 façade：构造 plan + 执行下载（一步到位）
+results = download_from_unified_input(
+    fetcher,
+    "identifiers.csv",
+    column="ID",
+    max_workers=3,
+)
+
+# 想要更细粒度：分两步走（CLI 也是这样做的）
 plan = build_download_plan_from_unified_input(
     "PMC123456,10.1186/s12916-020-01690-4,2301.12345",
     resolver=fetcher,
     logger=fetcher.logger,
 )
+downloadable = [e for e in plan["entries"] if e["status"] == "ready"]
+records = [e["paper"] for e in downloadable]
 
 results = download_from_unified_input(
     fetcher,
@@ -274,9 +294,26 @@ results = download_from_unified_input(
     column="ID",
     max_workers=3,
 )
+
+# 直接操作本地 PDF 存档（清理、列表、查路径）
+store = LocalPDFStore("data/pdfs")
+print(store.cache_info())          # 计数 / 字节数
+print(store.path_for(records[0]))   # 期望 PDF 路径
+store.cleanup_older_than(days=30)  # 清理 30 天前的旧 PDF
 ```
 
 下载链路使用 `download_plan.v1` 作为边界协议。`UnifiedDownloadManager.download_batch()` 只接收计划产出的论文记录，不再接收裸 DOI 字符串列表；如果要处理 CSV、PMCID、PMID、DOI 或 arXiv 混合输入，请先使用 `build_download_plan_from_unified_input()` 或直接调用 `download_from_unified_input()`。搜索/统计输出可通过 `--format console|json|markdown` 控制，或调用 `StatsFormatter.format(stats, format_type=...)` 时使用 `format_type="console" | "json" | "markdown"`。
+
+### 模块入口收口
+
+| 类 | 公开 API（其他一律下划线化） |
+| -- | ---------------------------- |
+| `PaperFetcher` | 仍是 façade；新增 Python 入口用 `download_from_unified_input` |
+| `PaperSearcher` | `search_papers(query, limit, source, *, require_pmcid, include_arxiv)` |
+| `PDFDownloader` | `download_paper(record)` |
+| `LocalPDFStore` | `path_for / has / open_writer / list_records / cleanup_older_than / cache_info` |
+| `download_service` | `execute_download_plan(plan, ...)` + `download_from_unified_input(...)` |
+| `UnifiedDownloadManager` | `download_batch(papers, timeout=30)` |
 
 ### PMC 过滤技巧
 

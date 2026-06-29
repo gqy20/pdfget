@@ -57,12 +57,13 @@ twine upload dist/*
 
 ### 核心模块结构
 - **PaperFetcher** (`fetcher.py`) - 搜索、元数据补全、PMID/DOI 解析协调器
-- **PaperSearcher** (`searcher.py`) - 文献搜索，支持 PubMed、Europe PMC 和 arXiv
+- **PaperSearcher** (`searcher.py`) - 文献搜索；单公开入口 `search_papers(query, limit, source)`，source ∈ `pubmed/europe_pmc/arxiv/both/all`；内部按源 raw API 调用全部下划线化（`_search_*_api`）
 - **input_parser** (`input_parser.py`) - CSV/标识符输入解析（列名、混分隔、单值）
-- **input_planner** (`input_planner.py`) - 将 CSV/标识符输入转换为下载计划
-- **download_plan** (`download_plan.py`) - 搜索结果、直接输入、续跑和下载器之间的统一计划协议 (`download_plan.v1`)
-- **download_service** (`download_service.py`) - Python API 的统一输入下载 façade
-- **PDFDownloader** (`downloader.py`) - 单篇 PDF 下载，从 PMC OA Service、Europe PMC、arXiv 等来源下载；归一化结果与失败分类
+- **input_planner** (`input_planner.py`) - CSV/标识符 → `download_plan.v1`
+- **download_plan** (`download_plan.py`) - 搜索结果、直接输入、续跑、下载器之间的统一计划协议 (`download_plan.v1`)
+- **download_service** (`download_service.py`) - `execute_download_plan` 纯函数（plan → 实际下载）+ `download_from_unified_input` 组合 façade；CLI workflow 复用 `execute_download_plan`，不复刻 façade 逻辑
+- **LocalPDFStore** (`storage.py`) - 本地 PDF 存档抽象（`path_for / has / open_writer / list_records / cleanup_older_than / cache_info`）；`PDFDownloader` 通过注入持有，所有文件 IO 委托给它
+- **PDFDownloader** (`downloader.py`) - 单公开入口 `download_paper(record)`；内部按源策略 `_via_pmcid / _via_arxiv / _via_direct`
 - **pmc_oa_service** (`pmc_oa_service.py`) - PMC Open Access Web Service 的封装
 - **UnifiedDownloadManager** (`manager.py`) - 并发下载管理器，只按下载计划中的论文记录执行下载
 - **PMCIDRetriever** (`pmcid.py`) - 批量 PMCID 获取，使用 ESummary API 优化
@@ -105,10 +106,12 @@ twine upload dist/*
 - 统计分析：`pdfget -s "query" --count`
 
 ### 扩展性设计
-- 检索、输入解析和下载之间通过 `download_plan.v1` 连接；下载管理器不再兼容裸 DOI 字符串列表，调用方需要先生成论文记录或使用 `download_from_unified_input()`
+- 检索、输入解析和下载之间通过 `download_plan.v1` 连接；下载管理器不再兼容裸 DOI 字符串列表，调用方需要先生成论文记录或使用 `download_from_unified_input()`（或 `execute_download_plan(plan, ...)` 当 plan 已构造好）
+- 三大核心类的公开表面收口到单入口：`PDFDownloader.download_paper(record)`、`PaperSearcher.search_papers(query, limit, source)`、`download_service.execute_download_plan(plan, ...)`；其余全部下划线化
 - 运行报告使用 `run_summary.v2`，包含成功、失败、计划阶段跳过、失败诊断、下载来源尝试明细和聚合统计；`--resume` 支持从 `run_summary.v2` 或 `download_plan.v1` 续跑
 - 搜索结果导出使用 `format_type` 参数，日志初始化由 `configure_logging()` / `get_logger()` 负责，不保留旧参数别名
 - 下载来源优先级通过 `--source-priority` 或 Python API 的 `source_priority` 控制，支持 `pmc`、`europe_pmc`、`arxiv`、`direct`
+- 本地 PDF 存档由 `LocalPDFStore` 抽象，可单独注入到下载器；新增下载源时可复用同一存储
 - 模块化架构支持添加新数据源
 - 下载源可在 `pdf_sources` 配置中扩展
 - 支持多种输出格式（console、json、markdown）
